@@ -1,6 +1,9 @@
 package chess
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestPieceAtEmptyBoard(t *testing.T) {
 	var board Board
@@ -20,13 +23,11 @@ func TestPieceAtEmptyBoard(t *testing.T) {
 func TestSetPiece(t *testing.T) {
 	var board Board
 	piece := Piece{Type: Queen, Color: White}
-	setPiece := board.SetPiece(Square(0), piece)
-	got, ok := board.PieceAt(Square(0))
-
-	if setPiece != nil {
-		t.Errorf("SetPiece(0, piece) = %v; expected nil", setPiece)
+	if err := board.SetPiece(Square(0), piece); err != nil {
+		t.Fatalf("SetPiece(0, piece) = %v; expected nil", err)
 	}
 
+	got, ok := board.PieceAt(Square(0))
 	if got != piece || !ok {
 		t.Errorf("PieceAt(0) = %v, %v; expected %v and true", got, ok, piece)
 	}
@@ -37,8 +38,8 @@ func TestSetPieceInvalidSquare(t *testing.T) {
 	piece := Piece{Type: Queen, Color: White}
 	setPiece := board.SetPiece(NoSquare, piece)
 
-	if setPiece == nil {
-		t.Errorf("SetPiece(NoSquare, piece) = %v; expected error", setPiece)
+	if !errors.Is(setPiece, ErrInvalidSquare) {
+		t.Errorf("SetPiece(NoSquare, piece) = %v; expected ErrInvalidSquare", setPiece)
 	}
 }
 
@@ -49,8 +50,8 @@ func TestRemovePiece(t *testing.T) {
 	if err := board.SetPiece(Square(0), piece); err != nil {
 		t.Fatalf("SetPiece(0, piece) = %v; expected nil", err)
 	}
-	removed, err := board.RemovePiece(Square(0))
 
+	removed, err := board.RemovePiece(Square(0))
 	if removed != piece || err != nil {
 		t.Errorf("RemovePiece(0) = %v, %v; expected %v and nil", removed, err, piece)
 	}
@@ -62,8 +63,7 @@ func TestRemovePiece(t *testing.T) {
 	}
 
 	removedNoSquare, errNoSquare := board.RemovePiece(NoSquare)
-
-	if removedNoSquare != (Piece{}) || errNoSquare == nil {
-		t.Errorf("RemovePiece(NoSquare) = %v, %v; expected Piece{} and error", removedNoSquare, errNoSquare)
+	if removedNoSquare != (Piece{}) || !errors.Is(errNoSquare, ErrInvalidSquare) {
+		t.Errorf("RemovePiece(NoSquare) = %v, %v; expected Piece{} and ErrInvalidSquare", removedNoSquare, errNoSquare)
 	}
 }

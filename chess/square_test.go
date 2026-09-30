@@ -1,6 +1,9 @@
 package chess
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func checkParseSquare(t *testing.T, input string, expected Square) {
 	got, err := ParseSquare(input)
@@ -13,21 +16,21 @@ func checkParseSquare(t *testing.T, input string, expected Square) {
 	}
 }
 
-func TestParseSquare(t *testing.T) {
-	checkParseSquare(t, "a1", 0)
-	checkParseSquare(t, "h8", 63)
-}
-
 func checkParseSquareInvalid(t *testing.T, input string) {
 	got, err := ParseSquare(input)
 
-	if err == nil {
-		t.Fatalf("ParseSquare(%s) expects error, got %d instead", input, got)
+	if !errors.Is(err, ErrInvalidSquare) {
+		t.Fatalf("ParseSquare(%s) expects ErrInvalidSquare, got %v instead", input, err)
 	}
 
 	if got != NoSquare {
 		t.Fatalf("ParseSquare(%s) expects NoSquare, got %d instead", input, got)
 	}
+}
+
+func TestParseSquare(t *testing.T) {
+	checkParseSquare(t, "a1", 0)
+	checkParseSquare(t, "h8", 63)
 }
 
 func TestParseSquareInvalid(t *testing.T) {

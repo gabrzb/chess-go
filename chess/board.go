@@ -1,7 +1,5 @@
 package chess
 
-import "errors"
-
 type Board struct {
 	squares [64]Piece
 }
@@ -16,7 +14,7 @@ func (b Board) PieceAt(square Square) (Piece, bool) {
 
 func (b *Board) SetPiece(square Square, piece Piece) error {
 	if !square.Valid() {
-		return errors.New("invalid square")
+		return ErrInvalidSquare
 	}
 
 	b.squares[square] = piece
@@ -25,7 +23,7 @@ func (b *Board) SetPiece(square Square, piece Piece) error {
 
 func (b *Board) RemovePiece(square Square) (Piece, error) {
 	if !square.Valid() {
-		return Piece{}, errors.New("invalid square")
+		return Piece{}, ErrInvalidSquare
 	}
 
 	removed := b.squares[square]

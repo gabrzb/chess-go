@@ -1,9 +1,5 @@
 package chess
 
-import (
-	"errors"
-)
-
 type Square uint8
 
 const NoSquare Square = 64
@@ -30,11 +26,11 @@ func ParseSquare(text string) (Square, error) {
 	var col, row int
 
 	if len(text) != 2 {
-		return NoSquare, errors.New("invalid square format")
+		return NoSquare, ErrInvalidSquare
 	}
 
 	if text[0] < 'a' || text[0] > 'h' || text[1] < '1' || text[1] > '8' {
-		return NoSquare, errors.New("invalid square format")
+		return NoSquare, ErrInvalidSquare
 	}
 
 	col = int(text[0] - 'a')
