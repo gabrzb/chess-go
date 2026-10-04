@@ -78,3 +78,28 @@ func jumpMoves(board Board, from Square, dir direction) []Move {
 
 	return []Move{{From: from, To: destination}}
 }
+
+func pseudoLegalMoves(board Board, from Square) []Move {
+	piece, ok := board.PieceAt(from)
+
+	if !ok {
+		return nil
+	}
+
+	switch piece.Type {
+	case Pawn:
+		return pawnMoves(board, from)
+	case Knight:
+		return knightMoves(board, from)
+	case Bishop:
+		return bishopMoves(board, from)
+	case Rook:
+		return rookMoves(board, from)
+	case Queen:
+		return queenMoves(board, from)
+	case King:
+		return kingMoves(board, from)
+	default:
+		return nil
+	}
+}
