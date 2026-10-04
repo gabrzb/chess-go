@@ -43,78 +43,38 @@ func slidingMoves(board Board, from Square, dir direction) []Move {
 	return moves
 }
 
-func rookMoves(board Board, from Square) []Move {
-	rook, ok := board.PieceAt(from)
+func canOccupySquare(board Board, to Square, color Color) bool {
+	occupant, ok := board.PieceAt(to)
 
-	if !ok || rook.Type != Rook {
-		return nil
+	if !ok {
+		return false
 	}
 
-	directions := []direction{
-		{colStep: 1, rowStep: 0},  // Right
-		{colStep: -1, rowStep: 0}, // Left
-		{colStep: 0, rowStep: 1},  // Up
-		{colStep: 0, rowStep: -1}, // Down
-	}
-
-	var moves []Move
-
-	for _, dir := range directions {
-		directionMoves := slidingMoves(board, from, dir)
-		moves = append(moves, directionMoves...)
-	}
-
-	return moves
+	return occupant.Type == NoPiece || occupant.Color != color
 }
 
-func bishopMoves(board Board, from Square) []Move {
-	bishop, ok := board.PieceAt(from)
+func jumpMoves(board Board, from Square, dir direction) []Move {
+	piece, ok := board.PieceAt(from)
 
-	if !ok || bishop.Type != Bishop {
+	if !ok || piece.Type == NoPiece {
 		return nil
 	}
 
-	directions := []direction{
-		{colStep: 1, rowStep: 1},   // diagonal up-right
-		{colStep: -1, rowStep: 1},  // diagonal up-left
-		{colStep: 1, rowStep: -1},  // diagonal down-right
-		{colStep: -1, rowStep: -1}, // diagonal down-left
-	}
+	col := int(from) % 8
+	row := int(from) / 8
 
-	var moves []Move
+	nextCol := col + dir.colStep
+	nextRow := row + dir.rowStep
 
-	for _, dir := range directions {
-		directionMoves := slidingMoves(board, from, dir)
-		moves = append(moves, directionMoves...)
-	}
-
-	return moves
-}
-
-func queenMoves(board Board, from Square) []Move {
-	queen, ok := board.PieceAt(from)
-
-	if !ok || queen.Type != Queen {
+	if nextCol < 0 || nextCol >= 8 || nextRow < 0 || nextRow >= 8 {
 		return nil
 	}
 
-	directions := []direction{
-		{colStep: 1, rowStep: 0},
-		{colStep: -1, rowStep: 0},
-		{colStep: 0, rowStep: 1},
-		{colStep: 0, rowStep: -1},
-		{colStep: 1, rowStep: 1},
-		{colStep: -1, rowStep: 1},
-		{colStep: 1, rowStep: -1},
-		{colStep: -1, rowStep: -1},
+	destination := Square(nextRow*8 + nextCol)
+
+	if !canOccupySquare(board, destination, piece.Color) {
+		return nil
 	}
 
-	var moves []Move
-
-	for _, dir := range directions {
-		directionMoves := slidingMoves(board, from, dir)
-		moves = append(moves, directionMoves...)
-	}
-
-	return moves
+	return []Move{{From: from, To: destination}}
 }
