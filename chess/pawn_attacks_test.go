@@ -19,7 +19,7 @@ func TestPawnAttackSquare(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := pawnAttackSquare(Square(27), tc.to, tc.color)
+			got := pawnAttacksSquare(Square(27), tc.to, tc.color)
 
 			if got != tc.want {
 				t.Errorf("Expected %v, got %v", tc.want, got)
