@@ -134,3 +134,103 @@ func TestLegalMovesCannotCaptureKing(t *testing.T) {
 		}
 	}
 }
+
+func TestHasLegalMoveAvailable(t *testing.T) {
+	var board Board
+
+	if err := board.SetPiece(Square(4), Piece{Type: King, Color: White}); err != nil {
+		t.Fatalf("Failed to set white king: %v", err)
+	}
+
+	if err := board.SetPiece(Square(60), Piece{Type: King, Color: Black}); err != nil {
+		t.Fatalf("Failed to set black rook: %v", err)
+	}
+
+	for _, color := range []Color{White, Black} {
+		got, err := hasLegalMove(board, color)
+		if err != nil {
+			t.Fatalf("Unexpected error for color %v: %v", color, err)
+		}
+
+		if !got {
+			t.Errorf("Expected color %v to have legal moves, but got false", color)
+		}
+	}
+}
+
+func TestHasLegalMoveUnavailable(t *testing.T) {
+	var board Board
+
+	if err := board.SetPiece(Square(56), Piece{Type: King, Color: Black}); err != nil {
+		t.Fatalf("Failed to set black king: %v", err)
+	}
+
+	if err := board.SetPiece(Square(42), Piece{Type: King, Color: White}); err != nil {
+		t.Fatalf("Failed to set white king: %v", err)
+	}
+
+	if err := board.SetPiece(Square(49), Piece{Type: Queen, Color: White}); err != nil {
+		t.Fatalf("Failed to set white queen: %v", err)
+	}
+
+	got, err := hasLegalMove(board, Black)
+	if err != nil {
+		t.Fatalf("Unexpected error for color Black: %v", err)
+	}
+
+	if got {
+		t.Error("Expected color Black to have no legal moves, but got true")
+	}
+}
+
+func TestHasLegalMoveContinuesSearching(t *testing.T) {
+	var board Board
+
+	if err := board.SetPiece(Square(56), Piece{Type: King, Color: Black}); err != nil {
+		t.Fatalf("Failed to set black king: %v", err)
+	}
+
+	if err := board.SetPiece(Square(42), Piece{Type: King, Color: White}); err != nil {
+		t.Fatalf("Failed to set white king: %v", err)
+	}
+
+	if err := board.SetPiece(Square(49), Piece{Type: Queen, Color: White}); err != nil {
+		t.Fatalf("Failed to set white queen: %v", err)
+	}
+
+	if err := board.SetPiece(Square(57), Piece{Type: Rook, Color: Black}); err != nil {
+		t.Fatalf("Failed to set black rook: %v", err)
+	}
+
+	got, err := hasLegalMove(board, Black)
+	if err != nil {
+		t.Fatalf("Unexpected error for color Black: %v", err)
+	}
+
+	if !got {
+		t.Error("Expected color Black to have a legal move, but got false")
+	}
+}
+
+func TestHasLegalMoveErrors(t *testing.T) {
+	var board Board
+
+	cases := []struct {
+		name    string
+		color   Color
+		wantErr error
+	}{
+		{"invalid color", NoColor, ErrInvalidColor},
+		{"missing king", White, ErrKingNotFound},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := hasLegalMove(board, tc.color)
+
+			if !errors.Is(err, tc.wantErr) {
+				t.Errorf("Expected error: %v, got: %v", tc.wantErr, err)
+			}
+		})
+	}
+}

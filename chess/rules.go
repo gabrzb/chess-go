@@ -55,3 +55,28 @@ func LegalMoves(board Board, from Square) ([]Move, error) {
 
 	return moves, nil
 }
+
+func hasLegalMove(board Board, color Color) (bool, error) {
+	if _, err := IsInCheck(board, color); err != nil {
+		return false, err
+	}
+
+	for from := Square(0); from < NoSquare; from++ {
+		piece, _ := board.PieceAt(from)
+
+		if piece.Type == NoPiece || piece.Color != color {
+			continue
+		}
+
+		moves, err := LegalMoves(board, from)
+		if err != nil {
+			return false, err
+		}
+
+		if len(moves) > 0 {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
