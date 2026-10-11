@@ -5,7 +5,6 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess/movegen"
 )
 
-// BoardAfterMove applies a generated basic move to a copy of the board.
 func BoardAfterMove(board chess.Board, move chess.Move) (chess.Board, error) {
 	if !move.From.Valid() || !move.To.Valid() {
 		return chess.Board{}, chess.ErrInvalidSquare
@@ -26,7 +25,6 @@ func BoardAfterMove(board chess.Board, move chess.Move) (chess.Board, error) {
 	return board, nil
 }
 
-// LegalMoves filters basic moves that leave the moving side's king in check.
 func LegalMoves(board chess.Board, from chess.Square) ([]chess.Move, error) {
 	piece, ok := board.PieceAt(from)
 	if !ok {
@@ -67,7 +65,50 @@ func LegalMoves(board chess.Board, from chess.Square) ([]chess.Move, error) {
 	return moves, nil
 }
 
-// HasLegalMove reports whether any piece of the given color has a legal move.
+func LegalMovesFrom(position chess.Position, from chess.Square) ([]chess.Move, error) {
+	piece, ok := position.Board.PieceAt(from)
+
+	if !ok {
+		return nil, chess.ErrInvalidSquare
+	}
+
+	if piece.Type == chess.NoPiece {
+		return nil, chess.ErrEmptySource
+	}
+
+	if position.SideToMove != chess.White && position.SideToMove != chess.Black {
+		return nil, chess.ErrInvalidColor
+	}
+
+	if piece.Color != position.SideToMove {
+		return nil, chess.ErrIllegalMove
+	}
+
+	moves, err := LegalMoves(position.Board, from)
+	if err != nil {
+		return nil, err
+	}
+
+	if piece.Type != chess.King {
+		return moves, nil
+	}
+
+	generators := []func(chess.Position) (chess.Move, bool){
+		KingSideCastlingMove,
+		QueenSideCastlingMove,
+	}
+
+	for _, generate := range generators {
+		move, ok := generate(position)
+
+		if ok && move.From == from {
+			moves = append(moves, move)
+		}
+	}
+
+	return moves, nil
+}
+
 func HasLegalMove(board chess.Board, color chess.Color) (bool, error) {
 	if _, err := IsInCheck(board, color); err != nil {
 		return false, err

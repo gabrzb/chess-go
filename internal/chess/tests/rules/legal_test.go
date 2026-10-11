@@ -215,6 +215,119 @@ func TestHasLegalMoveContinuesSearching(t *testing.T) {
 	}
 }
 
+func TestLegalMovesFromIncludesCastling(t *testing.T) {
+	cases := []struct {
+		name     string
+		color    chess.Color
+		kingSide bool
+		want     chess.Move
+	}{
+		{"white king-side", chess.White, true, chess.Move{From: 4, To: 6}},
+		{"black king-side", chess.Black, true, chess.Move{From: 60, To: 62}},
+		{"white queen-side", chess.White, false, chess.Move{From: 4, To: 2}},
+		{"black queen-side", chess.Black, false, chess.Move{From: 60, To: 58}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			position := castlingPosition(t, tc.color, tc.kingSide)
+
+			moves, err := rules.LegalMovesFrom(position, tc.want.From)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			found := false
+			for _, move := range moves {
+				if move == tc.want {
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				t.Errorf("Expected castling move %v in %v", tc.want, moves)
+			}
+		})
+	}
+}
+
+func TestLegalMovesFromErrors(t *testing.T) {
+	colors := []struct {
+		name     string
+		color    chess.Color
+		kingFrom chess.Square
+		rookFrom chess.Square
+	}{
+		{"white", chess.White, 4, 7},
+		{"black", chess.Black, 60, 63},
+	}
+
+	for _, side := range colors {
+		t.Run(side.name, func(t *testing.T) {
+			cases := []struct {
+				name       string
+				from       chess.Square
+				turn       chess.Color
+				removeKing bool
+				wantErr    error
+			}{
+				{"invalid square", chess.NoSquare, side.color, false, chess.ErrInvalidSquare},
+				{"out of range square", chess.Square(255), side.color, false, chess.ErrInvalidSquare},
+				{"empty square", 27, side.color, false, chess.ErrEmptySource},
+				{"missing turn color", side.kingFrom, chess.NoColor, false, chess.ErrInvalidColor},
+				{"invalid turn color", side.kingFrom, chess.Color(255), false, chess.ErrInvalidColor},
+				{"missing king", side.rookFrom, side.color, true, chess.ErrKingNotFound},
+			}
+
+			for _, tc := range cases {
+				t.Run(tc.name, func(t *testing.T) {
+					position := kingSidePosition(t, side.color)
+					position.SideToMove = tc.turn
+					if tc.removeKing {
+						if _, err := position.Board.RemovePiece(side.kingFrom); err != nil {
+							t.Fatalf("Failed to remove king: %v", err)
+						}
+					}
+
+					moves, err := rules.LegalMovesFrom(position, tc.from)
+					if !errors.Is(err, tc.wantErr) {
+						t.Errorf("Expected error %v, got %v", tc.wantErr, err)
+					}
+					if len(moves) != 0 {
+						t.Errorf("Expected no moves on error, got %v", moves)
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestLegalMovesFromWrongTurn(t *testing.T) {
+	cases := []struct {
+		name string
+		turn chess.Color
+		from chess.Square
+	}{
+		{"white turn selecting black piece", chess.White, 60},
+		{"black turn selecting white piece", chess.Black, 4},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			position := kingSidePosition(t, tc.turn)
+
+			moves, err := rules.LegalMovesFrom(position, tc.from)
+			if !errors.Is(err, chess.ErrIllegalMove) {
+				t.Errorf("Expected ErrIllegalMove, got %v", err)
+			}
+			if len(moves) != 0 {
+				t.Errorf("Expected no moves for the opposing side, got %v", moves)
+			}
+		})
+	}
+}
+
 func TestHasLegalMoveErrors(t *testing.T) {
 	var board chess.Board
 
