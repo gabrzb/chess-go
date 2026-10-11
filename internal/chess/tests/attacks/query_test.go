@@ -7,75 +7,32 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess/attacks"
 )
 
-func TestIsSquareAttackedEmptyBoard(t *testing.T) {
-	var board chess.Board
-
-	if attacks.IsSquareAttacked(board, chess.Square(27), chess.Black) {
-		t.Error("Expected square 27 to not be attacked on an empty board")
-	}
-}
-
-func TestIsSquareAttackedByColor(t *testing.T) {
-	var board chess.Board
-	rook := chess.Piece{Type: chess.Rook, Color: chess.Black}
-
-	if err := board.SetPiece(chess.Square(27), rook); err != nil {
-		t.Fatalf("Failed to set piece on board: %v", err)
-	}
-
-	if !attacks.IsSquareAttacked(board, chess.Square(31), chess.Black) {
-		t.Error("Expected square 27 to be attacked by Black rook")
-	}
-
-	if attacks.IsSquareAttacked(board, chess.Square(31), chess.White) {
-		t.Error("Expected square 27 to not be attacked by White rook")
-	}
-}
-
-func TestIsSquareAttackedByPiece(t *testing.T) {
+func TestIsSquareAttacked(t *testing.T) {
+	rook := placedPiece{27, chess.Piece{Type: chess.Rook, Color: chess.Black}}
 	cases := []struct {
-		name      string
-		pieceType chess.PieceType
-		from      chess.Square
+		name   string
+		pieces []placedPiece
+		to     chess.Square
+		by     chess.Color
+		want   bool
 	}{
-		{"pawn", chess.Pawn, chess.Square(34)},     // c5
-		{"knight", chess.Knight, chess.Square(10)}, // c2
-		{"bishop", chess.Bishop, chess.Square(0)},  // a1
-		{"rook", chess.Rook, chess.Square(3)},      // d1
-		{"queen", chess.Queen, chess.Square(63)},   // h8
-		{"king", chess.King, chess.Square(26)},     // c4
+		{"empty board", nil, 27, chess.Black, false},
+		{"attacking color", []placedPiece{rook}, 31, chess.Black, true},
+		{"other color", []placedPiece{rook}, 31, chess.White, false},
+		{"pawn", []placedPiece{{34, chess.Piece{Type: chess.Pawn, Color: chess.Black}}}, 27, chess.Black, true},
+		{"knight", []placedPiece{{10, chess.Piece{Type: chess.Knight, Color: chess.Black}}}, 27, chess.Black, true},
+		{"bishop", []placedPiece{{0, chess.Piece{Type: chess.Bishop, Color: chess.Black}}}, 27, chess.Black, true},
+		{"rook", []placedPiece{{3, chess.Piece{Type: chess.Rook, Color: chess.Black}}}, 27, chess.Black, true},
+		{"queen", []placedPiece{{63, chess.Piece{Type: chess.Queen, Color: chess.Black}}}, 27, chess.Black, true},
+		{"king", []placedPiece{{26, chess.Piece{Type: chess.King, Color: chess.Black}}}, 27, chess.Black, true},
+		{"continue searching", []placedPiece{{0, chess.Piece{Type: chess.Knight, Color: chess.Black}}, rook}, 31, chess.Black, true},
 	}
-
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			var board chess.Board
-			piece := chess.Piece{Type: tc.pieceType, Color: chess.Black}
-
-			if err := board.SetPiece(tc.from, piece); err != nil {
-				t.Fatalf("Failed to set piece on board: %v", err)
-			}
-
-			if !attacks.IsSquareAttacked(board, chess.Square(27), chess.Black) {
-				t.Errorf("Expected %s to attack d4", tc.name)
+			board := boardWithPieces(t, tc.pieces...)
+			if got := attacks.IsSquareAttacked(board, tc.to, tc.by); got != tc.want {
+				t.Errorf("Expected attack on %v by %v = %v, got %v", tc.to, tc.by, tc.want, got)
 			}
 		})
-	}
-}
-
-func TestIsSquareAttackedContinuesSearching(t *testing.T) {
-	var board chess.Board
-	knight := chess.Piece{Type: chess.Knight, Color: chess.Black}
-	rook := chess.Piece{Type: chess.Rook, Color: chess.Black}
-
-	if err := board.SetPiece(chess.Square(0), knight); err != nil {
-		t.Fatalf("Failed to set knight: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(27), rook); err != nil {
-		t.Fatalf("Failed to set rook: %v", err)
-	}
-
-	if !attacks.IsSquareAttacked(board, chess.Square(31), chess.Black) {
-		t.Error("Expected the search to find the rook attacking h4")
 	}
 }

@@ -8,172 +8,58 @@ import (
 )
 
 func TestSlidingAttacksSquare(t *testing.T) {
-	var board chess.Board
 	rook := chess.Piece{Type: chess.Rook, Color: chess.White}
-
-	if err := board.SetPiece(chess.Square(27), rook); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	got := attacks.SlidingAttacksSquare(
-		board, chess.Square(27),
-		chess.Square(31),
-		chess.Direction{ColStep: 1, RowStep: 0},
-	)
-
-	if !got {
-		t.Errorf("Expected an attack from 27 to 31, but got false")
-	}
-}
-
-func TestSlidingAttacksSquareBlocked(t *testing.T) {
-	var board chess.Board
-	rook := chess.Piece{Type: chess.Rook, Color: chess.White}
-	blocker := chess.Piece{Type: chess.Pawn, Color: chess.Black}
-
-	if err := board.SetPiece(chess.Square(27), rook); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(29), blocker); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	got := attacks.SlidingAttacksSquare(
-		board, chess.Square(27),
-		chess.Square(31),
-		chess.Direction{ColStep: 1, RowStep: 0},
-	)
-
-	if got {
-		t.Errorf("Expected the piece at 29 to block the attack from 27 to 31, but got true")
-	}
-}
-
-func TestSlidingAttacksSquareOwnPieceAtTarget(t *testing.T) {
-	var board chess.Board
-	rook := chess.Piece{Type: chess.Rook, Color: chess.White}
-	blocker := chess.Piece{Type: chess.Pawn, Color: chess.White}
-
-	if err := board.SetPiece(chess.Square(27), rook); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(31), blocker); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	got := attacks.SlidingAttacksSquare(
-		board, chess.Square(27),
-		chess.Square(31),
-		chess.Direction{ColStep: 1, RowStep: 0},
-	)
-
-	if !got {
-		t.Errorf("Expected an attack from 27 to 31 even though there's a piece of the same color at 31, but got false")
-	}
-}
-
-func TestRookAttacks(t *testing.T) {
 	cases := []struct {
-		name string
-		to   chess.Square
-		want bool
+		name  string
+		extra []placedPiece
+		want  bool
 	}{
-		{"right", chess.Square(31), true},
-		{"left", chess.Square(24), true},
-		{"up", chess.Square(59), true},
-		{"down", chess.Square(3), true},
-		{"diagonal", chess.Square(36), false},
-		{"knight move", chess.Square(37), false},
-		{"same square", chess.Square(27), false},
-		{"invalid destination", chess.NoSquare, false},
+		{"clear path", nil, true},
+		{"blocked path", []placedPiece{{29, chess.Piece{Type: chess.Pawn, Color: chess.Black}}}, false},
+		{"own piece at target", []placedPiece{{31, chess.Piece{Type: chess.Pawn, Color: chess.White}}}, true},
 	}
-
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			var board chess.Board
-			rook := chess.Piece{Type: chess.Rook, Color: chess.White}
-
-			if err := board.SetPiece(chess.Square(27), rook); err != nil {
-				t.Fatalf("Failed to set piece: %v", err)
-			}
-
-			got := attacks.RookAttacksSquare(board, chess.Square(27), tc.to)
-
+			pieces := append([]placedPiece{{27, rook}}, tc.extra...)
+			board := boardWithPieces(t, pieces...)
+			got := attacks.SlidingAttacksSquare(board, 27, 31, chess.Direction{ColStep: 1})
 			if got != tc.want {
-				t.Errorf("Expected %v, got %v", tc.want, got)
+				t.Errorf("Expected attack=%v, got %v", tc.want, got)
 			}
 		})
 	}
 }
 
-func TestBishopAttacks(t *testing.T) {
-	cases := []struct {
-		name string
-		to   chess.Square
-		want bool
+func TestSlidingPieceAttacks(t *testing.T) {
+	pieces := []struct {
+		name      string
+		pieceType chess.PieceType
+		attack    func(chess.Board, chess.Square, chess.Square) bool
+		cases     []attackCase
 	}{
-		{"up right", chess.Square(63), true},
-		{"up left", chess.Square(48), true},
-		{"down right", chess.Square(6), true},
-		{"down left", chess.Square(0), true},
-		{"horizontal", chess.Square(31), false},
-		{"vertical", chess.Square(59), false},
-		{"same square", chess.Square(27), false},
-		{"invalid destination", chess.NoSquare, false},
+		{"rook", chess.Rook, attacks.RookAttacksSquare, []attackCase{
+			{"right", 31, true}, {"left", 24, true}, {"up", 59, true}, {"down", 3, true},
+			{"diagonal", 36, false}, {"knight move", 37, false}, {"same square", 27, false}, {"invalid destination", chess.NoSquare, false},
+		}},
+		{"bishop", chess.Bishop, attacks.BishopAttacksSquare, []attackCase{
+			{"up right", 63, true}, {"up left", 48, true}, {"down right", 6, true}, {"down left", 0, true},
+			{"horizontal", 31, false}, {"vertical", 59, false}, {"same square", 27, false}, {"invalid destination", chess.NoSquare, false},
+		}},
+		{"queen", chess.Queen, attacks.QueenAttacksSquare, []attackCase{
+			{"right", 31, true}, {"left", 24, true}, {"up", 59, true}, {"down", 3, true},
+			{"up right", 63, true}, {"up left", 48, true}, {"down right", 6, true}, {"down left", 0, true},
+			{"knight move", 37, false}, {"same square", 27, false}, {"invalid destination", chess.NoSquare, false},
+		}},
 	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			var board chess.Board
-			bishop := chess.Piece{Type: chess.Bishop, Color: chess.White}
-
-			if err := board.SetPiece(chess.Square(27), bishop); err != nil {
-				t.Fatalf("Failed to set piece: %v", err)
-			}
-
-			got := attacks.BishopAttacksSquare(board, chess.Square(27), tc.to)
-
-			if got != tc.want {
-				t.Errorf("Expected %v, got %v", tc.want, got)
-			}
-		})
-	}
-}
-
-func TestQueenAttacks(t *testing.T) {
-	cases := []struct {
-		name string
-		to   chess.Square
-		want bool
-	}{
-		{"right", chess.Square(31), true},
-		{"left", chess.Square(24), true},
-		{"up", chess.Square(59), true},
-		{"down", chess.Square(3), true},
-		{"up right", chess.Square(63), true},
-		{"up left", chess.Square(48), true},
-		{"down right", chess.Square(6), true},
-		{"down left", chess.Square(0), true},
-		{"knight move", chess.Square(37), false},
-		{"same square", chess.Square(27), false},
-		{"invalid destination", chess.NoSquare, false},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			var board chess.Board
-			queen := chess.Piece{Type: chess.Queen, Color: chess.White}
-
-			if err := board.SetPiece(chess.Square(27), queen); err != nil {
-				t.Fatalf("Failed to set piece: %v", err)
-			}
-
-			got := attacks.QueenAttacksSquare(board, chess.Square(27), tc.to)
-
-			if got != tc.want {
-				t.Errorf("Expected %v, got %v", tc.want, got)
+	for _, piece := range pieces {
+		t.Run(piece.name, func(t *testing.T) {
+			board := boardWithPieces(t, placedPiece{27, chess.Piece{Type: piece.pieceType, Color: chess.White}})
+			for _, tc := range piece.cases {
+				t.Run(tc.name, func(t *testing.T) {
+					if got := piece.attack(board, 27, tc.to); got != tc.want {
+						t.Errorf("Expected attack to %v = %v, got %v", tc.to, tc.want, got)
+					}
+				})
 			}
 		})
 	}
