@@ -14,17 +14,17 @@ func TestPawnAttackSquare(t *testing.T) {
 		to    chess.Square
 		want  bool
 	}{
-		{"white left diagonal", chess.White, chess.Square(34), true},
-		{"white right diagonal", chess.White, chess.Square(36), true},
-		{"white forward", chess.White, chess.Square(35), false},
-		{"black left diagonal", chess.Black, chess.Square(18), true},
-		{"black right diagonal", chess.Black, chess.Square(20), true},
-		{"black forward", chess.Black, chess.Square(19), false},
+		{"white left diagonal", chess.White, chess.C5, true},
+		{"white right diagonal", chess.White, chess.E5, true},
+		{"white forward", chess.White, chess.D5, false},
+		{"black left diagonal", chess.Black, chess.C3, true},
+		{"black right diagonal", chess.Black, chess.E3, true},
+		{"black forward", chess.Black, chess.D3, false},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := attacks.PawnAttacksSquare(chess.Square(27), tc.to, tc.color)
+			got := attacks.PawnAttacksSquare(chess.D4, tc.to, tc.color)
 
 			if got != tc.want {
 				t.Errorf("Expected %v, got %v", tc.want, got)
@@ -39,8 +39,8 @@ func TestJumpAttacks(t *testing.T) {
 		attack       func(chess.Square, chess.Square) bool
 		hits, misses []chess.Square
 	}{
-		{"knight", attacks.KnightAttacksSquare, []chess.Square{37, 21, 33, 17, 44, 42, 12, 10}, []chess.Square{36, 27, chess.NoSquare}},
-		{"king", attacks.KingAttacksSquare, []chess.Square{28, 26, 35, 19, 36, 34, 20, 18}, []chess.Square{29, 43, 27, chess.NoSquare}},
+		{"knight", attacks.KnightAttacksSquare, []chess.Square{chess.F5, chess.F3, chess.B5, chess.B3, chess.E6, chess.C6, chess.E2, chess.C2}, []chess.Square{chess.E5, chess.D4, chess.NoSquare}},
+		{"king", attacks.KingAttacksSquare, []chess.Square{chess.E4, chess.C4, chess.D5, chess.D3, chess.E5, chess.C5, chess.E3, chess.C3}, []chess.Square{chess.F4, chess.D6, chess.D4, chess.NoSquare}},
 	}
 	for _, piece := range pieces {
 		t.Run(piece.name, func(t *testing.T) {
@@ -54,7 +54,7 @@ func TestJumpAttacks(t *testing.T) {
 				t.Run(group.name, func(t *testing.T) {
 					for _, to := range group.squares {
 						t.Run(to.String(), func(t *testing.T) {
-							if got := piece.attack(27, to); got != group.want {
+							if got := piece.attack(chess.D4, to); got != group.want {
 								t.Errorf("Expected attack to %v = %v, got %v", to, group.want, got)
 							}
 						})

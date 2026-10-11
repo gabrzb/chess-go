@@ -67,7 +67,7 @@ import (
 )
 
 // board é um chess.Board já montado.
-moves, err := rules.LegalMoves(board, chess.Square(12))
+moves, err := rules.LegalMoves(board, chess.E2)
 ```
 
 `BoardAfterMove` simula um movimento em uma cópia do tabuleiro. A geração e a

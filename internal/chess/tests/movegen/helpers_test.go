@@ -19,11 +19,11 @@ type moveCase struct {
 }
 
 var (
-	rookDestinations   = []chess.Square{28, 29, 30, 31, 26, 25, 24, 35, 43, 51, 59, 19, 11, 3}
-	bishopDestinations = []chess.Square{36, 45, 54, 63, 34, 41, 48, 20, 13, 6, 18, 9, 0}
-	queenDestinations  = []chess.Square{28, 29, 30, 31, 26, 25, 24, 35, 43, 51, 59, 19, 11, 3, 36, 45, 54, 63, 34, 41, 48, 20, 13, 6, 18, 9, 0}
-	knightDestinations = []chess.Square{37, 21, 33, 17, 44, 42, 12, 10}
-	kingDestinations   = []chess.Square{28, 26, 35, 19, 36, 34, 20, 18}
+	rookDestinations   = []chess.Square{chess.E4, chess.F4, chess.G4, chess.H4, chess.C4, chess.B4, chess.A4, chess.D5, chess.D6, chess.D7, chess.D8, chess.D3, chess.D2, chess.D1}
+	bishopDestinations = []chess.Square{chess.E5, chess.F6, chess.G7, chess.H8, chess.C5, chess.B6, chess.A7, chess.E3, chess.F2, chess.G1, chess.C3, chess.B2, chess.A1}
+	queenDestinations  = []chess.Square{chess.E4, chess.F4, chess.G4, chess.H4, chess.C4, chess.B4, chess.A4, chess.D5, chess.D6, chess.D7, chess.D8, chess.D3, chess.D2, chess.D1, chess.E5, chess.F6, chess.G7, chess.H8, chess.C5, chess.B6, chess.A7, chess.E3, chess.F2, chess.G1, chess.C3, chess.B2, chess.A1}
+	knightDestinations = []chess.Square{chess.F5, chess.F3, chess.B5, chess.B3, chess.E6, chess.C6, chess.E2, chess.C2}
+	kingDestinations   = []chess.Square{chess.E4, chess.C4, chess.D5, chess.D3, chess.E5, chess.C5, chess.E3, chess.C3}
 )
 
 func mustSetPiece(t *testing.T, board *chess.Board, square chess.Square, piece chess.Piece) {

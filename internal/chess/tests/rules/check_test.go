@@ -11,17 +11,17 @@ import (
 func TestFindKing(t *testing.T) {
 	var board chess.Board
 
-	mustSetPiece(t, &board, chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White})
+	mustSetPiece(t, &board, chess.E1, chess.Piece{Type: chess.King, Color: chess.White})
 
-	mustSetPiece(t, &board, chess.Square(60), chess.Piece{Type: chess.King, Color: chess.Black})
+	mustSetPiece(t, &board, chess.E8, chess.Piece{Type: chess.King, Color: chess.Black})
 
 	cases := []struct {
 		name  string
 		color chess.Color
 		want  chess.Square
 	}{
-		{"white", chess.White, chess.Square(4)},
-		{"black", chess.Black, chess.Square(60)},
+		{"white", chess.White, chess.E1},
+		{"black", chess.Black, chess.E8},
 		{"invalid color", chess.NoColor, chess.NoSquare},
 	}
 
@@ -40,7 +40,7 @@ func TestFindKingMissing(t *testing.T) {
 	var board chess.Board
 	rook := chess.Piece{Type: chess.Rook, Color: chess.White}
 
-	mustSetPiece(t, &board, chess.Square(4), rook)
+	mustSetPiece(t, &board, chess.E1, rook)
 
 	got := rules.FindKing(board, chess.White)
 
@@ -57,9 +57,9 @@ func TestIsInCheck(t *testing.T) {
 		blocked, want          bool
 		wantErr                error
 	}{
-		{"white", chess.White, chess.Black, 4, 60, false, true, nil},
-		{"black", chess.Black, chess.White, 60, 4, false, true, nil},
-		{"blocked", chess.White, chess.Black, 4, 60, true, false, nil},
+		{"white", chess.White, chess.Black, chess.E1, chess.E8, false, true, nil},
+		{"black", chess.Black, chess.White, chess.E8, chess.E1, false, true, nil},
+		{"blocked", chess.White, chess.Black, chess.E1, chess.E8, true, false, nil},
 		{"invalid color", chess.NoColor, chess.NoColor, chess.NoSquare, chess.NoSquare, false, false, chess.ErrInvalidColor},
 		{"missing king", chess.White, chess.NoColor, chess.NoSquare, chess.NoSquare, false, false, chess.ErrKingNotFound},
 	}
@@ -73,7 +73,7 @@ func TestIsInCheck(t *testing.T) {
 				mustSetPiece(t, &board, tc.attackerFrom, chess.Piece{Type: chess.Rook, Color: tc.enemy})
 			}
 			if tc.blocked {
-				mustSetPiece(t, &board, 28, chess.Piece{Type: chess.Pawn, Color: chess.White})
+				mustSetPiece(t, &board, chess.E4, chess.Piece{Type: chess.Pawn, Color: chess.White})
 			}
 			got, err := rules.IsInCheck(board, tc.color)
 			if !errors.Is(err, tc.wantErr) {

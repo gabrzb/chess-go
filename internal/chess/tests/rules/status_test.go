@@ -14,15 +14,15 @@ func TestEvaluateStatus(t *testing.T) {
 		queen chess.Square
 		want  chess.Status
 	}{
-		{"checkmate", 49, chess.StatusCheckmate},
-		{"stalemate", 41, chess.StatusStalemate},
-		{"ongoing", 40, chess.StatusOngoing},
+		{"checkmate", chess.B7, chess.StatusCheckmate},
+		{"stalemate", chess.B6, chess.StatusStalemate},
+		{"ongoing", chess.A6, chess.StatusOngoing},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			var board chess.Board
-			mustSetPiece(t, &board, 56, chess.Piece{Type: chess.King, Color: chess.Black})
-			mustSetPiece(t, &board, 42, chess.Piece{Type: chess.King, Color: chess.White})
+			mustSetPiece(t, &board, chess.A8, chess.Piece{Type: chess.King, Color: chess.Black})
+			mustSetPiece(t, &board, chess.C6, chess.Piece{Type: chess.King, Color: chess.White})
 			mustSetPiece(t, &board, tc.queen, chess.Piece{Type: chess.Queen, Color: chess.White})
 			got, err := rules.EvaluateStatus(board, chess.Black)
 			if err != nil {

@@ -9,7 +9,7 @@ import (
 
 func TestPieceAtEmptyBoard(t *testing.T) {
 	var board chess.Board
-	piece, ok := board.PieceAt(chess.Square(0))
+	piece, ok := board.PieceAt(chess.A1)
 
 	if piece != (chess.Piece{}) || !ok {
 		t.Errorf("PieceAt(0) = %v, %v; expected Piece{} and true", piece, ok)
@@ -25,11 +25,11 @@ func TestPieceAtEmptyBoard(t *testing.T) {
 func TestSetPiece(t *testing.T) {
 	var board chess.Board
 	piece := chess.Piece{Type: chess.Queen, Color: chess.White}
-	if err := board.SetPiece(chess.Square(0), piece); err != nil {
+	if err := board.SetPiece(chess.A1, piece); err != nil {
 		t.Fatalf("SetPiece(0, piece) = %v; expected nil", err)
 	}
 
-	got, ok := board.PieceAt(chess.Square(0))
+	got, ok := board.PieceAt(chess.A1)
 	if got != piece || !ok {
 		t.Errorf("PieceAt(0) = %v, %v; expected %v and true", got, ok, piece)
 	}
@@ -49,16 +49,16 @@ func TestRemovePiece(t *testing.T) {
 	var board chess.Board
 	piece := chess.Piece{Type: chess.Queen, Color: chess.White}
 
-	if err := board.SetPiece(chess.Square(0), piece); err != nil {
+	if err := board.SetPiece(chess.A1, piece); err != nil {
 		t.Fatalf("SetPiece(0, piece) = %v; expected nil", err)
 	}
 
-	removed, err := board.RemovePiece(chess.Square(0))
+	removed, err := board.RemovePiece(chess.A1)
 	if removed != piece || err != nil {
 		t.Errorf("RemovePiece(0) = %v, %v; expected %v and nil", removed, err, piece)
 	}
 
-	squarePiece, ok := board.PieceAt(chess.Square(0))
+	squarePiece, ok := board.PieceAt(chess.A1)
 
 	if squarePiece != (chess.Piece{}) || !ok {
 		t.Errorf("PieceAt(0) after removal = %v, %v; expected Piece{} and true", squarePiece, ok)

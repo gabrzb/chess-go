@@ -12,45 +12,45 @@ import (
 func TestLegalMovesPinnedRook(t *testing.T) {
 	var board chess.Board
 
-	mustSetPiece(t, &board, chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White})
+	mustSetPiece(t, &board, chess.E1, chess.Piece{Type: chess.King, Color: chess.White})
 
-	mustSetPiece(t, &board, chess.Square(12), chess.Piece{Type: chess.Rook, Color: chess.White})
+	mustSetPiece(t, &board, chess.E2, chess.Piece{Type: chess.Rook, Color: chess.White})
 
-	mustSetPiece(t, &board, chess.Square(60), chess.Piece{Type: chess.Rook, Color: chess.Black})
+	mustSetPiece(t, &board, chess.E8, chess.Piece{Type: chess.Rook, Color: chess.Black})
 
-	moves, err := rules.LegalMoves(board, chess.Square(12))
+	moves, err := rules.LegalMoves(board, chess.E2)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	destinations := []chess.Square{20, 28, 36, 44, 52, 60}
+	destinations := []chess.Square{chess.E3, chess.E4, chess.E5, chess.E6, chess.E7, chess.E8}
 
-	assertMoves(t, moves, 12, destinations)
+	assertMoves(t, moves, chess.E2, destinations)
 }
 
 func TestLegalMovesKingEscapesCheck(t *testing.T) {
 	var board chess.Board
 
-	mustSetPiece(t, &board, chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White})
+	mustSetPiece(t, &board, chess.E1, chess.Piece{Type: chess.King, Color: chess.White})
 
-	mustSetPiece(t, &board, chess.Square(60), chess.Piece{Type: chess.Rook, Color: chess.Black})
+	mustSetPiece(t, &board, chess.E8, chess.Piece{Type: chess.Rook, Color: chess.Black})
 
-	moves, err := rules.LegalMoves(board, chess.Square(4))
+	moves, err := rules.LegalMoves(board, chess.E1)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	destinations := []chess.Square{5, 3, 13, 11}
+	destinations := []chess.Square{chess.F1, chess.D1, chess.F2, chess.D2}
 
-	assertMoves(t, moves, 4, destinations)
+	assertMoves(t, moves, chess.E1, destinations)
 }
 
 func TestLegalMovesErrors(t *testing.T) {
 	var board chess.Board
 
-	mustSetPiece(t, &board, chess.Square(12), chess.Piece{Type: chess.Rook, Color: chess.White})
+	mustSetPiece(t, &board, chess.E2, chess.Piece{Type: chess.Rook, Color: chess.White})
 
-	mustSetPiece(t, &board, chess.Square(13), chess.Piece{Type: chess.Rook, Color: chess.NoColor})
+	mustSetPiece(t, &board, chess.F2, chess.Piece{Type: chess.Rook, Color: chess.NoColor})
 
 	cases := []struct {
 		name    string
@@ -58,9 +58,9 @@ func TestLegalMovesErrors(t *testing.T) {
 		wantErr error
 	}{
 		{"invalid square", chess.NoSquare, chess.ErrInvalidSquare},
-		{"empty square", chess.Square(27), chess.ErrEmptySource},
-		{"invalid piece color", chess.Square(13), chess.ErrInvalidColor},
-		{"missing king", chess.Square(12), chess.ErrKingNotFound},
+		{"empty square", chess.D4, chess.ErrEmptySource},
+		{"invalid piece color", chess.F2, chess.ErrInvalidColor},
+		{"missing king", chess.E2, chess.ErrKingNotFound},
 	}
 
 	for _, tc := range cases {
@@ -77,13 +77,13 @@ func TestLegalMovesErrors(t *testing.T) {
 func TestLegalMovesCannotCaptureKing(t *testing.T) {
 	var board chess.Board
 
-	mustSetPiece(t, &board, chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White})
+	mustSetPiece(t, &board, chess.E1, chess.Piece{Type: chess.King, Color: chess.White})
 
-	mustSetPiece(t, &board, chess.Square(12), chess.Piece{Type: chess.Rook, Color: chess.White})
+	mustSetPiece(t, &board, chess.E2, chess.Piece{Type: chess.Rook, Color: chess.White})
 
-	mustSetPiece(t, &board, chess.Square(60), chess.Piece{Type: chess.King, Color: chess.Black})
+	mustSetPiece(t, &board, chess.E8, chess.Piece{Type: chess.King, Color: chess.Black})
 
-	moves, err := rules.LegalMoves(board, chess.Square(12))
+	moves, err := rules.LegalMoves(board, chess.E2)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestLegalMovesCannotCaptureKing(t *testing.T) {
 	}
 
 	for _, move := range moves {
-		if move.To == chess.Square(60) {
+		if move.To == chess.E8 {
 			t.Errorf("Expected not to be able to capture the king, but found move: %v", move)
 		}
 	}
@@ -102,9 +102,9 @@ func TestLegalMovesCannotCaptureKing(t *testing.T) {
 func TestHasLegalMoveAvailable(t *testing.T) {
 	var board chess.Board
 
-	mustSetPiece(t, &board, chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White})
+	mustSetPiece(t, &board, chess.E1, chess.Piece{Type: chess.King, Color: chess.White})
 
-	mustSetPiece(t, &board, chess.Square(60), chess.Piece{Type: chess.King, Color: chess.Black})
+	mustSetPiece(t, &board, chess.E8, chess.Piece{Type: chess.King, Color: chess.Black})
 
 	for _, color := range []chess.Color{chess.White, chess.Black} {
 		got, err := rules.HasLegalMove(board, color)
@@ -129,11 +129,11 @@ func TestHasLegalMoveSearch(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var board chess.Board
-			mustSetPiece(t, &board, 56, chess.Piece{Type: chess.King, Color: chess.Black})
-			mustSetPiece(t, &board, 42, chess.Piece{Type: chess.King, Color: chess.White})
-			mustSetPiece(t, &board, 49, chess.Piece{Type: chess.Queen, Color: chess.White})
+			mustSetPiece(t, &board, chess.A8, chess.Piece{Type: chess.King, Color: chess.Black})
+			mustSetPiece(t, &board, chess.C6, chess.Piece{Type: chess.King, Color: chess.White})
+			mustSetPiece(t, &board, chess.B7, chess.Piece{Type: chess.Queen, Color: chess.White})
 			if tc.addRook {
-				mustSetPiece(t, &board, 57, chess.Piece{Type: chess.Rook, Color: chess.Black})
+				mustSetPiece(t, &board, chess.B8, chess.Piece{Type: chess.Rook, Color: chess.Black})
 			}
 			got, err := rules.HasLegalMove(board, chess.Black)
 			if err != nil {
@@ -169,8 +169,8 @@ func TestLegalMovesFromErrors(t *testing.T) {
 		rookFrom  chess.Square
 		enemyKing chess.Square
 	}{
-		{"white", chess.White, 4, 7, 60},
-		{"black", chess.Black, 60, 63, 4},
+		{"white", chess.White, chess.E1, chess.H1, chess.E8},
+		{"black", chess.Black, chess.E8, chess.H8, chess.E1},
 	}
 
 	for _, side := range colors {
@@ -184,7 +184,7 @@ func TestLegalMovesFromErrors(t *testing.T) {
 			}{
 				{"invalid square", chess.NoSquare, side.color, false, chess.ErrInvalidSquare},
 				{"out of range square", chess.Square(255), side.color, false, chess.ErrInvalidSquare},
-				{"empty square", 27, side.color, false, chess.ErrEmptySource},
+				{"empty square", chess.D4, side.color, false, chess.ErrEmptySource},
 				{"missing turn color", side.kingFrom, chess.NoColor, false, chess.ErrInvalidColor},
 				{"invalid turn color", side.kingFrom, chess.Color(255), false, chess.ErrInvalidColor},
 				{"missing king", side.rookFrom, side.color, true, chess.ErrKingNotFound},

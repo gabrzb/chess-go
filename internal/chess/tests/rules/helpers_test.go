@@ -56,18 +56,19 @@ func castlingPosition(t *testing.T, color chess.Color, kingSide bool) chess.Posi
 	t.Helper()
 
 	var board chess.Board
-	rookSquare := chess.Square(0)
+	rookSquare := chess.A1
 	right := chess.WhiteQueenSide
 	if kingSide {
-		rookSquare = 7
+		rookSquare = chess.H1
 		right = chess.WhiteKingSide
 	}
 
 	if color == chess.Black {
-		rookSquare += 56
+		rookSquare = chess.A8
 		right = chess.BlackQueenSide
 		if kingSide {
 			right = chess.BlackKingSide
+			rookSquare = chess.H8
 		}
 	}
 
@@ -75,9 +76,9 @@ func castlingPosition(t *testing.T, color chess.Color, kingSide bool) chess.Posi
 		square chess.Square
 		piece  chess.Piece
 	}{
-		{4, chess.Piece{Type: chess.King, Color: chess.White}},
+		{chess.E1, chess.Piece{Type: chess.King, Color: chess.White}},
 		{rookSquare, chess.Piece{Type: chess.Rook, Color: color}},
-		{60, chess.Piece{Type: chess.King, Color: chess.Black}},
+		{chess.E8, chess.Piece{Type: chess.King, Color: chess.Black}},
 	}
 
 	for _, item := range pieces {

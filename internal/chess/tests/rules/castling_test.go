@@ -25,29 +25,29 @@ var castlingCases = []castlingCase{
 	{
 		name: "white king-side", color: chess.White, enemy: chess.Black, kingSide: true,
 		right: chess.WhiteKingSide, wrongRights: []chess.CastlingRights{chess.WhiteQueenSide},
-		kingMove: chess.Move{From: 4, To: 6}, rookMove: chess.Move{From: 7, To: 5},
-		emptySquares: []chess.Square{5, 6}, attackers: []chess.Square{52, 53, 54},
+		kingMove: chess.Move{From: chess.E1, To: chess.G1}, rookMove: chess.Move{From: chess.H1, To: chess.F1},
+		emptySquares: []chess.Square{chess.F1, chess.G1}, attackers: []chess.Square{chess.E7, chess.F7, chess.G7},
 		canCastle: rules.CanCastleKingSide, generate: rules.KingSideCastlingMove, apply: rules.ApplyKingSideCastling,
 	},
 	{
 		name: "black king-side", color: chess.Black, enemy: chess.White, kingSide: true,
 		right: chess.BlackKingSide, wrongRights: []chess.CastlingRights{chess.BlackQueenSide, chess.WhiteKingSide},
-		kingMove: chess.Move{From: 60, To: 62}, rookMove: chess.Move{From: 63, To: 61},
-		emptySquares: []chess.Square{61, 62}, attackers: []chess.Square{12, 13, 14},
+		kingMove: chess.Move{From: chess.E8, To: chess.G8}, rookMove: chess.Move{From: chess.H8, To: chess.F8},
+		emptySquares: []chess.Square{chess.F8, chess.G8}, attackers: []chess.Square{chess.E2, chess.F2, chess.G2},
 		canCastle: rules.CanCastleKingSide, generate: rules.KingSideCastlingMove, apply: rules.ApplyKingSideCastling,
 	},
 	{
 		name: "white queen-side", color: chess.White, enemy: chess.Black,
 		right:    chess.WhiteQueenSide,
-		kingMove: chess.Move{From: 4, To: 2}, rookMove: chess.Move{From: 0, To: 3},
-		emptySquares: []chess.Square{1, 2, 3}, attackers: []chess.Square{52, 51, 50},
+		kingMove: chess.Move{From: chess.E1, To: chess.C1}, rookMove: chess.Move{From: chess.A1, To: chess.D1},
+		emptySquares: []chess.Square{chess.B1, chess.C1, chess.D1}, attackers: []chess.Square{chess.E7, chess.D7, chess.C7},
 		canCastle: rules.CanCastleQueenSide, generate: rules.QueenSideCastlingMove, apply: rules.ApplyQueenSideCastling,
 	},
 	{
 		name: "black queen-side", color: chess.Black, enemy: chess.White,
 		right:    chess.BlackQueenSide,
-		kingMove: chess.Move{From: 60, To: 58}, rookMove: chess.Move{From: 56, To: 59},
-		emptySquares: []chess.Square{57, 58, 59}, attackers: []chess.Square{12, 11, 10},
+		kingMove: chess.Move{From: chess.E8, To: chess.C8}, rookMove: chess.Move{From: chess.A8, To: chess.D8},
+		emptySquares: []chess.Square{chess.B8, chess.C8, chess.D8}, attackers: []chess.Square{chess.E2, chess.D2, chess.C2},
 		canCastle: rules.CanCastleQueenSide, generate: rules.QueenSideCastlingMove, apply: rules.ApplyQueenSideCastling,
 	},
 }
@@ -78,9 +78,9 @@ func TestCanCastle(t *testing.T) {
 				cases = append(cases, condition{"attacker " + square.String(), castle.right, square, chess.Piece{Type: chess.Queen, Color: castle.enemy}, false})
 			}
 			if !castle.kingSide {
-				square := chess.Square(8)
+				square := chess.A2
 				if castle.color == chess.Black {
-					square = 48
+					square = chess.A7
 				}
 				cases = append(cases, condition{"b-square attacked", castle.right, square, chess.Piece{Type: chess.Bishop, Color: castle.enemy}, true})
 			}
@@ -133,7 +133,7 @@ func TestApplyCastling(t *testing.T) {
 		t.Run(castle.name, func(t *testing.T) {
 			position := castlingPosition(t, castle.color, castle.kingSide)
 			position.CastlingRights = whiteRights | blackRights
-			position.EnPassant = 42
+			position.EnPassant = chess.C6
 			position.HalfmoveClock = 7
 			position.FullmoveNumber = 20
 			before := position

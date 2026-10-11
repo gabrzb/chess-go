@@ -14,10 +14,10 @@ func TestCanOccupySquare(t *testing.T) {
 		piece  chess.Piece
 		want   bool
 	}{
-		{"empty", 27, chess.Piece{}, true},
+		{"empty", chess.D4, chess.Piece{}, true},
 		{"invalid", chess.NoSquare, chess.Piece{}, false},
-		{"own piece", 27, chess.Piece{Type: chess.Pawn, Color: chess.White}, false},
-		{"enemy piece", 27, chess.Piece{Type: chess.Pawn, Color: chess.Black}, true},
+		{"own piece", chess.D4, chess.Piece{Type: chess.Pawn, Color: chess.White}, false},
+		{"enemy piece", chess.D4, chess.Piece{Type: chess.Pawn, Color: chess.Black}, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -34,12 +34,12 @@ func TestCanOccupySquare(t *testing.T) {
 
 func TestJumpMoves(t *testing.T) {
 	var board chess.Board
-	mustSetPiece(t, &board, 27, chess.Piece{Type: chess.Knight, Color: chess.White})
-	assertMoves(t, movegen.JumpMoves(board, 27, chess.Direction{ColStep: 2, RowStep: 1}), 27, []chess.Square{37})
+	mustSetPiece(t, &board, chess.D4, chess.Piece{Type: chess.Knight, Color: chess.White})
+	assertMoves(t, movegen.JumpMoves(board, chess.D4, chess.Direction{ColStep: 2, RowStep: 1}), chess.D4, []chess.Square{chess.F5})
 }
 
 func TestPseudoLegalMovesFromUnavailableSquare(t *testing.T) {
-	for _, from := range []chess.Square{27, chess.NoSquare} {
+	for _, from := range []chess.Square{chess.D4, chess.NoSquare} {
 		t.Run(from.String(), func(t *testing.T) {
 			assertMoves(t, movegen.PseudoLegalMoves(chess.Board{}, from), from, nil)
 		})
@@ -52,7 +52,7 @@ func TestPseudoLegalMovesByPiece(t *testing.T) {
 		pieceType    chess.PieceType
 		destinations []chess.Square
 	}{
-		{"pawn", chess.Pawn, []chess.Square{35}},
+		{"pawn", chess.Pawn, []chess.Square{chess.D5}},
 		{"knight", chess.Knight, knightDestinations},
 		{"bishop", chess.Bishop, bishopDestinations},
 		{"rook", chess.Rook, rookDestinations},
@@ -62,8 +62,8 @@ func TestPseudoLegalMovesByPiece(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			var board chess.Board
-			mustSetPiece(t, &board, 27, chess.Piece{Type: tc.pieceType, Color: chess.White})
-			assertMoves(t, movegen.PseudoLegalMoves(board, 27), 27, tc.destinations)
+			mustSetPiece(t, &board, chess.D4, chess.Piece{Type: tc.pieceType, Color: chess.White})
+			assertMoves(t, movegen.PseudoLegalMoves(board, chess.D4), chess.D4, tc.destinations)
 		})
 	}
 }

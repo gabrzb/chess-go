@@ -9,7 +9,7 @@ import (
 
 func TestNewPosition(t *testing.T) {
 	var whiteBoard chess.Board
-	if err := whiteBoard.SetPiece(4, chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
+	if err := whiteBoard.SetPiece(chess.E1, chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
 		t.Fatalf("Failed to set king: %v", err)
 	}
 	cases := []struct {

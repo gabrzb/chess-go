@@ -8,7 +8,7 @@ import (
 )
 
 func TestIsSquareAttacked(t *testing.T) {
-	rook := placedPiece{27, chess.Piece{Type: chess.Rook, Color: chess.Black}}
+	rook := placedPiece{chess.D4, chess.Piece{Type: chess.Rook, Color: chess.Black}}
 	cases := []struct {
 		name   string
 		pieces []placedPiece
@@ -16,16 +16,16 @@ func TestIsSquareAttacked(t *testing.T) {
 		by     chess.Color
 		want   bool
 	}{
-		{"empty board", nil, 27, chess.Black, false},
-		{"attacking color", []placedPiece{rook}, 31, chess.Black, true},
-		{"other color", []placedPiece{rook}, 31, chess.White, false},
-		{"pawn", []placedPiece{{34, chess.Piece{Type: chess.Pawn, Color: chess.Black}}}, 27, chess.Black, true},
-		{"knight", []placedPiece{{10, chess.Piece{Type: chess.Knight, Color: chess.Black}}}, 27, chess.Black, true},
-		{"bishop", []placedPiece{{0, chess.Piece{Type: chess.Bishop, Color: chess.Black}}}, 27, chess.Black, true},
-		{"rook", []placedPiece{{3, chess.Piece{Type: chess.Rook, Color: chess.Black}}}, 27, chess.Black, true},
-		{"queen", []placedPiece{{63, chess.Piece{Type: chess.Queen, Color: chess.Black}}}, 27, chess.Black, true},
-		{"king", []placedPiece{{26, chess.Piece{Type: chess.King, Color: chess.Black}}}, 27, chess.Black, true},
-		{"continue searching", []placedPiece{{0, chess.Piece{Type: chess.Knight, Color: chess.Black}}, rook}, 31, chess.Black, true},
+		{"empty board", nil, chess.D4, chess.Black, false},
+		{"attacking color", []placedPiece{rook}, chess.H4, chess.Black, true},
+		{"other color", []placedPiece{rook}, chess.H4, chess.White, false},
+		{"pawn", []placedPiece{{chess.C5, chess.Piece{Type: chess.Pawn, Color: chess.Black}}}, chess.D4, chess.Black, true},
+		{"knight", []placedPiece{{chess.C2, chess.Piece{Type: chess.Knight, Color: chess.Black}}}, chess.D4, chess.Black, true},
+		{"bishop", []placedPiece{{chess.A1, chess.Piece{Type: chess.Bishop, Color: chess.Black}}}, chess.D4, chess.Black, true},
+		{"rook", []placedPiece{{chess.D1, chess.Piece{Type: chess.Rook, Color: chess.Black}}}, chess.D4, chess.Black, true},
+		{"queen", []placedPiece{{chess.H8, chess.Piece{Type: chess.Queen, Color: chess.Black}}}, chess.D4, chess.Black, true},
+		{"king", []placedPiece{{chess.C4, chess.Piece{Type: chess.King, Color: chess.Black}}}, chess.D4, chess.Black, true},
+		{"continue searching", []placedPiece{{chess.A1, chess.Piece{Type: chess.Knight, Color: chess.Black}}, rook}, chess.H4, chess.Black, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

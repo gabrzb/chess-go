@@ -19,15 +19,15 @@ func TestBoardAfterMove(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var board chess.Board
 			rook := chess.Piece{Type: chess.Rook, Color: chess.White}
-			mustSetPiece(t, &board, 27, rook)
-			mustSetPiece(t, &board, 35, tc.target)
+			mustSetPiece(t, &board, chess.D4, rook)
+			mustSetPiece(t, &board, chess.D5, tc.target)
 			before := board
-			next, err := rules.BoardAfterMove(board, chess.Move{From: 27, To: 35})
+			next, err := rules.BoardAfterMove(board, chess.Move{From: chess.D4, To: chess.D5})
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
-			assertPositionPiece(t, chess.Position{Board: next}, 27, chess.Piece{})
-			assertPositionPiece(t, chess.Position{Board: next}, 35, rook)
+			assertPositionPiece(t, chess.Position{Board: next}, chess.D4, chess.Piece{})
+			assertPositionPiece(t, chess.Position{Board: next}, chess.D5, rook)
 			if board != before {
 				t.Error("Expected original board to remain unchanged")
 			}
@@ -38,16 +38,16 @@ func TestBoardAfterMove(t *testing.T) {
 func TestBoardAfterMoveErrors(t *testing.T) {
 	var board chess.Board
 
-	mustSetPiece(t, &board, chess.Square(27), chess.Piece{Type: chess.Rook, Color: chess.White})
+	mustSetPiece(t, &board, chess.D4, chess.Piece{Type: chess.Rook, Color: chess.White})
 
 	cases := []struct {
 		name    string
 		move    chess.Move
 		wantErr error
 	}{
-		{"invalid source", chess.Move{From: chess.NoSquare, To: chess.Square(35)}, chess.ErrInvalidSquare},
-		{"invalid destination", chess.Move{From: chess.Square(27), To: chess.NoSquare}, chess.ErrInvalidSquare},
-		{"empty source", chess.Move{From: chess.Square(28), To: chess.Square(35)}, chess.ErrEmptySource},
+		{"invalid source", chess.Move{From: chess.NoSquare, To: chess.D5}, chess.ErrInvalidSquare},
+		{"invalid destination", chess.Move{From: chess.D4, To: chess.NoSquare}, chess.ErrInvalidSquare},
+		{"empty source", chess.Move{From: chess.E4, To: chess.D5}, chess.ErrEmptySource},
 	}
 
 	for _, tc := range cases {

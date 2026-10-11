@@ -31,8 +31,8 @@ func checkParseSquareInvalid(t *testing.T, input string) {
 }
 
 func TestParseSquare(t *testing.T) {
-	checkParseSquare(t, "a1", 0)
-	checkParseSquare(t, "h8", 63)
+	checkParseSquare(t, "a1", chess.A1)
+	checkParseSquare(t, "h8", chess.H8)
 }
 
 func TestParseSquareInvalid(t *testing.T) {
@@ -41,8 +41,8 @@ func TestParseSquareInvalid(t *testing.T) {
 }
 
 func TestSquareString(t *testing.T) {
-	if got := chess.Square(28).String(); got != "e4" {
-		t.Errorf("Square(28).String() expects e4, got %s instead", got)
+	if got := chess.E4.String(); got != "e4" {
+		t.Errorf("E4.String() expects e4, got %s instead", got)
 	}
 
 	if got := chess.NoSquare.String(); got != "-" {
@@ -51,16 +51,16 @@ func TestSquareString(t *testing.T) {
 }
 
 func TestSquareValid(t *testing.T) {
-	testA := chess.Square(0).Valid()
-	testB := chess.Square(63).Valid()
+	testA := chess.A1.Valid()
+	testB := chess.H8.Valid()
 	testC := chess.NoSquare.Valid()
 
 	if !testA {
-		t.Errorf("Square(0).Valid() expects true, got false instead")
+		t.Errorf("A1.Valid() expects true, got false instead")
 	}
 
 	if !testB {
-		t.Errorf("Square(63).Valid() expects true, got false instead")
+		t.Errorf("H8.Valid() expects true, got false instead")
 	}
 
 	if testC {
@@ -87,34 +87,34 @@ func checkMovePromotionString(t *testing.T, move chess.Move, expected string) {
 func TestMoveString(t *testing.T) {
 	checkMoveString(
 		t,
-		chess.Move{From: chess.Square(12), To: chess.Square(28)},
+		chess.Move{From: chess.E2, To: chess.E4},
 		"e2e4",
 	)
 	checkMovePromotionString(
 		t,
 		chess.Move{
-			From: chess.Square(52), To: chess.Square(60), Promotion: chess.Knight,
+			From: chess.E7, To: chess.E8, Promotion: chess.Knight,
 		},
 		"e7e8n",
 	)
 	checkMovePromotionString(
 		t,
 		chess.Move{
-			From: chess.Square(52), To: chess.Square(60), Promotion: chess.Bishop,
+			From: chess.E7, To: chess.E8, Promotion: chess.Bishop,
 		},
 		"e7e8b",
 	)
 	checkMovePromotionString(
 		t,
 		chess.Move{
-			From: chess.Square(52), To: chess.Square(60), Promotion: chess.Rook,
+			From: chess.E7, To: chess.E8, Promotion: chess.Rook,
 		},
 		"e7e8r",
 	)
 	checkMovePromotionString(
 		t,
 		chess.Move{
-			From: chess.Square(52), To: chess.Square(60), Promotion: chess.Queen,
+			From: chess.E7, To: chess.E8, Promotion: chess.Queen,
 		},
 		"e7e8q",
 	)
