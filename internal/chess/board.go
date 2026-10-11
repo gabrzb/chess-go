@@ -1,7 +1,7 @@
 package chess
 
 type Board struct {
-	squares [64]Piece
+	squares [SquareCount]Piece
 }
 
 func (b Board) PieceAt(square Square) (Piece, bool) {

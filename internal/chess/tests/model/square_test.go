@@ -6,6 +6,59 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess"
 )
 
+func TestSquareCoordinates(t *testing.T) {
+	cases := []struct {
+		name        string
+		square      chess.Square
+		column, row int
+	}{
+		{"a1", chess.A1, 0, 0},
+		{"h1", chess.H1, chess.BoardSize - 1, 0},
+		{"e4", chess.E4, 4, 3},
+		{"a8", chess.A8, 0, chess.BoardSize - 1},
+		{"h8", chess.H8, chess.BoardSize - 1, chess.BoardSize - 1},
+		{"no square", chess.NoSquare, -1, -1},
+		{"out of range", chess.Square(255), -1, -1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if col, row := tc.square.Column(), tc.square.Row(); col != tc.column || row != tc.row {
+				t.Errorf("Expected coordinates (%d, %d), got (%d, %d)", tc.column, tc.row, col, row)
+			}
+		})
+	}
+}
+
+func TestSquareOffset(t *testing.T) {
+	cases := []struct {
+		name string
+		from chess.Square
+		step chess.Direction
+		want chess.Square
+		ok   bool
+	}{
+		{"diagonal", chess.D4, chess.Direction{ColStep: 1, RowStep: 1}, chess.E5, true},
+		{"knight jump", chess.D4, chess.Direction{ColStep: 2, RowStep: 1}, chess.F5, true},
+		{"reverse across board", chess.H8, chess.Direction{ColStep: -7, RowStep: -7}, chess.A1, true},
+		{"zero offset", chess.D4, chess.Direction{}, chess.D4, true},
+		{"left edge", chess.A1, chess.Direction{ColStep: -1}, chess.NoSquare, false},
+		{"right edge", chess.H1, chess.Direction{ColStep: 1}, chess.NoSquare, false},
+		{"bottom edge", chess.A1, chess.Direction{RowStep: -1}, chess.NoSquare, false},
+		{"top edge", chess.A8, chess.Direction{RowStep: 1}, chess.NoSquare, false},
+		{"large offset", chess.A1, chess.Direction{ColStep: chess.BoardSize}, chess.NoSquare, false},
+		{"invalid origin", chess.NoSquare, chess.Direction{}, chess.NoSquare, false},
+		{"out of range origin", chess.Square(255), chess.Direction{}, chess.NoSquare, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, ok := tc.from.Offset(tc.step.ColStep, tc.step.RowStep)
+			if got != tc.want || ok != tc.ok {
+				t.Errorf("Expected (%v, %v), got (%v, %v)", tc.want, tc.ok, got, ok)
+			}
+		})
+	}
+}
+
 func TestNamedSquares(t *testing.T) {
 	rows := [][]chess.Square{
 		{chess.A1, chess.B1, chess.C1, chess.D1, chess.E1, chess.F1, chess.G1, chess.H1},
