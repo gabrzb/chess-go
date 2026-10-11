@@ -167,3 +167,25 @@ func makeCastlingPlan(color chess.Color, side castlingSide) (castlingPlan, bool)
 
 	return plan, true
 }
+
+func castlingRightsWithoutPiece(
+	rights chess.CastlingRights,
+	piece chess.Piece,
+	square chess.Square,
+) chess.CastlingRights {
+	for _, side := range []castlingSide{kingSide, queenSide} {
+		plan, ok := makeCastlingPlan(piece.Color, side)
+		if !ok {
+			continue
+		}
+
+		kingLeft := piece.Type == chess.King
+		rookLeft := piece.Type == chess.Rook && plan.rookMove.From == square
+
+		if kingLeft || rookLeft {
+			rights = rights.Without(plan.right)
+		}
+	}
+
+	return rights
+}
