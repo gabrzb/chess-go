@@ -134,8 +134,8 @@ func TestApplyCastling(t *testing.T) {
 			position := castlingPosition(t, castle.color, castle.kingSide)
 			position.CastlingRights = whiteRights | blackRights
 			position.EnPassant = chess.C6
-			position.HalfmoveClock = 7
-			position.FullmoveNumber = 20
+			position.HalfmoveClock = initialHalfmoveClock
+			position.FullmoveNumber = initialFullmoveNumber
 			before := position
 			next, err := castle.apply(position)
 			if err != nil {
@@ -145,11 +145,11 @@ func TestApplyCastling(t *testing.T) {
 			assertPositionPiece(t, next, castle.rookMove.From, chess.Piece{})
 			assertPositionPiece(t, next, castle.kingMove.To, chess.Piece{Type: chess.King, Color: castle.color})
 			assertPositionPiece(t, next, castle.rookMove.To, chess.Piece{Type: chess.Rook, Color: castle.color})
-			wantRights, wantFullmove := blackRights, uint16(20)
+			wantRights, wantFullmove := blackRights, initialFullmoveNumber
 			if castle.color == chess.Black {
-				wantRights, wantFullmove = whiteRights, 21
+				wantRights, wantFullmove = whiteRights, initialFullmoveNumber+1
 			}
-			assertPositionState(t, next, positionState{castle.enemy, wantRights, chess.NoSquare, 8, wantFullmove})
+			assertPositionState(t, next, positionState{castle.enemy, wantRights, chess.NoSquare, initialHalfmoveClock + 1, wantFullmove})
 			if position != before {
 				t.Error("Expected original position to remain unchanged")
 			}

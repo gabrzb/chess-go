@@ -6,6 +6,11 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess"
 )
 
+const (
+	initialHalfmoveClock  uint16 = 7
+	initialFullmoveNumber uint16 = 20
+)
+
 func mustSetPiece(t *testing.T, board *chess.Board, square chess.Square, piece chess.Piece) {
 	t.Helper()
 	if err := board.SetPiece(square, piece); err != nil {

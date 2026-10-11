@@ -21,12 +21,12 @@ func TestPositionAfterMoveState(t *testing.T) {
 		enPassant        chess.Square
 		wantFullmove     uint16
 	}{
-		{"white h-rook", chess.White, chess.Black, true, chess.Move{From: chess.H1, To: chess.H2}, chess.WhiteQueenSide | blackRights, chess.C6, 20},
-		{"black h-rook", chess.Black, chess.White, true, chess.Move{From: chess.H8, To: chess.H7}, chess.BlackQueenSide | whiteRights, chess.C3, 21},
-		{"white a-rook", chess.White, chess.Black, false, chess.Move{From: chess.A1, To: chess.A2}, chess.WhiteKingSide | blackRights, chess.C6, 20},
-		{"black a-rook", chess.Black, chess.White, false, chess.Move{From: chess.A8, To: chess.A7}, chess.BlackKingSide | whiteRights, chess.C3, 21},
-		{"white king", chess.White, chess.Black, true, chess.Move{From: chess.E1, To: chess.E2}, blackRights, chess.C6, 20},
-		{"black king", chess.Black, chess.White, true, chess.Move{From: chess.E8, To: chess.E7}, whiteRights, chess.C3, 21},
+		{"white h-rook", chess.White, chess.Black, true, chess.Move{From: chess.H1, To: chess.H2}, chess.WhiteQueenSide | blackRights, chess.C6, initialFullmoveNumber},
+		{"black h-rook", chess.Black, chess.White, true, chess.Move{From: chess.H8, To: chess.H7}, chess.BlackQueenSide | whiteRights, chess.C3, initialFullmoveNumber + 1},
+		{"white a-rook", chess.White, chess.Black, false, chess.Move{From: chess.A1, To: chess.A2}, chess.WhiteKingSide | blackRights, chess.C6, initialFullmoveNumber},
+		{"black a-rook", chess.Black, chess.White, false, chess.Move{From: chess.A8, To: chess.A7}, chess.BlackKingSide | whiteRights, chess.C3, initialFullmoveNumber + 1},
+		{"white king", chess.White, chess.Black, true, chess.Move{From: chess.E1, To: chess.E2}, blackRights, chess.C6, initialFullmoveNumber},
+		{"black king", chess.Black, chess.White, true, chess.Move{From: chess.E8, To: chess.E7}, whiteRights, chess.C3, initialFullmoveNumber + 1},
 	}
 
 	for _, tc := range cases {
@@ -34,8 +34,8 @@ func TestPositionAfterMoveState(t *testing.T) {
 			position := castlingPosition(t, tc.color, tc.kingSide)
 			position.CastlingRights = whiteRights | blackRights
 			position.EnPassant = tc.enPassant
-			position.HalfmoveClock = 7
-			position.FullmoveNumber = 20
+			position.HalfmoveClock = initialHalfmoveClock
+			position.FullmoveNumber = initialFullmoveNumber
 
 			movingPiece, _ := position.Board.PieceAt(tc.move.From)
 			before := position
@@ -46,7 +46,7 @@ func TestPositionAfterMoveState(t *testing.T) {
 
 			assertPositionPiece(t, next, tc.move.From, chess.Piece{})
 			assertPositionPiece(t, next, tc.move.To, movingPiece)
-			assertPositionState(t, next, positionState{tc.nextColor, tc.wantRights, chess.NoSquare, 8, tc.wantFullmove})
+			assertPositionState(t, next, positionState{tc.nextColor, tc.wantRights, chess.NoSquare, initialHalfmoveClock + 1, tc.wantFullmove})
 			if position != before {
 				t.Error("Expected original position to remain unchanged")
 			}
@@ -83,7 +83,7 @@ func TestPositionAfterMoveCaptures(t *testing.T) {
 			mustSetPiece(t, &position.Board, tc.move.From, mover)
 			mustSetPiece(t, &position.Board, tc.move.To, captured)
 			position.CastlingRights = whiteRights | blackRights
-			position.HalfmoveClock = 7
+			position.HalfmoveClock = initialHalfmoveClock
 			before := position
 
 			next, err := rules.PositionAfterMove(position, tc.move)
@@ -131,7 +131,7 @@ func TestPositionAfterMovePawns(t *testing.T) {
 				mustSetPiece(t, &position.Board, tc.move.To, chess.Piece{Type: chess.Knight, Color: tc.enemy})
 			}
 			position.EnPassant = chess.C3
-			position.HalfmoveClock = 7
+			position.HalfmoveClock = initialHalfmoveClock
 			before := position
 
 			next, err := rules.PositionAfterMove(position, tc.move)
@@ -165,8 +165,8 @@ func TestPositionAfterMoveCastling(t *testing.T) {
 			position := castlingPosition(t, castle.color, castle.kingSide)
 			position.CastlingRights = whiteRights | blackRights
 			position.EnPassant = chess.C3
-			position.HalfmoveClock = 7
-			position.FullmoveNumber = 20
+			position.HalfmoveClock = initialHalfmoveClock
+			position.FullmoveNumber = initialFullmoveNumber
 			before := position
 			next, err := rules.PositionAfterMove(position, castle.kingMove)
 			if err != nil {
@@ -176,11 +176,11 @@ func TestPositionAfterMoveCastling(t *testing.T) {
 			assertPositionPiece(t, next, castle.rookMove.From, chess.Piece{})
 			assertPositionPiece(t, next, castle.kingMove.To, chess.Piece{Type: chess.King, Color: castle.color})
 			assertPositionPiece(t, next, castle.rookMove.To, chess.Piece{Type: chess.Rook, Color: castle.color})
-			wantRights, wantFullmove := blackRights, uint16(20)
+			wantRights, wantFullmove := blackRights, initialFullmoveNumber
 			if castle.color == chess.Black {
-				wantRights, wantFullmove = whiteRights, 21
+				wantRights, wantFullmove = whiteRights, initialFullmoveNumber+1
 			}
-			assertPositionState(t, next, positionState{castle.enemy, wantRights, chess.NoSquare, 8, wantFullmove})
+			assertPositionState(t, next, positionState{castle.enemy, wantRights, chess.NoSquare, initialHalfmoveClock + 1, wantFullmove})
 			if position != before {
 				t.Error("Expected original position to remain unchanged")
 			}
@@ -198,9 +198,10 @@ func TestPositionAfterMoveRejected(t *testing.T) {
 		enemyKing    chess.Square
 		ownKingSide  chess.Square
 		ownQueenSide chess.Square
+		diagonalTo   chess.Square
 	}{
-		{"white", chess.White, chess.E1, chess.H1, chess.H2, chess.E8, chess.G1, chess.C1},
-		{"black", chess.Black, chess.E8, chess.H8, chess.H7, chess.E1, chess.G8, chess.C8},
+		{"white", chess.White, chess.E1, chess.H1, chess.H2, chess.E8, chess.G1, chess.C1, chess.G2},
+		{"black", chess.Black, chess.E8, chess.H8, chess.H7, chess.E1, chess.G8, chess.C8, chess.G7},
 	}
 
 	for _, side := range colors {
@@ -220,7 +221,7 @@ func TestPositionAfterMoveRejected(t *testing.T) {
 				{"invalid turn color", chess.Move{From: side.rookFrom, To: side.rookTo}, chess.Color(255), false, false, chess.ErrInvalidColor},
 				{"opposing piece", chess.Move{From: side.enemyKing, To: chess.D4}, side.color, false, false, chess.ErrIllegalMove},
 				{"missing king", chess.Move{From: side.rookFrom, To: side.rookTo}, side.color, true, false, chess.ErrKingNotFound},
-				{"diagonal rook move", chess.Move{From: side.rookFrom, To: side.rookTo - chess.B1}, side.color, false, false, chess.ErrIllegalMove},
+				{"diagonal rook move", chess.Move{From: side.rookFrom, To: side.diagonalTo}, side.color, false, false, chess.ErrIllegalMove},
 				{"same source and destination", chess.Move{From: side.rookFrom, To: side.rookFrom}, side.color, false, false, chess.ErrIllegalMove},
 				{"own piece at destination", chess.Move{From: side.rookFrom, To: side.kingFrom}, side.color, false, false, chess.ErrIllegalMove},
 				{"promotion on rook move", chess.Move{From: side.rookFrom, To: side.rookTo, Promotion: chess.Queen}, side.color, false, false, chess.ErrIllegalMove},

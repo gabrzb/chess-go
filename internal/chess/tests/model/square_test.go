@@ -30,6 +30,7 @@ func TestSquareCoordinates(t *testing.T) {
 }
 
 func TestSquareOffset(t *testing.T) {
+	lastIndex := chess.BoardSize - 1
 	cases := []struct {
 		name string
 		from chess.Square
@@ -39,7 +40,7 @@ func TestSquareOffset(t *testing.T) {
 	}{
 		{"diagonal", chess.D4, chess.Direction{ColStep: 1, RowStep: 1}, chess.E5, true},
 		{"knight jump", chess.D4, chess.Direction{ColStep: 2, RowStep: 1}, chess.F5, true},
-		{"reverse across board", chess.H8, chess.Direction{ColStep: -7, RowStep: -7}, chess.A1, true},
+		{"reverse across board", chess.H8, chess.Direction{ColStep: -lastIndex, RowStep: -lastIndex}, chess.A1, true},
 		{"zero offset", chess.D4, chess.Direction{}, chess.D4, true},
 		{"left edge", chess.A1, chess.Direction{ColStep: -1}, chess.NoSquare, false},
 		{"right edge", chess.H1, chess.Direction{ColStep: 1}, chess.NoSquare, false},

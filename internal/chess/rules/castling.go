@@ -124,47 +124,42 @@ func ApplyQueenSideCastling(position chess.Position) (chess.Position, error) {
 }
 
 func makeCastlingPlan(color chess.Color, side castlingSide) (castlingPlan, bool) {
-	var base chess.Square
+	home := chess.A1
 	var kingRight, queenRight chess.CastlingRights
 	var enemyColor chess.Color
-
 	switch color {
 	case chess.White:
-		base = 0
-		kingRight = chess.WhiteKingSide
-		queenRight = chess.WhiteQueenSide
+		kingRight, queenRight = chess.WhiteKingSide, chess.WhiteQueenSide
 		enemyColor = chess.Black
 	case chess.Black:
-		base = 56
-		kingRight = chess.BlackKingSide
-		queenRight = chess.BlackQueenSide
+		home = chess.A8
+		kingRight, queenRight = chess.BlackKingSide, chess.BlackQueenSide
 		enemyColor = chess.White
 	default:
 		return castlingPlan{}, false
 	}
-
-	plan := castlingPlan{
-		enemyColor: enemyColor,
-		kingMove:   chess.Move{From: base + 4},
+	// The first-row template maps to the moving color's home row.
+	onHomeRow := func(square chess.Square) chess.Square {
+		mapped, _ := square.Offset(0, home.Row())
+		return mapped
 	}
-
+	plan := castlingPlan{enemyColor: enemyColor, kingMove: chess.Move{From: onHomeRow(chess.E1)}}
 	switch side {
 	case kingSide:
 		plan.right = kingRight
-		plan.kingMove.To = base + 6
-		plan.rookMove = chess.Move{From: base + 7, To: base + 5}
-		plan.emptySquares = []chess.Square{base + 5, base + 6}
-		plan.kingPath = []chess.Square{base + 4, base + 5, base + 6}
+		plan.kingMove.To = onHomeRow(chess.G1)
+		plan.rookMove = chess.Move{From: onHomeRow(chess.H1), To: onHomeRow(chess.F1)}
+		plan.emptySquares = []chess.Square{onHomeRow(chess.F1), onHomeRow(chess.G1)}
+		plan.kingPath = []chess.Square{onHomeRow(chess.E1), onHomeRow(chess.F1), onHomeRow(chess.G1)}
 	case queenSide:
 		plan.right = queenRight
-		plan.kingMove.To = base + 2
-		plan.rookMove = chess.Move{From: base + 0, To: base + 3}
-		plan.emptySquares = []chess.Square{base + 1, base + 2, base + 3}
-		plan.kingPath = []chess.Square{base + 4, base + 3, base + 2}
+		plan.kingMove.To = onHomeRow(chess.C1)
+		plan.rookMove = chess.Move{From: onHomeRow(chess.A1), To: onHomeRow(chess.D1)}
+		plan.emptySquares = []chess.Square{onHomeRow(chess.B1), onHomeRow(chess.C1), onHomeRow(chess.D1)}
+		plan.kingPath = []chess.Square{onHomeRow(chess.E1), onHomeRow(chess.D1), onHomeRow(chess.C1)}
 	default:
 		return castlingPlan{}, false
 	}
-
 	return plan, true
 }
 

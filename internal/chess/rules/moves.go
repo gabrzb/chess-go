@@ -114,7 +114,7 @@ func HasLegalMove(board chess.Board, color chess.Color) (bool, error) {
 		return false, err
 	}
 
-	for from := chess.Square(0); from < chess.NoSquare; from++ {
+	for from := chess.A1; from < chess.NoSquare; from++ {
 		piece, _ := board.PieceAt(from)
 
 		if piece.Type == chess.NoPiece || piece.Color != color {

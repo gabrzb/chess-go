@@ -59,10 +59,9 @@ func PositionAfterMove(position chess.Position, move chess.Move) (chess.Position
 	position.EnPassant = chess.NoSquare
 
 	if piece.Type == chess.Pawn {
-		distance := int(move.To) - int(move.From)
-
-		if distance == 16 || distance == -16 {
-			position.EnPassant = chess.Square((int(move.To) + int(move.From)) / 2)
+		rowDistance := move.To.Row() - move.From.Row()
+		if rowDistance == 2 || rowDistance == -2 {
+			position.EnPassant, _ = move.From.Offset(0, rowDistance/2)
 		}
 	}
 

@@ -73,6 +73,22 @@ moves, err := rules.LegalMoves(board, chess.E2)
 `BoardAfterMove` simula um movimento em uma cópia do tabuleiro. A geração e a
 filtragem das jogadas são feitas por `movegen` e `rules.LegalMoves`.
 
+## Casas e coordenadas
+
+As 64 casas t?m constantes tipadas no pacote `chess`: `A1` at? `H8`.
+Use os nomes ao montar tabuleiros e movimentos:
+
+```go
+move := chess.Move{From: chess.E2, To: chess.E4}
+destination, ok := chess.E2.Offset(0, 1) // E3, true
+```
+
+`BoardSize` define a quantidade de linhas e colunas, e `SquareCount` define
+quantas casas existem. `Column()` e `Row()` retornam ?ndices a partir de zero;
+para casas inv?lidas, retornam `-1`. `Offset()` verifica os limites e devolve
+`NoSquare, false` quando a origem ? inv?lida ou o deslocamento sai do tabuleiro.
+Essas defini??es pertencem ao pacote `chess`, junto de `Square` e `Board`.
+
 ## Testes
 
 Os testes ficam agrupados por assunto em `internal/chess/tests`. Os 87 testes

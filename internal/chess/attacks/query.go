@@ -34,7 +34,7 @@ func IsSquareAttacked(board chess.Board, square chess.Square, byColor chess.Colo
 		return false
 	}
 
-	for from := chess.Square(0); from < chess.NoSquare; from++ {
+	for from := chess.A1; from < chess.NoSquare; from++ {
 		piece, _ := board.PieceAt(from)
 
 		if piece.Type == chess.NoPiece || piece.Color != byColor {

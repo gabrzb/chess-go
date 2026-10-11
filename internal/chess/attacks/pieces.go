@@ -10,8 +10,8 @@ func PawnAttacksSquare(from, to chess.Square, color chess.Color) bool {
 		return false
 	}
 
-	colDiff := int(to)%8 - int(from)%8
-	rowDiff := int(to)/8 - int(from)/8
+	colDiff := to.Column() - from.Column()
+	rowDiff := to.Row() - from.Row()
 
 	switch color {
 	case chess.White:
@@ -29,8 +29,8 @@ func KnightAttacksSquare(from, to chess.Square) bool {
 		return false
 	}
 
-	colDiff := int(to)%8 - int(from)%8
-	rowDiff := int(to)/8 - int(from)/8
+	colDiff := to.Column() - from.Column()
+	rowDiff := to.Row() - from.Row()
 
 	if colDiff < 0 {
 		colDiff = -colDiff
@@ -49,8 +49,8 @@ func KingAttacksSquare(from, to chess.Square) bool {
 		return false
 	}
 
-	colDiff := int(to)%8 - int(from)%8
-	rowDiff := int(to)/8 - int(from)/8
+	colDiff := to.Column() - from.Column()
+	rowDiff := to.Row() - from.Row()
 
 	if colDiff < 0 {
 		colDiff = -colDiff
@@ -140,33 +140,20 @@ func QueenAttacksSquare(board chess.Board, from, to chess.Square) bool {
 }
 
 // SlidingAttacksSquare follows one unit direction and includes the first occupied target.
-func SlidingAttacksSquare(
-	board chess.Board,
-	from, to chess.Square,
-	dir chess.Direction,
-) bool {
+func SlidingAttacksSquare(board chess.Board, from, to chess.Square, dir chess.Direction) bool {
 	if !from.Valid() || !to.Valid() || from == to {
 		return false
 	}
-
-	nextCol := int(from)%8 + dir.ColStep
-	nextRow := int(from)/8 + dir.RowStep
-
-	for nextCol >= 0 && nextCol < 8 && nextRow >= 0 && nextRow < 8 {
-		square := chess.Square(nextRow*8 + nextCol)
-
+	square, ok := from.Offset(dir.ColStep, dir.RowStep)
+	for ok {
 		if square == to {
 			return true
 		}
-
 		occupant, _ := board.PieceAt(square)
 		if occupant.Type != chess.NoPiece {
 			return false
 		}
-
-		nextCol += dir.ColStep
-		nextRow += dir.RowStep
+		square, ok = square.Offset(dir.ColStep, dir.RowStep)
 	}
-
 	return false
 }
