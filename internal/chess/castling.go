@@ -12,3 +12,7 @@ const (
 func (r CastlingRights) Has(right CastlingRights) bool {
 	return right != 0 && r&right == right
 }
+
+func (r CastlingRights) Without(right CastlingRights) CastlingRights {
+	return r &^ right
+}

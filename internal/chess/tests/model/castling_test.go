@@ -37,3 +37,31 @@ func TestCastlingRightHas(t *testing.T) {
 		})
 	}
 }
+
+func TestCastlingRightsWithout(t *testing.T) {
+	whiteRights := chess.WhiteKingSide | chess.WhiteQueenSide
+	blackRights := chess.BlackKingSide | chess.BlackQueenSide
+	allRights := whiteRights | blackRights
+
+	cases := []struct {
+		name   string
+		remove chess.CastlingRights
+		want   chess.CastlingRights
+	}{
+		{"white rights removed", whiteRights, blackRights},
+		{"black rights removed", blackRights, whiteRights},
+		{"one right", chess.WhiteKingSide, chess.WhiteQueenSide | blackRights},
+		{"remove nnothing", 0, allRights},
+		{"remove all", allRights, 0},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := allRights.Without(tc.remove)
+
+			if got != tc.want {
+				t.Errorf("Expected rights %v, got %v", tc.want, got)
+			}
+		})
+	}
+}

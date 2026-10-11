@@ -1,6 +1,7 @@
 package rules_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/gabrzb/chess-go/internal/chess"
@@ -247,6 +248,121 @@ func TestKingSideCastlingMoveUnavailable(t *testing.T) {
 
 		if ok {
 			t.Errorf("Expected king-side castling to be unavailable for color %v", color)
+		}
+	}
+}
+
+func TestApplyKingSideCastlingPieces(t *testing.T) {
+	cases := []struct {
+		name             string
+		color            chess.Color
+		kingFrom, kingTo chess.Square
+		rookFrom, rookTo chess.Square
+	}{
+		{"white", chess.White, 4, 6, 7, 5},
+		{"black", chess.Black, 60, 62, 63, 61},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			position := kingSidePosition(t, tc.color)
+			before := position
+
+			next, err := rules.ApplyKingSideCastling(position)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			expected := []struct {
+				square chess.Square
+				piece  chess.Piece
+			}{
+				{tc.kingFrom, chess.Piece{}},
+				{tc.rookFrom, chess.Piece{}},
+				{tc.kingTo, chess.Piece{Type: chess.King, Color: tc.color}},
+				{tc.rookTo, chess.Piece{Type: chess.Rook, Color: tc.color}},
+			}
+
+			for _, item := range expected {
+				got, _ := next.Board.PieceAt(item.square)
+
+				if got != item.piece {
+					t.Errorf("At %v: expected %v, got %v", item.square, item.piece, got)
+				}
+			}
+
+			if position != before {
+				t.Error("Expected the original position to remain unchanged")
+			}
+		})
+	}
+}
+
+func TestApplyKingSideCastlingState(t *testing.T) {
+	whiteRights := chess.WhiteKingSide | chess.WhiteQueenSide
+	blackRights := chess.BlackKingSide | chess.BlackQueenSide
+
+	cases := []struct {
+		name             string
+		color, nextColor chess.Color
+		wantRights       chess.CastlingRights
+		enPassant        chess.Square
+		wantFullmove     uint16
+	}{
+		{"white", chess.White, chess.Black, blackRights, 42, 20},
+		{"black", chess.Black, chess.White, whiteRights, 18, 21},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			position := kingSidePosition(t, tc.color)
+			position.CastlingRights = whiteRights | blackRights
+			position.EnPassant = tc.enPassant
+			position.HalfmoveClock = 7
+			position.FullmoveNumber = 20
+
+			next, err := rules.ApplyKingSideCastling(position)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			if next.SideToMove != tc.nextColor {
+				t.Errorf("Expected next color %v, got %v", tc.nextColor, next.SideToMove)
+			}
+
+			if next.CastlingRights != tc.wantRights {
+				t.Errorf("Expected rights %v, got %v", tc.wantRights, next.CastlingRights)
+			}
+
+			if next.EnPassant != chess.NoSquare {
+				t.Error("Expected the en passant target to expire")
+			}
+
+			if next.HalfmoveClock != 8 {
+				t.Errorf("Expected halfmove clock 8, got %d", next.HalfmoveClock)
+			}
+
+			if next.FullmoveNumber != tc.wantFullmove {
+				t.Errorf("Expected fullmove number %d, got %d", tc.wantFullmove, next.FullmoveNumber)
+			}
+		})
+	}
+}
+
+func TestApplyKingSideCastlingUnavailable(t *testing.T) {
+	for _, color := range []chess.Color{chess.White, chess.Black} {
+		position := kingSidePosition(t, color)
+		position.CastlingRights = 0
+		before := position
+
+		_, err := rules.ApplyKingSideCastling(position)
+
+		if !errors.Is(err, chess.ErrIllegalMove) {
+			t.Errorf("Expected ErrIllegalMove for color %v, got %v", color, err)
+		}
+
+		if position != before {
+			t.Error("Expected the original position to remain unchanged after failed castling")
 		}
 	}
 }

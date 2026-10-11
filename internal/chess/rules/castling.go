@@ -68,3 +68,40 @@ func KingSideCastlingMove(position chess.Position) (chess.Move, bool) {
 
 	return chess.Move{From: from, To: from + 2}, true
 }
+
+func ApplyKingSideCastling(position chess.Position) (chess.Position, error) {
+	kingMove, ok := KingSideCastlingMove(position)
+	if !ok {
+		return chess.Position{}, chess.ErrIllegalMove
+	}
+
+	rookMove := chess.Move{
+		From: kingMove.From + 3,
+		To:   kingMove.From + 1,
+	}
+
+	for _, move := range []chess.Move{kingMove, rookMove} {
+		board, err := BoardAfterMove(position.Board, move)
+		if err != nil {
+			return chess.Position{}, err
+		}
+
+		position.Board = board
+	}
+
+	rightsToRemove := chess.WhiteKingSide | chess.WhiteQueenSide
+	nextColor := chess.Black
+
+	if position.SideToMove == chess.Black {
+		rightsToRemove = chess.BlackKingSide | chess.BlackQueenSide
+		nextColor = chess.White
+		position.FullmoveNumber++
+	}
+
+	position.CastlingRights = position.CastlingRights.Without(rightsToRemove)
+	position.EnPassant = chess.NoSquare
+	position.HalfmoveClock++
+	position.SideToMove = nextColor
+
+	return position, nil
+}
