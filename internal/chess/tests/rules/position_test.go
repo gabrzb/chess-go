@@ -37,38 +37,21 @@ func TestPositionAfterMoveState(t *testing.T) {
 			position.HalfmoveClock = 7
 			position.FullmoveNumber = 20
 
+			movingPiece, _ := position.Board.PieceAt(tc.move.From)
+			before := position
 			next, err := rules.PositionAfterMove(position, tc.move)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 
-			if next.SideToMove != tc.nextColor {
-				t.Errorf("Expected next color %v, got %v", tc.nextColor, next.SideToMove)
+			assertPositionPiece(t, next, tc.move.From, chess.Piece{})
+			assertPositionPiece(t, next, tc.move.To, movingPiece)
+			assertPositionState(t, next, positionState{tc.nextColor, tc.wantRights, chess.NoSquare, 8, tc.wantFullmove})
+			if position != before {
+				t.Error("Expected original position to remain unchanged")
 			}
-			if next.FullmoveNumber != tc.wantFullmove {
-				t.Errorf("Expected fullmove number %d, got %d", tc.wantFullmove, next.FullmoveNumber)
-			}
-			if next.HalfmoveClock != 8 {
-				t.Errorf("Expected halfmove clock 8, got %d", next.HalfmoveClock)
-			}
-			if next.EnPassant != chess.NoSquare {
-				t.Errorf("Expected en passant target to expire, got %v", next.EnPassant)
-			}
-			if next.CastlingRights != tc.wantRights {
-				t.Errorf("Expected rights %v, got %v", tc.wantRights, next.CastlingRights)
-			}
-		})
-	}
-}
 
-func assertPositionPiece(t *testing.T, position chess.Position, square chess.Square, want chess.Piece) {
-	t.Helper()
-	got, ok := position.Board.PieceAt(square)
-	if !ok {
-		t.Fatalf("Invalid square in test: %v", square)
-	}
-	if got != want {
-		t.Errorf("At %v: expected %v, got %v", square, want, got)
+		})
 	}
 }
 
@@ -97,12 +80,8 @@ func TestPositionAfterMoveCaptures(t *testing.T) {
 			position := kingSidePosition(t, tc.color)
 			mover := chess.Piece{Type: tc.pieceType, Color: tc.color}
 			captured := chess.Piece{Type: chess.Rook, Color: tc.enemy}
-			if err := position.Board.SetPiece(tc.move.From, mover); err != nil {
-				t.Fatalf("Failed to set moving piece: %v", err)
-			}
-			if err := position.Board.SetPiece(tc.move.To, captured); err != nil {
-				t.Fatalf("Failed to set captured piece: %v", err)
-			}
+			mustSetPiece(t, &position.Board, tc.move.From, mover)
+			mustSetPiece(t, &position.Board, tc.move.To, captured)
 			position.CastlingRights = whiteRights | blackRights
 			position.HalfmoveClock = 7
 			before := position
@@ -147,13 +126,9 @@ func TestPositionAfterMovePawns(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			position := kingSidePosition(t, tc.color)
 			pawn := chess.Piece{Type: chess.Pawn, Color: tc.color}
-			if err := position.Board.SetPiece(tc.move.From, pawn); err != nil {
-				t.Fatalf("Failed to set pawn: %v", err)
-			}
+			mustSetPiece(t, &position.Board, tc.move.From, pawn)
 			if tc.capture {
-				if err := position.Board.SetPiece(tc.move.To, chess.Piece{Type: chess.Knight, Color: tc.enemy}); err != nil {
-					t.Fatalf("Failed to set captured piece: %v", err)
-				}
+				mustSetPiece(t, &position.Board, tc.move.To, chess.Piece{Type: chess.Knight, Color: tc.enemy})
 			}
 			position.EnPassant = 18
 			position.HalfmoveClock = 7
@@ -185,55 +160,27 @@ func TestPositionAfterMovePawns(t *testing.T) {
 func TestPositionAfterMoveCastling(t *testing.T) {
 	whiteRights := chess.WhiteKingSide | chess.WhiteQueenSide
 	blackRights := chess.BlackKingSide | chess.BlackQueenSide
-
-	cases := []struct {
-		name             string
-		color, nextColor chess.Color
-		kingSide         bool
-		kingMove         chess.Move
-		rookMove         chess.Move
-		wantRights       chess.CastlingRights
-		wantFullmove     uint16
-	}{
-		{"white king-side", chess.White, chess.Black, true, chess.Move{From: 4, To: 6}, chess.Move{From: 7, To: 5}, blackRights, 20},
-		{"black king-side", chess.Black, chess.White, true, chess.Move{From: 60, To: 62}, chess.Move{From: 63, To: 61}, whiteRights, 21},
-		{"white queen-side", chess.White, chess.Black, false, chess.Move{From: 4, To: 2}, chess.Move{From: 0, To: 3}, blackRights, 20},
-		{"black queen-side", chess.Black, chess.White, false, chess.Move{From: 60, To: 58}, chess.Move{From: 56, To: 59}, whiteRights, 21},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			position := castlingPosition(t, tc.color, tc.kingSide)
+	for _, castle := range castlingCases {
+		t.Run(castle.name, func(t *testing.T) {
+			position := castlingPosition(t, castle.color, castle.kingSide)
 			position.CastlingRights = whiteRights | blackRights
 			position.EnPassant = 18
 			position.HalfmoveClock = 7
 			position.FullmoveNumber = 20
 			before := position
-
-			next, err := rules.PositionAfterMove(position, tc.kingMove)
+			next, err := rules.PositionAfterMove(position, castle.kingMove)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
-
-			assertPositionPiece(t, next, tc.kingMove.From, chess.Piece{})
-			assertPositionPiece(t, next, tc.rookMove.From, chess.Piece{})
-			assertPositionPiece(t, next, tc.kingMove.To, chess.Piece{Type: chess.King, Color: tc.color})
-			assertPositionPiece(t, next, tc.rookMove.To, chess.Piece{Type: chess.Rook, Color: tc.color})
-			if next.SideToMove != tc.nextColor {
-				t.Errorf("Expected next color %v, got %v", tc.nextColor, next.SideToMove)
+			assertPositionPiece(t, next, castle.kingMove.From, chess.Piece{})
+			assertPositionPiece(t, next, castle.rookMove.From, chess.Piece{})
+			assertPositionPiece(t, next, castle.kingMove.To, chess.Piece{Type: chess.King, Color: castle.color})
+			assertPositionPiece(t, next, castle.rookMove.To, chess.Piece{Type: chess.Rook, Color: castle.color})
+			wantRights, wantFullmove := blackRights, uint16(20)
+			if castle.color == chess.Black {
+				wantRights, wantFullmove = whiteRights, 21
 			}
-			if next.CastlingRights != tc.wantRights {
-				t.Errorf("Expected rights %v, got %v", tc.wantRights, next.CastlingRights)
-			}
-			if next.EnPassant != chess.NoSquare {
-				t.Errorf("Expected en passant target to expire, got %v", next.EnPassant)
-			}
-			if next.HalfmoveClock != 8 {
-				t.Errorf("Expected halfmove clock 8, got %d", next.HalfmoveClock)
-			}
-			if next.FullmoveNumber != tc.wantFullmove {
-				t.Errorf("Expected fullmove number %d, got %d", tc.wantFullmove, next.FullmoveNumber)
-			}
+			assertPositionState(t, next, positionState{castle.enemy, wantRights, chess.NoSquare, 8, wantFullmove})
 			if position != before {
 				t.Error("Expected original position to remain unchanged")
 			}
@@ -303,44 +250,6 @@ func TestPositionAfterMoveRejected(t *testing.T) {
 						t.Error("Expected rejected move to preserve original position")
 					}
 				})
-			}
-		})
-	}
-}
-
-func TestPositionAfterMoveBasicMove(t *testing.T) {
-	cases := []struct {
-		name  string
-		color chess.Color
-		move  chess.Move
-	}{
-		{"white", chess.White, chess.Move{From: 7, To: 15}},
-		{"black", chess.Black, chess.Move{From: 63, To: 55}},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			position := kingSidePosition(t, tc.color)
-			before := position
-
-			next, err := rules.PositionAfterMove(position, tc.move)
-			if err != nil {
-				t.Fatalf("Unexpected error: %v", err)
-			}
-
-			source, _ := next.Board.PieceAt(tc.move.From)
-			if source.Type != chess.NoPiece {
-				t.Error("Expected source square to be empty")
-			}
-
-			target, _ := next.Board.PieceAt(tc.move.To)
-			want := chess.Piece{Type: chess.Rook, Color: tc.color}
-			if target != want {
-				t.Errorf("Expected %v at destination, got %v", want, target)
-			}
-
-			if position != before {
-				t.Error("Expected original position to remain unchanged")
 			}
 		})
 	}

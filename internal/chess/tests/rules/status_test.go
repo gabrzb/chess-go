@@ -8,78 +8,30 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess/rules"
 )
 
-func TestEvaluateStatusCheckmate(t *testing.T) {
-	var board chess.Board
-
-	if err := board.SetPiece(chess.Square(56), chess.Piece{Type: chess.King, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black king: %v", err)
+func TestEvaluateStatus(t *testing.T) {
+	cases := []struct {
+		name  string
+		queen chess.Square
+		want  chess.Status
+	}{
+		{"checkmate", 49, chess.StatusCheckmate},
+		{"stalemate", 41, chess.StatusStalemate},
+		{"ongoing", 40, chess.StatusOngoing},
 	}
-
-	if err := board.SetPiece(chess.Square(42), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(49), chess.Piece{Type: chess.Queen, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white queen: %v", err)
-	}
-
-	got, err := rules.EvaluateStatus(board, chess.Black)
-	if err != nil {
-		t.Fatalf("Unexpected error for color Black: %v", err)
-	}
-
-	if got != chess.StatusCheckmate {
-		t.Errorf("Expected StatusCheckmate, got %v", got)
-	}
-}
-
-func TestEvaluateStatusStalemate(t *testing.T) {
-	var board chess.Board
-
-	if err := board.SetPiece(chess.Square(56), chess.Piece{Type: chess.King, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black king: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(42), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(41), chess.Piece{Type: chess.Queen, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white queen: %v", err)
-	}
-
-	got, err := rules.EvaluateStatus(board, chess.Black)
-	if err != nil {
-		t.Fatalf("Unexpected error for color Black: %v", err)
-	}
-
-	if got != chess.StatusStalemate {
-		t.Errorf("Expected StatusStalemate, got %v", got)
-	}
-}
-
-func TestEvaluateStatusOngoing(t *testing.T) {
-	var board chess.Board
-
-	if err := board.SetPiece(chess.Square(56), chess.Piece{Type: chess.King, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black king: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(42), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(40), chess.Piece{Type: chess.Queen, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white queen: %v", err)
-	}
-
-	got, err := rules.EvaluateStatus(board, chess.Black)
-	if err != nil {
-		t.Fatalf("Unexpected error for color Black: %v", err)
-	}
-
-	if got != chess.StatusOngoing {
-		t.Errorf("Expected StatusOngoing, got %v", got)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var board chess.Board
+			mustSetPiece(t, &board, 56, chess.Piece{Type: chess.King, Color: chess.Black})
+			mustSetPiece(t, &board, 42, chess.Piece{Type: chess.King, Color: chess.White})
+			mustSetPiece(t, &board, tc.queen, chess.Piece{Type: chess.Queen, Color: chess.White})
+			got, err := rules.EvaluateStatus(board, chess.Black)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			if got != tc.want {
+				t.Errorf("Expected status %v, got %v", tc.want, got)
+			}
+		})
 	}
 }
 

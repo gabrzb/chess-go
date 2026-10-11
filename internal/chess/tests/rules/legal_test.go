@@ -2,6 +2,7 @@ package rules_test
 
 import (
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/gabrzb/chess-go/internal/chess"
@@ -11,17 +12,11 @@ import (
 func TestLegalMovesPinnedRook(t *testing.T) {
 	var board chess.Board
 
-	if err := board.SetPiece(chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White})
 
-	if err := board.SetPiece(chess.Square(12), chess.Piece{Type: chess.Rook, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white rook: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(12), chess.Piece{Type: chess.Rook, Color: chess.White})
 
-	if err := board.SetPiece(chess.Square(60), chess.Piece{Type: chess.Rook, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black rook: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(60), chess.Piece{Type: chess.Rook, Color: chess.Black})
 
 	moves, err := rules.LegalMoves(board, chess.Square(12))
 	if err != nil {
@@ -30,29 +25,15 @@ func TestLegalMovesPinnedRook(t *testing.T) {
 
 	destinations := []chess.Square{20, 28, 36, 44, 52, 60}
 
-	if len(moves) != len(destinations) {
-		t.Fatalf("Expected %d moves, got %d", len(destinations), len(moves))
-	}
-
-	for i, destination := range destinations {
-		expectedMove := chess.Move{From: chess.Square(12), To: destination}
-
-		if moves[i] != expectedMove {
-			t.Errorf("Expected move %v, got %v", expectedMove, moves[i])
-		}
-	}
+	assertMoves(t, moves, 12, destinations)
 }
 
 func TestLegalMovesKingEscapesCheck(t *testing.T) {
 	var board chess.Board
 
-	if err := board.SetPiece(chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White})
 
-	if err := board.SetPiece(chess.Square(60), chess.Piece{Type: chess.Rook, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black rook: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(60), chess.Piece{Type: chess.Rook, Color: chess.Black})
 
 	moves, err := rules.LegalMoves(board, chess.Square(4))
 	if err != nil {
@@ -61,29 +42,15 @@ func TestLegalMovesKingEscapesCheck(t *testing.T) {
 
 	destinations := []chess.Square{5, 3, 13, 11}
 
-	if len(moves) != len(destinations) {
-		t.Fatalf("Expected %d moves, got %d", len(destinations), len(moves))
-	}
-
-	for i, destination := range destinations {
-		expectedMove := chess.Move{From: chess.Square(4), To: destination}
-
-		if moves[i] != expectedMove {
-			t.Errorf("Expected move %v, got %v", expectedMove, moves[i])
-		}
-	}
+	assertMoves(t, moves, 4, destinations)
 }
 
 func TestLegalMovesErrors(t *testing.T) {
 	var board chess.Board
 
-	if err := board.SetPiece(chess.Square(12), chess.Piece{Type: chess.Rook, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white rook: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(12), chess.Piece{Type: chess.Rook, Color: chess.White})
 
-	if err := board.SetPiece(chess.Square(13), chess.Piece{Type: chess.Rook, Color: chess.NoColor}); err != nil {
-		t.Fatalf("Failed to set no color rook: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(13), chess.Piece{Type: chess.Rook, Color: chess.NoColor})
 
 	cases := []struct {
 		name    string
@@ -110,17 +77,11 @@ func TestLegalMovesErrors(t *testing.T) {
 func TestLegalMovesCannotCaptureKing(t *testing.T) {
 	var board chess.Board
 
-	if err := board.SetPiece(chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White})
 
-	if err := board.SetPiece(chess.Square(12), chess.Piece{Type: chess.Rook, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white rook: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(12), chess.Piece{Type: chess.Rook, Color: chess.White})
 
-	if err := board.SetPiece(chess.Square(60), chess.Piece{Type: chess.King, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black rook: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(60), chess.Piece{Type: chess.King, Color: chess.Black})
 
 	moves, err := rules.LegalMoves(board, chess.Square(12))
 	if err != nil {
@@ -141,13 +102,9 @@ func TestLegalMovesCannotCaptureKing(t *testing.T) {
 func TestHasLegalMoveAvailable(t *testing.T) {
 	var board chess.Board
 
-	if err := board.SetPiece(chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White})
 
-	if err := board.SetPiece(chess.Square(60), chess.Piece{Type: chess.King, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black rook: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(60), chess.Piece{Type: chess.King, Color: chess.Black})
 
 	for _, color := range []chess.Color{chess.White, chess.Black} {
 		got, err := rules.HasLegalMove(board, color)
@@ -161,92 +118,44 @@ func TestHasLegalMoveAvailable(t *testing.T) {
 	}
 }
 
-func TestHasLegalMoveUnavailable(t *testing.T) {
-	var board chess.Board
-
-	if err := board.SetPiece(chess.Square(56), chess.Piece{Type: chess.King, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black king: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(42), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(49), chess.Piece{Type: chess.Queen, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white queen: %v", err)
-	}
-
-	got, err := rules.HasLegalMove(board, chess.Black)
-	if err != nil {
-		t.Fatalf("Unexpected error for color Black: %v", err)
-	}
-
-	if got {
-		t.Error("Expected color Black to have no legal moves, but got true")
-	}
-}
-
-func TestHasLegalMoveContinuesSearching(t *testing.T) {
-	var board chess.Board
-
-	if err := board.SetPiece(chess.Square(56), chess.Piece{Type: chess.King, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black king: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(42), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(49), chess.Piece{Type: chess.Queen, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white queen: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(57), chess.Piece{Type: chess.Rook, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black rook: %v", err)
-	}
-
-	got, err := rules.HasLegalMove(board, chess.Black)
-	if err != nil {
-		t.Fatalf("Unexpected error for color Black: %v", err)
-	}
-
-	if !got {
-		t.Error("Expected color Black to have a legal move, but got false")
+func TestHasLegalMoveSearch(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		addRook bool
+		want    bool
+	}{
+		{"no legal moves", false, false},
+		{"continue to next piece", true, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var board chess.Board
+			mustSetPiece(t, &board, 56, chess.Piece{Type: chess.King, Color: chess.Black})
+			mustSetPiece(t, &board, 42, chess.Piece{Type: chess.King, Color: chess.White})
+			mustSetPiece(t, &board, 49, chess.Piece{Type: chess.Queen, Color: chess.White})
+			if tc.addRook {
+				mustSetPiece(t, &board, 57, chess.Piece{Type: chess.Rook, Color: chess.Black})
+			}
+			got, err := rules.HasLegalMove(board, chess.Black)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			if got != tc.want {
+				t.Errorf("Expected legal-move availability %v, got %v", tc.want, got)
+			}
+		})
 	}
 }
 
 func TestLegalMovesFromIncludesCastling(t *testing.T) {
-	cases := []struct {
-		name     string
-		color    chess.Color
-		kingSide bool
-		want     chess.Move
-	}{
-		{"white king-side", chess.White, true, chess.Move{From: 4, To: 6}},
-		{"black king-side", chess.Black, true, chess.Move{From: 60, To: 62}},
-		{"white queen-side", chess.White, false, chess.Move{From: 4, To: 2}},
-		{"black queen-side", chess.Black, false, chess.Move{From: 60, To: 58}},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			position := castlingPosition(t, tc.color, tc.kingSide)
-
-			moves, err := rules.LegalMovesFrom(position, tc.want.From)
+	for _, castle := range castlingCases {
+		t.Run(castle.name, func(t *testing.T) {
+			position := castlingPosition(t, castle.color, castle.kingSide)
+			moves, err := rules.LegalMovesFrom(position, castle.kingMove.From)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
-
-			found := false
-			for _, move := range moves {
-				if move == tc.want {
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				t.Errorf("Expected castling move %v in %v", tc.want, moves)
+			if !slices.Contains(moves, castle.kingMove) {
+				t.Errorf("Expected castling move %v in %v", castle.kingMove, moves)
 			}
 		})
 	}
@@ -254,13 +163,14 @@ func TestLegalMovesFromIncludesCastling(t *testing.T) {
 
 func TestLegalMovesFromErrors(t *testing.T) {
 	colors := []struct {
-		name     string
-		color    chess.Color
-		kingFrom chess.Square
-		rookFrom chess.Square
+		name      string
+		color     chess.Color
+		kingFrom  chess.Square
+		rookFrom  chess.Square
+		enemyKing chess.Square
 	}{
-		{"white", chess.White, 4, 7},
-		{"black", chess.Black, 60, 63},
+		{"white", chess.White, 4, 7, 60},
+		{"black", chess.Black, 60, 63, 4},
 	}
 
 	for _, side := range colors {
@@ -278,6 +188,7 @@ func TestLegalMovesFromErrors(t *testing.T) {
 				{"missing turn color", side.kingFrom, chess.NoColor, false, chess.ErrInvalidColor},
 				{"invalid turn color", side.kingFrom, chess.Color(255), false, chess.ErrInvalidColor},
 				{"missing king", side.rookFrom, side.color, true, chess.ErrKingNotFound},
+				{"opposing piece", side.enemyKing, side.color, false, chess.ErrIllegalMove},
 			}
 
 			for _, tc := range cases {
@@ -298,31 +209,6 @@ func TestLegalMovesFromErrors(t *testing.T) {
 						t.Errorf("Expected no moves on error, got %v", moves)
 					}
 				})
-			}
-		})
-	}
-}
-
-func TestLegalMovesFromWrongTurn(t *testing.T) {
-	cases := []struct {
-		name string
-		turn chess.Color
-		from chess.Square
-	}{
-		{"white turn selecting black piece", chess.White, 60},
-		{"black turn selecting white piece", chess.Black, 4},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			position := kingSidePosition(t, tc.turn)
-
-			moves, err := rules.LegalMovesFrom(position, tc.from)
-			if !errors.Is(err, chess.ErrIllegalMove) {
-				t.Errorf("Expected ErrIllegalMove, got %v", err)
-			}
-			if len(moves) != 0 {
-				t.Errorf("Expected no moves for the opposing side, got %v", moves)
 			}
 		})
 	}

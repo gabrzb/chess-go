@@ -11,13 +11,9 @@ import (
 func TestFindKing(t *testing.T) {
 	var board chess.Board
 
-	if err := board.SetPiece(chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White})
 
-	if err := board.SetPiece(chess.Square(60), chess.Piece{Type: chess.King, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black king: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(60), chess.Piece{Type: chess.King, Color: chess.Black})
 
 	cases := []struct {
 		name  string
@@ -44,9 +40,7 @@ func TestFindKingMissing(t *testing.T) {
 	var board chess.Board
 	rook := chess.Piece{Type: chess.Rook, Color: chess.White}
 
-	if err := board.SetPiece(chess.Square(4), rook); err != nil {
-		t.Fatalf("Failed to set white rook: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(4), rook)
 
 	got := rules.FindKing(board, chess.White)
 
@@ -55,89 +49,39 @@ func TestFindKingMissing(t *testing.T) {
 	}
 }
 
-func TestIsInCheckWhite(t *testing.T) {
-	var board chess.Board
-
-	if err := board.SetPiece(chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
+func TestIsInCheck(t *testing.T) {
+	cases := []struct {
+		name                   string
+		color, enemy           chess.Color
+		kingFrom, attackerFrom chess.Square
+		blocked, want          bool
+		wantErr                error
+	}{
+		{"white", chess.White, chess.Black, 4, 60, false, true, nil},
+		{"black", chess.Black, chess.White, 60, 4, false, true, nil},
+		{"blocked", chess.White, chess.Black, 4, 60, true, false, nil},
+		{"invalid color", chess.NoColor, chess.NoColor, chess.NoSquare, chess.NoSquare, false, false, chess.ErrInvalidColor},
+		{"missing king", chess.White, chess.NoColor, chess.NoSquare, chess.NoSquare, false, false, chess.ErrKingNotFound},
 	}
-
-	if err := board.SetPiece(chess.Square(60), chess.Piece{Type: chess.Rook, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black rook: %v", err)
-	}
-
-	got, err := rules.IsInCheck(board, chess.White)
-	if err != nil {
-		t.Fatalf("IsInCheck returned an error: %v", err)
-	}
-
-	if !got {
-		t.Errorf("IsInCheck(White) = %v; want true", got)
-	}
-}
-
-func TestIsInCheckBlack(t *testing.T) {
-	var board chess.Board
-
-	if err := board.SetPiece(chess.Square(4), chess.Piece{Type: chess.Rook, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white rook: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(60), chess.Piece{Type: chess.King, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black king: %v", err)
-	}
-
-	got, err := rules.IsInCheck(board, chess.Black)
-	if err != nil {
-		t.Fatalf("IsInCheck returned an error: %v", err)
-	}
-
-	if !got {
-		t.Errorf("IsInCheck(White) = %v; want true", got)
-	}
-}
-
-func TestIsInCheckBlocked(t *testing.T) {
-	var board chess.Board
-
-	if err := board.SetPiece(chess.Square(4), chess.Piece{Type: chess.King, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white king: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(60), chess.Piece{Type: chess.Rook, Color: chess.Black}); err != nil {
-		t.Fatalf("Failed to set black rook: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(28), chess.Piece{Type: chess.Pawn, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to set white pawn: %v", err)
-	}
-
-	got, err := rules.IsInCheck(board, chess.White)
-	if err != nil {
-		t.Fatalf("IsInCheck returned an error: %v", err)
-	}
-
-	if got {
-		t.Errorf("IsInCheck(White) = %v; want false", got)
-	}
-}
-
-func TestIsInCheckInvalidColor(t *testing.T) {
-	var board chess.Board
-
-	_, err := rules.IsInCheck(board, chess.NoColor)
-
-	if !errors.Is(err, chess.ErrInvalidColor) {
-		t.Errorf("IsInCheck returned error %v; want ErrInvalidColor", err)
-	}
-}
-
-func TestIsInCheckMissingKing(t *testing.T) {
-	var board chess.Board
-
-	_, err := rules.IsInCheck(board, chess.White)
-
-	if !errors.Is(err, chess.ErrKingNotFound) {
-		t.Errorf("IsInCheck returned error %v; want ErrKingNotFound", err)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var board chess.Board
+			if tc.kingFrom.Valid() {
+				mustSetPiece(t, &board, tc.kingFrom, chess.Piece{Type: chess.King, Color: tc.color})
+			}
+			if tc.attackerFrom.Valid() {
+				mustSetPiece(t, &board, tc.attackerFrom, chess.Piece{Type: chess.Rook, Color: tc.enemy})
+			}
+			if tc.blocked {
+				mustSetPiece(t, &board, 28, chess.Piece{Type: chess.Pawn, Color: chess.White})
+			}
+			got, err := rules.IsInCheck(board, tc.color)
+			if !errors.Is(err, tc.wantErr) {
+				t.Fatalf("Expected error %v, got %v", tc.wantErr, err)
+			}
+			if err == nil && got != tc.want {
+				t.Errorf("Expected check=%v, got %v", tc.want, got)
+			}
+		})
 	}
 }

@@ -9,76 +9,36 @@ import (
 )
 
 func TestBoardAfterMove(t *testing.T) {
-	var board chess.Board
-	rook := chess.Piece{Type: chess.Rook, Color: chess.White}
-
-	if err := board.SetPiece(chess.Square(27), rook); err != nil {
-		t.Fatalf("Failed to place rook: %v", err)
-	}
-
-	beforeMove := board
-
-	nextMove, err := rules.BoardAfterMove(board, chess.Move{From: chess.Square(27), To: chess.Square(35)})
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	source, _ := nextMove.PieceAt(chess.Square(27))
-	if source.Type != chess.NoPiece {
-		t.Errorf("Expected source square to be empty, got %v", source)
-	}
-
-	destination, _ := nextMove.PieceAt(chess.Square(35))
-	if destination != rook {
-		t.Errorf("Expected destination square to have rook, got %v", destination)
-	}
-
-	if board != beforeMove {
-		t.Errorf("Expected original board to remain unchanged, but it changed")
-	}
-}
-
-func TestBoardAfterMoveCapture(t *testing.T) {
-	var board chess.Board
-	rook := chess.Piece{Type: chess.Rook, Color: chess.White}
-	pawn := chess.Piece{Type: chess.Pawn, Color: chess.Black}
-
-	if err := board.SetPiece(chess.Square(27), rook); err != nil {
-		t.Fatalf("Failed to place rook: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(35), pawn); err != nil {
-		t.Fatalf("Failed to place pawn: %v", err)
-	}
-
-	beforeMove := board
-
-	nextMove, err := rules.BoardAfterMove(board, chess.Move{From: chess.Square(27), To: chess.Square(35)})
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	source, _ := nextMove.PieceAt(chess.Square(27))
-	if source.Type != chess.NoPiece {
-		t.Errorf("Expected source square to be empty, got %v", source)
-	}
-
-	destination, _ := nextMove.PieceAt(chess.Square(35))
-	if destination != rook {
-		t.Errorf("Expected destination square to have rook, got %v", destination)
-	}
-
-	if board != beforeMove {
-		t.Errorf("Expected original board to remain unchanged, but it changed")
+	for _, tc := range []struct {
+		name   string
+		target chess.Piece
+	}{
+		{"empty destination", chess.Piece{}},
+		{"capture", chess.Piece{Type: chess.Pawn, Color: chess.Black}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var board chess.Board
+			rook := chess.Piece{Type: chess.Rook, Color: chess.White}
+			mustSetPiece(t, &board, 27, rook)
+			mustSetPiece(t, &board, 35, tc.target)
+			before := board
+			next, err := rules.BoardAfterMove(board, chess.Move{From: 27, To: 35})
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			assertPositionPiece(t, chess.Position{Board: next}, 27, chess.Piece{})
+			assertPositionPiece(t, chess.Position{Board: next}, 35, rook)
+			if board != before {
+				t.Error("Expected original board to remain unchanged")
+			}
+		})
 	}
 }
 
 func TestBoardAfterMoveErrors(t *testing.T) {
 	var board chess.Board
 
-	if err := board.SetPiece(chess.Square(27), chess.Piece{Type: chess.Rook, Color: chess.White}); err != nil {
-		t.Fatalf("Failed to place rook: %v", err)
-	}
+	mustSetPiece(t, &board, chess.Square(27), chess.Piece{Type: chess.Rook, Color: chess.White})
 
 	cases := []struct {
 		name    string

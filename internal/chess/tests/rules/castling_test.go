@@ -8,60 +8,6 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess/rules"
 )
 
-func castlingPosition(t *testing.T, color chess.Color, kingSide bool) chess.Position {
-	t.Helper()
-
-	var board chess.Board
-	rookSquare := chess.Square(0)
-	right := chess.WhiteQueenSide
-	if kingSide {
-		rookSquare = 7
-		right = chess.WhiteKingSide
-	}
-
-	if color == chess.Black {
-		rookSquare += 56
-		right = chess.BlackQueenSide
-		if kingSide {
-			right = chess.BlackKingSide
-		}
-	}
-
-	pieces := []struct {
-		square chess.Square
-		piece  chess.Piece
-	}{
-		{4, chess.Piece{Type: chess.King, Color: chess.White}},
-		{rookSquare, chess.Piece{Type: chess.Rook, Color: color}},
-		{60, chess.Piece{Type: chess.King, Color: chess.Black}},
-	}
-
-	for _, item := range pieces {
-		if err := board.SetPiece(item.square, item.piece); err != nil {
-			t.Fatalf("Failed to set piece on board: %v", err)
-		}
-	}
-
-	position, err := chess.NewPosition(board, color)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	position.CastlingRights = right
-
-	return position
-}
-
-func kingSidePosition(t *testing.T, color chess.Color) chess.Position {
-	t.Helper()
-	return castlingPosition(t, color, true)
-}
-
-func queenSidePosition(t *testing.T, color chess.Color) chess.Position {
-	t.Helper()
-	return castlingPosition(t, color, false)
-}
-
 type castlingCase struct {
 	name                    string
 	color, enemy            chess.Color
@@ -143,9 +89,7 @@ func TestCanCastle(t *testing.T) {
 					position := castlingPosition(t, castle.color, castle.kingSide)
 					position.CastlingRights = tc.rights
 					if tc.square.Valid() {
-						if err := position.Board.SetPiece(tc.square, tc.piece); err != nil {
-							t.Fatalf("Failed to set piece: %v", err)
-						}
+						mustSetPiece(t, &position.Board, tc.square, tc.piece)
 					}
 					if got := castle.canCastle(position); got != tc.want {
 						t.Errorf("Expected castling availability %v, got %v", tc.want, got)
@@ -205,9 +149,7 @@ func TestApplyCastling(t *testing.T) {
 			if castle.color == chess.Black {
 				wantRights, wantFullmove = whiteRights, 21
 			}
-			if next.SideToMove != castle.enemy || next.CastlingRights != wantRights || next.EnPassant != chess.NoSquare || next.HalfmoveClock != 8 || next.FullmoveNumber != wantFullmove {
-				t.Errorf("Unexpected position state: turn=%v rights=%v enPassant=%v halfmove=%d fullmove=%d", next.SideToMove, next.CastlingRights, next.EnPassant, next.HalfmoveClock, next.FullmoveNumber)
-			}
+			assertPositionState(t, next, positionState{castle.enemy, wantRights, chess.NoSquare, 8, wantFullmove})
 			if position != before {
 				t.Error("Expected original position to remain unchanged")
 			}
