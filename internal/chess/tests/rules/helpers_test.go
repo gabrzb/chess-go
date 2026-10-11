@@ -1,8 +1,9 @@
 package rules_test
 
 import (
-	"github.com/gabrzb/chess-go/internal/chess"
 	"testing"
+
+	"github.com/gabrzb/chess-go/internal/chess"
 )
 
 func mustSetPiece(t *testing.T, board *chess.Board, square chess.Square, piece chess.Piece) {
