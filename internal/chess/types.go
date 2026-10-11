@@ -33,7 +33,6 @@ const (
 	StatusStalemate
 )
 
-// Direction describes a displacement in board columns and rows.
 type Direction struct {
 	ColStep int
 	RowStep int

@@ -4,7 +4,6 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess"
 )
 
-// SlidingMoves generates moves along one unit direction until a piece blocks the path.
 func SlidingMoves(board chess.Board, from chess.Square, dir chess.Direction) []chess.Move {
 	piece, ok := board.PieceAt(from)
 	if !ok || piece.Type == chess.NoPiece {
@@ -36,7 +35,6 @@ func CanOccupySquare(board chess.Board, to chess.Square, color chess.Color) bool
 	return occupant.Type == chess.NoPiece || occupant.Color != color
 }
 
-// JumpMoves generates a move to a single offset without checking intermediate squares.
 func JumpMoves(board chess.Board, from chess.Square, dir chess.Direction) []chess.Move {
 	piece, ok := board.PieceAt(from)
 	if !ok || piece.Type == chess.NoPiece {

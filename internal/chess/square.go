@@ -22,7 +22,6 @@ func (s Square) Valid() bool {
 	return s < NoSquare
 }
 
-// Column returns the zero-based column, or -1 for an invalid square.
 func (s Square) Column() int {
 	if !s.Valid() {
 		return -1
@@ -30,7 +29,6 @@ func (s Square) Column() int {
 	return int(s) % BoardSize
 }
 
-// Row returns the zero-based row, or -1 for an invalid square.
 func (s Square) Row() int {
 	if !s.Valid() {
 		return -1
@@ -38,7 +36,6 @@ func (s Square) Row() int {
 	return int(s) / BoardSize
 }
 
-// Offset moves by columns and rows, returning false when it leaves the board.
 func (s Square) Offset(colStep, rowStep int) (Square, bool) {
 	if !s.Valid() {
 		return NoSquare, false

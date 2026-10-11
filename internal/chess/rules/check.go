@@ -5,7 +5,6 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess/attacks"
 )
 
-// FindKing locates a king by color, returning NoSquare when absent or the color is invalid.
 func FindKing(board chess.Board, color chess.Color) chess.Square {
 	if color != chess.White && color != chess.Black {
 		return chess.NoSquare
@@ -22,7 +21,6 @@ func FindKing(board chess.Board, color chess.Color) chess.Square {
 	return chess.NoSquare
 }
 
-// IsInCheck checks attacks on the king of the given color.
 func IsInCheck(board chess.Board, color chess.Color) (bool, error) {
 	if color != chess.White && color != chess.Black {
 		return false, chess.ErrInvalidColor

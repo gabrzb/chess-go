@@ -4,7 +4,6 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess"
 )
 
-// RookMoves generates basic pseudolegal rook moves.
 func RookMoves(board chess.Board, from chess.Square) []chess.Move {
 	rook, ok := board.PieceAt(from)
 
@@ -13,10 +12,10 @@ func RookMoves(board chess.Board, from chess.Square) []chess.Move {
 	}
 
 	directions := []chess.Direction{
-		{ColStep: 1, RowStep: 0},  // Right
-		{ColStep: -1, RowStep: 0}, // Left
-		{ColStep: 0, RowStep: 1},  // Up
-		{ColStep: 0, RowStep: -1}, // Down
+		{ColStep: 1, RowStep: 0},
+		{ColStep: -1, RowStep: 0},
+		{ColStep: 0, RowStep: 1},
+		{ColStep: 0, RowStep: -1},
 	}
 
 	var moves []chess.Move
@@ -29,7 +28,6 @@ func RookMoves(board chess.Board, from chess.Square) []chess.Move {
 	return moves
 }
 
-// BishopMoves generates basic pseudolegal bishop moves.
 func BishopMoves(board chess.Board, from chess.Square) []chess.Move {
 	bishop, ok := board.PieceAt(from)
 
@@ -38,10 +36,10 @@ func BishopMoves(board chess.Board, from chess.Square) []chess.Move {
 	}
 
 	directions := []chess.Direction{
-		{ColStep: 1, RowStep: 1},   // Up-Right
-		{ColStep: -1, RowStep: 1},  // Up-Left
-		{ColStep: 1, RowStep: -1},  // Down-Right
-		{ColStep: -1, RowStep: -1}, // Down-Left
+		{ColStep: 1, RowStep: 1},
+		{ColStep: -1, RowStep: 1},
+		{ColStep: 1, RowStep: -1},
+		{ColStep: -1, RowStep: -1},
 	}
 
 	var moves []chess.Move
@@ -54,7 +52,6 @@ func BishopMoves(board chess.Board, from chess.Square) []chess.Move {
 	return moves
 }
 
-// QueenMoves generates basic pseudolegal queen moves.
 func QueenMoves(board chess.Board, from chess.Square) []chess.Move {
 	queen, ok := board.PieceAt(from)
 
@@ -83,7 +80,6 @@ func QueenMoves(board chess.Board, from chess.Square) []chess.Move {
 	return moves
 }
 
-// KnightMoves generates basic pseudolegal knight moves.
 func KnightMoves(board chess.Board, from chess.Square) []chess.Move {
 	knight, ok := board.PieceAt(from)
 
@@ -112,7 +108,7 @@ func KnightMoves(board chess.Board, from chess.Square) []chess.Move {
 	return moves
 }
 
-// KingMoves generates adjacent king moves before filtering attacked squares.
+// King safety is checked by rules.LegalMoves after simulating the move.
 func KingMoves(board chess.Board, from chess.Square) []chess.Move {
 	king, ok := board.PieceAt(from)
 
@@ -141,7 +137,6 @@ func KingMoves(board chess.Board, from chess.Square) []chess.Move {
 	return moves
 }
 
-// PawnMoves generates basic pawn advances and diagonal captures.
 func PawnMoves(board chess.Board, from chess.Square) []chess.Move {
 	pawn, ok := board.PieceAt(from)
 	if !ok || pawn.Type != chess.Pawn {

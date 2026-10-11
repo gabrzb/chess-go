@@ -1,6 +1,5 @@
 package chess
 
-// Named squares follow board order, from a1 through h8.
 const (
 	A1 Square = iota
 	B1

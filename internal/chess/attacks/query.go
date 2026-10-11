@@ -28,7 +28,6 @@ func pieceAttacksSquare(board chess.Board, from, to chess.Square) bool {
 	}
 }
 
-// IsSquareAttacked reports whether a piece of byColor attacks the target.
 func IsSquareAttacked(board chess.Board, square chess.Square, byColor chess.Color) bool {
 	if !square.Valid() || (byColor != chess.White && byColor != chess.Black) {
 		return false

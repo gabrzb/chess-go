@@ -138,7 +138,7 @@ func makeCastlingPlan(color chess.Color, side castlingSide) (castlingPlan, bool)
 	default:
 		return castlingPlan{}, false
 	}
-	// The first-row template maps to the moving color's home row.
+	// First-row templates let both colors share the same castling layout.
 	onHomeRow := func(square chess.Square) chess.Square {
 		mapped, _ := square.Offset(0, home.Row())
 		return mapped
