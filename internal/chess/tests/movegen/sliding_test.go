@@ -7,317 +7,60 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess/movegen"
 )
 
-func TestRookMovesToRightBlockedByOwnPiece(t *testing.T) {
-	var board chess.Board
-	rook := chess.Piece{Type: chess.Rook, Color: chess.White}
-	pawn := chess.Piece{Type: chess.Pawn, Color: chess.White}
-
-	if err := board.SetPiece(chess.Square(27), rook); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
+func TestSlidingMoves(t *testing.T) {
+	ownPawn := chess.Piece{Type: chess.Pawn, Color: chess.White}
+	enemyPawn := chess.Piece{Type: chess.Pawn, Color: chess.Black}
+	cases := []struct {
+		name         string
+		direction    chess.Direction
+		extra        []placedPiece
+		destinations []chess.Square
+	}{
+		{"right", chess.Direction{ColStep: 1}, nil, []chess.Square{28, 29, 30, 31}},
+		{"left", chess.Direction{ColStep: -1}, nil, []chess.Square{26, 25, 24}},
+		{"up", chess.Direction{RowStep: 1}, nil, []chess.Square{35, 43, 51, 59}},
+		{"down", chess.Direction{RowStep: -1}, nil, []chess.Square{19, 11, 3}},
+		{"own piece blocks", chess.Direction{ColStep: 1}, []placedPiece{{29, ownPawn}}, []chess.Square{28}},
+		{"capture ends ray", chess.Direction{ColStep: 1}, []placedPiece{{29, enemyPawn}}, []chess.Square{28, 29}},
 	}
-
-	if err := board.SetPiece(chess.Square(29), pawn); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	moves := movegen.SlidingMoves(
-		board,
-		chess.Square(27),
-		chess.Direction{ColStep: 1, RowStep: 0},
-	)
-
-	if len(moves) != 1 {
-		t.Fatalf("Expected 1 move, got %d", len(moves))
-	}
-
-	expectedMove := chess.Move{From: chess.Square(27), To: chess.Square(28)}
-	if moves[0] != expectedMove {
-		t.Errorf("Expected move %v, got %v", expectedMove, moves[0])
-	}
-}
-
-func TestRookMovesToRightCapturesEnemy(t *testing.T) {
-	var board chess.Board
-	rook := chess.Piece{Type: chess.Rook, Color: chess.White}
-	pawn := chess.Piece{Type: chess.Pawn, Color: chess.Black}
-
-	if err := board.SetPiece(chess.Square(27), rook); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(29), pawn); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	moves := movegen.SlidingMoves(
-		board,
-		chess.Square(27),
-		chess.Direction{ColStep: 1, RowStep: 0},
-	)
-
-	expectedMoves := []chess.Move{
-		{From: chess.Square(27), To: chess.Square(28)},
-		{From: chess.Square(27), To: chess.Square(29)},
-	}
-
-	if len(moves) != len(expectedMoves) {
-		t.Fatalf("Expected %d moves, got %d", len(expectedMoves), len(moves))
-	}
-
-	for i, wantedMove := range expectedMoves {
-		if moves[i] != wantedMove {
-			t.Errorf("Expected move %v, got %v", wantedMove, moves[i])
-		}
-	}
-}
-
-func TestRookMovesFromEmptySquare(t *testing.T) {
-	var board chess.Board
-	moves := movegen.RookMoves(board, chess.Square(27))
-
-	if len(moves) != 0 {
-		t.Fatalf("Expected 0 moves, got %d", len(moves))
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var board chess.Board
+			mustSetPiece(t, &board, 27, chess.Piece{Type: chess.Rook, Color: chess.White})
+			for _, item := range tc.extra {
+				mustSetPiece(t, &board, item.square, item.piece)
+			}
+			assertMoves(t, movegen.SlidingMoves(board, 27, tc.direction), 27, tc.destinations)
+		})
 	}
 }
 
 func TestRookMoves(t *testing.T) {
-	var board chess.Board
-	rook := chess.Piece{Type: chess.Rook, Color: chess.White}
+	runMoveCases(t, chess.Rook, movegen.RookMoves, []moveCase{
+		{"center", 27, chess.White, nil, rookDestinations},
+	})
+}
 
-	if err := board.SetPiece(chess.Square(27), rook); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	moves := movegen.RookMoves(board, chess.Square(27))
-
-	destinationSquares := []chess.Square{
-		28, 29, 30, 31, // Right
-		26, 25, 24, // Left
-		35, 43, 51, 59, // Up
-		19, 11, 3, // Down
-	}
-
-	if len(moves) != len(destinationSquares) {
-		t.Fatalf("Expected %d moves, got %d", len(destinationSquares), len(moves))
-	}
-
-	for i, destination := range destinationSquares {
-		expectedMove := chess.Move{From: chess.Square(27), To: destination}
-
-		if moves[i] != expectedMove {
-			t.Errorf("Expected move %v, got %v", expectedMove, moves[i])
-		}
-	}
+func TestRookMovesFromEmptySquare(t *testing.T) {
+	assertMoves(t, movegen.RookMoves(chess.Board{}, 27), 27, nil)
 }
 
 func TestBishopMoves(t *testing.T) {
-	var board chess.Board
-	bishop := chess.Piece{Type: chess.Bishop, Color: chess.White}
-
-	if err := board.SetPiece(chess.Square(27), bishop); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	moves := movegen.BishopMoves(board, chess.Square(27))
-
-	destinationSquares := []chess.Square{
-		36, 45, 54, 63, // diagonal up-right
-		34, 41, 48, // diagonal up-left
-		20, 13, 6, // diagonal down-right
-		18, 9, 0, // diagonal down-left
-	}
-
-	if len(moves) != len(destinationSquares) {
-		t.Fatalf("Expected %d moves, got %d", len(destinationSquares), len(moves))
-	}
-
-	for i, destination := range destinationSquares {
-		expectedMove := chess.Move{From: chess.Square(27), To: destination}
-
-		if moves[i] != expectedMove {
-			t.Errorf("Expected move %v, got %v", expectedMove, moves[i])
-		}
-	}
-}
-
-func TestBishopMovesBlockedByOwnPiece(t *testing.T) {
-	var board chess.Board
-	bishop := chess.Piece{Type: chess.Bishop, Color: chess.White}
-	pawn := chess.Piece{Type: chess.Pawn, Color: chess.White}
-
-	if err := board.SetPiece(chess.Square(27), bishop); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(45), pawn); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	moves := movegen.BishopMoves(board, chess.Square(27))
-
-	destinationSquares := []chess.Square{
-		36,         // diagonal up-right
-		34, 41, 48, // diagonal up-left
-		20, 13, 6, // diagonal down-right
-		18, 9, 0, // diagonal down-left
-	}
-
-	if len(moves) != len(destinationSquares) {
-		t.Fatalf("Expected %d moves, got %d", len(destinationSquares), len(moves))
-	}
-
-	for i, destination := range destinationSquares {
-		expectedMove := chess.Move{From: chess.Square(27), To: destination}
-
-		if moves[i] != expectedMove {
-			t.Errorf("Expected move %v, got %v", expectedMove, moves[i])
-		}
-	}
-}
-
-func TestBishopCapturesEnemy(t *testing.T) {
-	var board chess.Board
-	bishop := chess.Piece{Type: chess.Bishop, Color: chess.White}
-	pawn := chess.Piece{Type: chess.Pawn, Color: chess.Black}
-
-	if err := board.SetPiece(chess.Square(27), bishop); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(45), pawn); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	moves := movegen.BishopMoves(board, chess.Square(27))
-
-	destinationSquares := []chess.Square{
-		36, 45, // diagonal up-right
-		34, 41, 48, // diagonal up-left
-		20, 13, 6, // diagonal down-right
-		18, 9, 0, // diagonal down-left
-	}
-
-	if len(moves) != len(destinationSquares) {
-		t.Fatalf("Expected %d moves, got %d", len(destinationSquares), len(moves))
-	}
-
-	for i, destination := range destinationSquares {
-		expectedMove := chess.Move{From: chess.Square(27), To: destination}
-
-		if moves[i] != expectedMove {
-			t.Errorf("Expected move %v, got %v", expectedMove, moves[i])
-		}
-	}
+	ownPawn := chess.Piece{Type: chess.Pawn, Color: chess.White}
+	enemyPawn := chess.Piece{Type: chess.Pawn, Color: chess.Black}
+	runMoveCases(t, chess.Bishop, movegen.BishopMoves, []moveCase{
+		{"center", 27, chess.White, nil, bishopDestinations},
+		{"own piece blocks", 27, chess.White, []placedPiece{{45, ownPawn}}, []chess.Square{36, 34, 41, 48, 20, 13, 6, 18, 9, 0}},
+		{"capture ends ray", 27, chess.White, []placedPiece{{45, enemyPawn}}, []chess.Square{36, 45, 34, 41, 48, 20, 13, 6, 18, 9, 0}},
+	})
 }
 
 func TestQueenMoves(t *testing.T) {
-	var board chess.Board
-	queen := chess.Piece{Type: chess.Queen, Color: chess.White}
-
-	if err := board.SetPiece(chess.Square(27), queen); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	moves := movegen.QueenMoves(board, chess.Square(27))
-
-	destinationSquares := []chess.Square{
-		28, 29, 30, 31, // Right
-		26, 25, 24, // Left
-		35, 43, 51, 59, // Up
-		19, 11, 3, // Down
-		36, 45, 54, 63, // Diagonal up-right
-		34, 41, 48, // Diagonal up-left
-		20, 13, 6, // Diagonal down-right
-		18, 9, 0, // Diagonal down-left
-	}
-
-	if len(moves) != len(destinationSquares) {
-		t.Fatalf("Expected %d moves, got %d", len(destinationSquares), len(moves))
-	}
-
-	for i, destination := range destinationSquares {
-		expectedMove := chess.Move{From: chess.Square(27), To: destination}
-
-		if moves[i] != expectedMove {
-			t.Errorf("Expected move %v, got %v", expectedMove, moves[i])
-		}
-	}
-}
-
-func TestQueenMovesBlockedByOwnPiece(t *testing.T) {
-	var board chess.Board
-	queen := chess.Piece{Type: chess.Queen, Color: chess.White}
-	pawn := chess.Piece{Type: chess.Pawn, Color: chess.White}
-
-	if err := board.SetPiece(chess.Square(27), queen); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(29), pawn); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	moves := movegen.QueenMoves(board, chess.Square(27))
-
-	destinationSquares := []chess.Square{
-		28,         // Right
-		26, 25, 24, // Left
-		35, 43, 51, 59, // Up
-		19, 11, 3, // Down
-		36, 45, 54, 63, // Diagonal up-right
-		34, 41, 48, // Diagonal up-left
-		20, 13, 6, // Diagonal down-right
-		18, 9, 0, // Diagonal down-left
-	}
-
-	if len(moves) != len(destinationSquares) {
-		t.Fatalf("Expected %d moves, got %d", len(destinationSquares), len(moves))
-	}
-
-	for i, destination := range destinationSquares {
-		expectedMove := chess.Move{From: chess.Square(27), To: destination}
-
-		if moves[i] != expectedMove {
-			t.Errorf("Expected move %v, got %v", expectedMove, moves[i])
-		}
-	}
-}
-
-func TestQueenMovesCapturesEnemy(t *testing.T) {
-	var board chess.Board
-	queen := chess.Piece{Type: chess.Queen, Color: chess.White}
-	pawn := chess.Piece{Type: chess.Pawn, Color: chess.Black}
-
-	if err := board.SetPiece(chess.Square(27), queen); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	if err := board.SetPiece(chess.Square(29), pawn); err != nil {
-		t.Fatalf("Failed to set piece: %v", err)
-	}
-
-	moves := movegen.QueenMoves(board, chess.Square(27))
-
-	destinationSquares := []chess.Square{
-		28, 29, // Right
-		26, 25, 24, // Left
-		35, 43, 51, 59, // Up
-		19, 11, 3, // Down
-		36, 45, 54, 63, // Diagonal up-right
-		34, 41, 48, // Diagonal up-left
-		20, 13, 6, // Diagonal down-right
-		18, 9, 0, // Diagonal down-left
-	}
-
-	if len(moves) != len(destinationSquares) {
-		t.Fatalf("Expected %d moves, got %d", len(destinationSquares), len(moves))
-	}
-
-	for i, destination := range destinationSquares {
-		expectedMove := chess.Move{From: chess.Square(27), To: destination}
-
-		if moves[i] != expectedMove {
-			t.Errorf("Expected move %v, got %v", expectedMove, moves[i])
-		}
-	}
+	ownPawn := chess.Piece{Type: chess.Pawn, Color: chess.White}
+	enemyPawn := chess.Piece{Type: chess.Pawn, Color: chess.Black}
+	runMoveCases(t, chess.Queen, movegen.QueenMoves, []moveCase{
+		{"center", 27, chess.White, nil, queenDestinations},
+		{"own piece blocks", 27, chess.White, []placedPiece{{29, ownPawn}}, []chess.Square{28, 26, 25, 24, 35, 43, 51, 59, 19, 11, 3, 36, 45, 54, 63, 34, 41, 48, 20, 13, 6, 18, 9, 0}},
+		{"capture ends ray", 27, chess.White, []placedPiece{{29, enemyPawn}}, []chess.Square{28, 29, 26, 25, 24, 35, 43, 51, 59, 19, 11, 3, 36, 45, 54, 63, 34, 41, 48, 20, 13, 6, 18, 9, 0}},
+	})
 }
