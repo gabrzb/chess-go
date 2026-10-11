@@ -211,3 +211,42 @@ func TestCanCastleKingSideInvalidColor(t *testing.T) {
 		}
 	}
 }
+
+func TestKingSideCastlingMove(t *testing.T) {
+	cases := []struct {
+		name  string
+		color chess.Color
+		want  chess.Move
+	}{
+		{"white king-side", chess.White, chess.Move{From: 4, To: 6}},
+		{"black king-side", chess.Black, chess.Move{From: 60, To: 62}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			position := kingSidePosition(t, tc.color)
+
+			move, ok := rules.KingSideCastlingMove(position)
+			if !ok {
+				t.Fatal("Expected king-side castling to be available")
+			}
+
+			if move != tc.want {
+				t.Errorf("Expected move %v, got %v", tc.want, move)
+			}
+		})
+	}
+}
+
+func TestKingSideCastlingMoveUnavailable(t *testing.T) {
+	for _, color := range []chess.Color{chess.White, chess.Black} {
+		position := kingSidePosition(t, color)
+		position.CastlingRights = 0
+
+		_, ok := rules.KingSideCastlingMove(position)
+
+		if ok {
+			t.Errorf("Expected king-side castling to be unavailable for color %v", color)
+		}
+	}
+}

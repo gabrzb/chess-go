@@ -55,3 +55,16 @@ func CanCastleKingSide(position chess.Position) bool {
 
 	return true
 }
+
+func KingSideCastlingMove(position chess.Position) (chess.Move, bool) {
+	if !CanCastleKingSide(position) {
+		return chess.Move{}, false
+	}
+
+	from := chess.Square(4)
+	if position.SideToMove == chess.Black {
+		from = 60
+	}
+
+	return chess.Move{From: from, To: from + 2}, true
+}
