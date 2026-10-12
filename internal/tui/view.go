@@ -3,7 +3,18 @@ package tui
 import tea "charm.land/bubbletea/v2"
 
 func (m model) View() tea.View {
-	view := tea.NewView("Chess Go\n\nq or Ctrl+c to quit\n\n")
+	content := "Chess Go\n\n"
+
+	snapshot, err := m.game.Snapshot()
+	if err != nil {
+		content += "Failed to load game: " + err.Error()
+	} else {
+		content += renderBoard(snapshot.Board)
+	}
+
+	content += "\n\nq or Ctrl+C to quit\n"
+
+	view := tea.NewView(content)
 	view.AltScreen = true
 	return view
 }
