@@ -9,10 +9,14 @@ func (m model) View() tea.View {
 	if err != nil {
 		content += "Failed to load game: " + err.Error()
 	} else {
-		content += renderBoard(snapshot.Board, m.cursor)
+		content += m.renderBoard(snapshot.Board)
 	}
 
-	content += "\n\nq or Ctrl+C to quit\n"
+	if m.message != "" {
+		content += "\n\n" + m.message
+	}
+
+	content += "\n\nArrows/WASD: move | Enter: select | Esc: cancel | q/Ctrl+C: quit\n"
 
 	view := tea.NewView(content)
 	view.AltScreen = true

@@ -8,14 +8,18 @@ import (
 )
 
 type model struct {
-	game   *game.Game
-	cursor chess.Square
+	game       *game.Game
+	cursor     chess.Square
+	selected   chess.Square
+	legalMoves []chess.Move
+	message    string
 }
 
 func NewModel(g *game.Game) tea.Model {
 	return model{
-		game:   g,
-		cursor: chess.A2,
+		game:     g,
+		cursor:   chess.A2,
+		selected: chess.NoSquare,
 	}
 }
 
