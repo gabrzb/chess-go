@@ -120,19 +120,19 @@ func LegalMovesFrom(position chess.Position, from chess.Square) ([]chess.Move, e
 	return moves, nil
 }
 
-func HasLegalMove(board chess.Board, color chess.Color) (bool, error) {
-	if _, err := IsInCheck(board, color); err != nil {
+func HasLegalMove(position chess.Position) (bool, error) {
+	if _, err := IsInCheck(position.Board, position.SideToMove); err != nil {
 		return false, err
 	}
 
-	for from := chess.A1; from < chess.NoSquare; from++ {
-		piece, _ := board.PieceAt(from)
+	for from := chess.A1; from <= chess.H8; from++ {
+		piece, _ := position.Board.PieceAt(from)
 
-		if piece.Type == chess.NoPiece || piece.Color != color {
+		if piece.Type == chess.NoPiece || piece.Color != position.SideToMove {
 			continue
 		}
 
-		moves, err := LegalMoves(board, from)
+		moves, err := LegalMovesFrom(position, from)
 		if err != nil {
 			return false, err
 		}

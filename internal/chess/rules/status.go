@@ -4,8 +4,8 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess"
 )
 
-func EvaluateStatus(board chess.Board, sideToMove chess.Color) (chess.Status, error) {
-	canMove, err := HasLegalMove(board, sideToMove)
+func EvaluateStatus(position chess.Position) (chess.Status, error) {
+	canMove, err := HasLegalMove(position)
 	if err != nil {
 		return chess.StatusOngoing, err
 	}
@@ -14,7 +14,7 @@ func EvaluateStatus(board chess.Board, sideToMove chess.Color) (chess.Status, er
 		return chess.StatusOngoing, nil
 	}
 
-	inCheck, err := IsInCheck(board, sideToMove)
+	inCheck, err := IsInCheck(position.Board, position.SideToMove)
 	if err != nil {
 		return chess.StatusOngoing, err
 	}

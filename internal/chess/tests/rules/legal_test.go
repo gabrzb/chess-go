@@ -107,7 +107,8 @@ func TestHasLegalMoveAvailable(t *testing.T) {
 	mustSetPiece(t, &board, chess.E8, chess.Piece{Type: chess.King, Color: chess.Black})
 
 	for _, color := range []chess.Color{chess.White, chess.Black} {
-		got, err := rules.HasLegalMove(board, color)
+		position := chess.Position{Board: board, SideToMove: color, EnPassant: chess.NoSquare}
+		got, err := rules.HasLegalMove(position)
 		if err != nil {
 			t.Fatalf("Unexpected error for color %v: %v", color, err)
 		}
@@ -135,7 +136,8 @@ func TestHasLegalMoveSearch(t *testing.T) {
 			if tc.addRook {
 				mustSetPiece(t, &board, chess.B8, chess.Piece{Type: chess.Rook, Color: chess.Black})
 			}
-			got, err := rules.HasLegalMove(board, chess.Black)
+			position := chess.Position{Board: board, SideToMove: chess.Black, EnPassant: chess.NoSquare}
+			got, err := rules.HasLegalMove(position)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
@@ -228,7 +230,8 @@ func TestHasLegalMoveErrors(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := rules.HasLegalMove(board, tc.color)
+			position := chess.Position{Board: board, SideToMove: tc.color, EnPassant: chess.NoSquare}
+			_, err := rules.HasLegalMove(position)
 
 			if !errors.Is(err, tc.wantErr) {
 				t.Errorf("Expected error: %v, got: %v", tc.wantErr, err)
