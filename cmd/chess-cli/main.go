@@ -1,7 +1,15 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+
+	"github.com/gabrzb/chess-go/internal/tui"
+)
 
 func main() {
-	fmt.Print("Hello")
+	if err := tui.Run(); err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to run TUI:", err)
+		os.Exit(1)
+	}
 }
