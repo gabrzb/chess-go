@@ -117,6 +117,6 @@ func assertGameUnchanged(t *testing.T, g *game.Game, before game.Snapshot, histo
 		t.Fatalf("Failed to get current game snapshot: %v", err)
 	}
 	if !reflect.DeepEqual(after, before) || g.HistoryLen() != historyLength {
-		t.Error("Expected interface selection to preserve game state and history")
+		t.Error("Expected interface action to preserve game state and history")
 	}
 }

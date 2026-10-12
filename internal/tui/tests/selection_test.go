@@ -96,47 +96,38 @@ func TestInvalidSelectionPreservesState(t *testing.T) {
 		{name: "white", own: chess.A2, enemy: chess.A7},
 		{name: "black", setup: []chess.Move{{From: chess.E2, To: chess.E4}}, own: chess.A7, enemy: chess.A2},
 	} {
-		for _, existing := range []bool{false, true} {
-			stateName := "without selection"
-			if existing {
-				stateName = "with selection"
-			}
-			for _, invalid := range []struct {
-				name   string
-				square chess.Square
-				err    error
-			}{
-				{"empty square", chess.D4, chess.ErrEmptySource},
-				{"opponent piece", side.enemy, chess.ErrIllegalMove},
-			} {
-				t.Run(side.name+"/"+stateName+"/"+invalid.name, func(t *testing.T) {
-					g := game.NewGame()
-					for _, move := range side.setup {
-						if _, err := g.Play(move); err != nil {
-							t.Fatal(err)
-						}
-					}
-					m := moveCursorTo(t, tui.NewModel(g), side.own)
-					if existing {
-						m = updateModel(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
-					}
-					m = moveCursorTo(t, m, invalid.square)
-					beforeBoard := boardText(t, m)
-					before, err := g.Snapshot()
-					if err != nil {
+		for _, invalid := range []struct {
+			name   string
+			square chess.Square
+			err    error
+		}{
+			{"empty square", chess.D4, chess.ErrEmptySource},
+			{"opponent piece", side.enemy, chess.ErrIllegalMove},
+		} {
+			t.Run(side.name+"/"+invalid.name, func(t *testing.T) {
+				g := game.NewGame()
+				for _, move := range side.setup {
+					if _, err := g.Play(move); err != nil {
 						t.Fatal(err)
 					}
-					length := g.HistoryLen()
-					m = updateModel(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
-					if got := boardText(t, m); got != beforeBoard {
-						t.Error("Expected failed selection to preserve existing highlights and cursor")
-					}
-					if !strings.Contains(m.View().Content, invalid.err.Error()) {
-						t.Errorf("Expected error message %q in view, got %q", invalid.err, m.View().Content)
-					}
-					assertGameUnchanged(t, g, before, length)
-				})
-			}
+				}
+				m := moveCursorTo(t, tui.NewModel(g), side.own)
+				m = moveCursorTo(t, m, invalid.square)
+				beforeBoard := boardText(t, m)
+				before, err := g.Snapshot()
+				if err != nil {
+					t.Fatal(err)
+				}
+				length := g.HistoryLen()
+				m = updateModel(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
+				if got := boardText(t, m); got != beforeBoard {
+					t.Error("Expected failed selection to preserve existing highlights and cursor")
+				}
+				if !strings.Contains(m.View().Content, invalid.err.Error()) {
+					t.Errorf("Expected error message %q in view, got %q", invalid.err, m.View().Content)
+				}
+				assertGameUnchanged(t, g, before, length)
+			})
 		}
 	}
 }
@@ -145,14 +136,18 @@ func TestSelectionClearsError(t *testing.T) {
 	for _, cancel := range []bool{true, false} {
 		name := "Escape cancels"
 		if !cancel {
-			name = "successful selection replaces"
+			name = "successful selection clears message"
 		}
 		t.Run(name, func(t *testing.T) {
 			m, g := modelAt(t, chess.A2)
-			m = updateModel(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
+			wantErr := chess.ErrEmptySource
+			if cancel {
+				m = updateModel(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
+				wantErr = chess.ErrIllegalMove
+			}
 			m = moveCursorTo(t, m, chess.D4)
 			m = updateModel(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
-			if !strings.Contains(m.View().Content, chess.ErrEmptySource.Error()) {
+			if !strings.Contains(m.View().Content, wantErr.Error()) {
 				t.Fatal("Expected setup error message")
 			}
 			before, err := g.Snapshot()

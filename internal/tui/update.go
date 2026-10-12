@@ -16,7 +16,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "right", "d":
 			m.moveCursor(1, 0)
 		case "enter":
-			if err := m.selectPiece(); err != nil {
+			var err error
+
+			if m.selected.Valid() {
+				err = m.playSelectedMove()
+			} else {
+				err = m.selectPiece()
+			}
+
+			if err != nil {
 				m.message = err.Error()
 			} else {
 				m.message = ""
