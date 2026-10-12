@@ -7,7 +7,7 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess"
 )
 
-func renderBoard(board chess.Board) string {
+func renderBoard(board chess.Board, cursor chess.Square) string {
 	var text strings.Builder
 
 	for row := chess.A8.Row(); row >= chess.A1.Row(); row-- {
@@ -16,7 +16,13 @@ func renderBoard(board chess.Board) string {
 		for col := 0; col < chess.BoardSize; col++ {
 			square, _ := chess.A1.Offset(col, row)
 			piece, _ := board.PieceAt(square)
-			fmt.Fprintf(&text, " %s", pieceSymbol(piece))
+
+			symbol := pieceSymbol(piece)
+			if square == cursor {
+				symbol = cursorStyle.Render(symbol)
+			}
+
+			fmt.Fprintf(&text, " %s", symbol)
 		}
 
 		text.WriteString("\n")

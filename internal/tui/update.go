@@ -7,6 +7,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch key.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
+		case "up", "w":
+			m.moveCursor(0, 1)
+		case "down", "s":
+			m.moveCursor(0, -1)
+		case "left", "a":
+			m.moveCursor(-1, 0)
+		case "right", "d":
+			m.moveCursor(1, 0)
 		}
 	}
 

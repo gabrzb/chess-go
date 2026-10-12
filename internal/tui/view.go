@@ -9,7 +9,7 @@ func (m model) View() tea.View {
 	if err != nil {
 		content += "Failed to load game: " + err.Error()
 	} else {
-		content += renderBoard(snapshot.Board)
+		content += renderBoard(snapshot.Board, m.cursor)
 	}
 
 	content += "\n\nq or Ctrl+C to quit\n"
