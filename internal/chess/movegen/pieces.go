@@ -139,11 +139,14 @@ func KingMoves(board chess.Board, from chess.Square) []chess.Move {
 
 func PawnMoves(board chess.Board, from chess.Square) []chess.Move {
 	pawn, ok := board.PieceAt(from)
+
 	if !ok || pawn.Type != chess.Pawn {
 		return nil
 	}
+
 	var rowStep int
 	startRow := chess.A2.Row()
+
 	switch pawn.Color {
 	case chess.White:
 		rowStep = 1
@@ -153,33 +156,41 @@ func PawnMoves(board chess.Board, from chess.Square) []chess.Move {
 	default:
 		return nil
 	}
+
 	destination, ok := from.Offset(0, rowStep)
 	if !ok {
 		return nil
 	}
+
 	occupant, _ := board.PieceAt(destination)
 	var moves []chess.Move
+
 	if occupant.Type == chess.NoPiece {
-		moves = append(moves, chess.Move{From: from, To: destination})
+		moves = append(moves, pawnMovesTo(from, destination)...)
+
 		if from.Row() == startRow {
+
 			doubleDestination, ok := destination.Offset(0, rowStep)
 			if ok {
 				doubleOccupant, _ := board.PieceAt(doubleDestination)
 				if doubleOccupant.Type == chess.NoPiece {
-					moves = append(moves, chess.Move{From: from, To: doubleDestination})
+					moves = append(moves, pawnMovesTo(from, doubleDestination)...)
 				}
 			}
 		}
 	}
+
 	for _, colStep := range []int{-1, 1} {
 		captureDestination, ok := from.Offset(colStep, rowStep)
 		if !ok {
 			continue
 		}
+
 		target, _ := board.PieceAt(captureDestination)
 		if target.Type != chess.NoPiece && target.Color != pawn.Color {
-			moves = append(moves, chess.Move{From: from, To: captureDestination})
+			moves = append(moves, pawnMovesTo(from, captureDestination)...)
 		}
 	}
+
 	return moves
 }

@@ -18,6 +18,11 @@ func BoardAfterMove(board chess.Board, move chess.Move) (chess.Board, error) {
 	if _, err := board.RemovePiece(move.From); err != nil {
 		return chess.Board{}, err
 	}
+
+	if move.Promotion != chess.NoPiece {
+		piece.Type = move.Promotion
+	}
+
 	if err := board.SetPiece(move.To, piece); err != nil {
 		return chess.Board{}, err
 	}
