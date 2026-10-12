@@ -10,6 +10,7 @@ func (m model) View() tea.View {
 		content += "Failed to load game: " + err.Error()
 	} else {
 		content += m.renderBoard(snapshot.Board)
+		content += "\n\n" + statusText(snapshot)
 	}
 
 	if m.message != "" {
