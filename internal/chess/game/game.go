@@ -7,7 +7,7 @@ import (
 
 type Game struct {
 	position chess.Position
-	history  []chess.Position
+	history  []Snapshot
 	status   chess.Status
 	lastMove *chess.Move
 }

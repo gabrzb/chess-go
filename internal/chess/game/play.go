@@ -31,7 +31,12 @@ func (g *Game) Play(move chess.Move) (MoveResult, error) {
 		return MoveResult{}, err
 	}
 
-	g.history = append(g.history, g.position)
+	previous, err := g.Snapshot()
+	if err != nil {
+		return MoveResult{}, err
+	}
+
+	g.history = append(g.history, previous)
 	g.position = nextPosition
 	g.status = nextStatus
 	g.lastMove = &move
