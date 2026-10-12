@@ -33,7 +33,16 @@ func PositionAfterMove(position chess.Position, move chess.Move) (chess.Position
 	}
 
 	capturedPiece, _ := position.Board.PieceAt(move.To)
-	board, err := BoardAfterMove(position.Board, move)
+	var board chess.Board
+
+	plan, ok := makeEnPassantPlan(position, move.From)
+	if ok && plan.move == move {
+		capturedPiece, _ = position.Board.PieceAt(plan.capturedSquare)
+		board, err = boardAfterEnPassant(position.Board, plan)
+	} else {
+		board, err = BoardAfterMove(position.Board, move)
+	}
+
 	if err != nil {
 		return chess.Position{}, err
 	}

@@ -89,6 +89,12 @@ func LegalMovesFrom(position chess.Position, from chess.Square) ([]chess.Move, e
 		return nil, err
 	}
 
+	if piece.Type == chess.Pawn {
+		if move, ok := EnPassantMove(position, from); ok {
+			moves = append(moves, move)
+		}
+	}
+
 	if piece.Type != chess.King {
 		return moves, nil
 	}
