@@ -12,9 +12,9 @@ type model struct {
 	cursor chess.Square
 }
 
-func newModel() model {
+func NewModel(g *game.Game) tea.Model {
 	return model{
-		game:   game.NewGame(),
+		game:   g,
 		cursor: chess.A2,
 	}
 }

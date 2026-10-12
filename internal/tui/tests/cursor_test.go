@@ -1,4 +1,4 @@
-package tui
+package tui_test
 
 import (
 	"fmt"
@@ -32,25 +32,17 @@ func TestUpdateCursor(t *testing.T) {
 				{"at edge", tc.edge, tc.edge},
 			} {
 				t.Run(fmt.Sprintf("%s/%s/%s", tc.name, key.String(), state.name), func(t *testing.T) {
-					m := newModel()
-					m.cursor = state.from
-					before, err := m.game.Snapshot()
+					m, g := modelAt(t, state.from)
+					before, err := g.Snapshot()
 					if err != nil {
 						t.Fatalf("Failed to get snapshot before key event: %v", err)
 					}
 
-					updated, cmd := m.Update(key)
-					got, ok := updated.(model)
-					if !ok {
-						t.Fatalf("Expected TUI model, got %T", updated)
+					updated := updateModel(t, m, key)
+					if got := visibleCursor(t, updated); got != state.want {
+						t.Errorf("Expected cursor at %v, got %v", state.want, got)
 					}
-					if cmd != nil {
-						t.Error("Expected cursor movement without a command")
-					}
-					if got.cursor != state.want {
-						t.Errorf("Expected cursor at %v, got %v", state.want, got.cursor)
-					}
-					after, err := got.game.Snapshot()
+					after, err := g.Snapshot()
 					if err != nil {
 						t.Fatalf("Failed to get snapshot after key event: %v", err)
 					}
@@ -76,18 +68,10 @@ func TestUpdateIgnoresNonMovementEvents(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			m := newModel()
-			m.cursor = chess.D4
-			updated, cmd := m.Update(tc.msg)
-			got, ok := updated.(model)
-			if !ok {
-				t.Fatalf("Expected TUI model, got %T", updated)
-			}
-			if got.cursor != m.cursor {
-				t.Errorf("Expected cursor to stay at %v, got %v", m.cursor, got.cursor)
-			}
-			if cmd != nil {
-				t.Error("Expected ignored event without a command")
+			m, _ := modelAt(t, chess.D4)
+			updated := updateModel(t, m, tc.msg)
+			if got := visibleCursor(t, updated); got != chess.D4 {
+				t.Errorf("Expected cursor to stay at %v, got %v", chess.D4, got)
 			}
 		})
 	}

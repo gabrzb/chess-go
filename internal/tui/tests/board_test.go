@@ -1,4 +1,4 @@
-package tui
+package tui_test
 
 import (
 	"strings"
@@ -7,10 +7,12 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/gabrzb/chess-go/internal/chess"
+	"github.com/gabrzb/chess-go/internal/chess/game"
+	"github.com/gabrzb/chess-go/internal/tui"
 )
 
-func TestRenderInitialBoard(t *testing.T) {
-	position := chess.NewInitialPosition()
+func TestViewInitialBoard(t *testing.T) {
+	m := tui.NewModel(game.NewGame())
 	want := `8 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜
 7 ♟ ♟ ♟ ♟ ♟ ♟ ♟ ♟
 6 . . . . . . . .
@@ -21,17 +23,17 @@ func TestRenderInitialBoard(t *testing.T) {
 1 ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖
   a b c d e f g h`
 
-	if got := renderBoard(position.Board, chess.NoSquare); got != want {
+	if got := ansi.Strip(boardText(t, m)); got != want {
 		t.Errorf("Unexpected initial board rendering:\nwant:\n%s\ngot:\n%s", want, got)
 	}
 }
 
-func TestRenderBoardCursor(t *testing.T) {
-	position := chess.NewInitialPosition()
-	plain := renderBoard(position.Board, chess.NoSquare)
+func TestViewBoardCursor(t *testing.T) {
+	plain := ansi.Strip(boardText(t, tui.NewModel(game.NewGame())))
 	for _, cursor := range []chess.Square{chess.A2, chess.D4, chess.H8} {
 		t.Run(cursor.String(), func(t *testing.T) {
-			got := renderBoard(position.Board, cursor)
+			m, _ := modelAt(t, cursor)
+			got := boardText(t, m)
 			if ansi.Strip(got) != plain {
 				t.Fatal("Expected cursor styling to preserve board text and coordinates")
 			}
