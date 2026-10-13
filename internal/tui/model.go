@@ -8,11 +8,12 @@ import (
 )
 
 type model struct {
-	game       *game.Game
-	cursor     chess.Square
-	selected   chess.Square
-	legalMoves []chess.Move
-	message    string
+	game           *game.Game
+	cursor         chess.Square
+	selected       chess.Square
+	legalMoves     []chess.Move
+	message        string
+	promotionMoves []chess.Move
 }
 
 func NewModel(g *game.Game) tea.Model {

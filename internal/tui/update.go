@@ -4,8 +4,16 @@ import tea "charm.land/bubbletea/v2"
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if key, ok := msg.(tea.KeyPressMsg); ok {
+		if key.String() == "ctrl+c" {
+			return m, tea.Quit
+		}
+
+		if len(m.promotionMoves) > 0 {
+			m.handlePromotionKey(key.String())
+			return m, nil
+		}
 		switch key.String() {
-		case "q", "ctrl+c":
+		case "q":
 			return m, tea.Quit
 		case "up", "w":
 			m.moveCursor(0, 1)

@@ -17,7 +17,11 @@ func (m model) View() tea.View {
 		content += "\n\n" + m.message
 	}
 
-	content += "\n\nArrows/WASD: move | Enter: select | Esc: cancel | q/Ctrl+C: quit\n"
+	if len(m.promotionMoves) > 0 {
+		content += "\n\nPromotion: q=Queen | r=Rook | b=Bishop | n=Kinght | Esc: cancel | Ctrl+C: quit\n"
+	} else {
+		content += "\n\nArrows/WASD: move | Enter: select/play | Esc: cancel | q/Ctrl+C: quit\n"
+	}
 
 	view := tea.NewView(content)
 	view.AltScreen = true

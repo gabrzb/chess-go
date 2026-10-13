@@ -22,6 +22,7 @@ func (m *model) clearSelection() {
 	m.selected = chess.NoSquare
 	m.legalMoves = nil
 	m.message = ""
+	m.promotionMoves = nil
 }
 
 func (m model) isLegalDestination(square chess.Square) bool {
