@@ -14,6 +14,10 @@ import (
 func TestBoardRendering(t *testing.T) {
 	m := tui.NewModel(gameWith(t))
 	board := ansi.Strip(boardText(t, m))
+	rawBoard := boardText(t, m)
+	if strings.Count(rawBoard, "48;2;") != 1 || strings.Contains(rawBoard, ansi.NewStyle(ansi.AttrReverse).String()) {
+		t.Fatal("Cursor background must affect only its cell, without reverse video")
+	}
 	if len(boardCells(t, m)) != chess.SquareCount || !strings.Contains(board, "  a b c d e f g h") || !strings.Contains(m.View().Content, "Turn: White") {
 		t.Fatal("Missing initial board, coordinates or turn")
 	}

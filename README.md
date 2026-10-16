@@ -60,10 +60,10 @@ go run ./cmd/chess-tui -ai hard -color black
 | `-seed` | Inteiro usado no desempate da IA | `1` |
 | `-no-animation` | Desativar animações | Animações ligadas |
 
-O tabuleiro atual foi preservado. Em terminais largos, o painel lateral mostra
-a situação da partida e os últimos lances, agrupados por cor em notação algébrica
-(SAN). Janelas menores usam um layout compacto; se o tabuleiro não couber, a
-interface pede para ampliar a janela e preserva a posição. As peças requerem
+O tabuleiro fica centralizado, com turno, último lance e histórico distribuídos
+acima dele. Os lances são agrupados por cor em notação algébrica (SAN). O cursor
+destaca somente sua casa. Janelas menores usam um layout compacto; se o tabuleiro
+não couber, a interface pede para ampliar a janela e preserva a posição. As peças requerem
 uma fonte com suporte aos símbolos Unicode de xadrez.
 
 ### Controles

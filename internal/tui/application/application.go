@@ -1,8 +1,6 @@
 package application
 
 import (
-	"github.com/gabrzb/chess-go/internal/tui/match"
-
 	"context"
 	"errors"
 	"io"
@@ -14,6 +12,7 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess"
 	"github.com/gabrzb/chess-go/internal/chess/ai"
 	"github.com/gabrzb/chess-go/internal/chess/game"
+	"github.com/gabrzb/chess-go/internal/tui/match"
 )
 
 type screen uint8

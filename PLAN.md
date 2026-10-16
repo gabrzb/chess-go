@@ -4,6 +4,10 @@ Referência visual e funcional: UI.md (apoio local, não versionado).
 
 ## Implementação concluída
 
+Ajustes posteriores: TUI separada em `application`, `match` e `render`; textos
+centralizados; painel da partida distribuído acima do tabuleiro; cursor com fundo
+aplicado somente ao símbolo da casa. A suíte segue com 39 funções e 48 casos.
+
 - `cc87048`: resultado explícito no motor, desistência e acordo de empate.
 - `474fd00`: modelo raiz, tema, menus, configuração, confirmações e ciclo da partida.
 - `6254fdb`: painéis adaptáveis, histórico SAN, promoção e animações por mensagens.
@@ -34,7 +38,7 @@ ignorado e ausente dos commits.
 - [x] Criar o controle de telas e transições no modelo raiz.
 - [x] Criar tema, faixas, títulos, opções com marcador e rodapé compartilhados.
 - [x] Implementar menu principal com modo local, modo IA e saída.
-- [x] Centralizar os conjuntos de conteúdo; preservar a coluna do marcador.
+- [x] Centralizar o conteúdo e cada opção; reservar espaço para o marcador.
 
 Aceite: navegar por setas/Enter, abrir cada modo e encerrar restaurando o terminal.
 A abertura animada será acrescentada no bloco 7.
@@ -99,8 +103,8 @@ não carrega seleção, mensagens, histórico ou respostas da IA da sessão ante
 - [x] Apresentar falha da IA com tentar novamente ou voltar ao menu; registrar
   detalhes técnicos sem misturá-los ao conteúdo da TUI.
 - [x] Tratar dimensões e recompor layout largo/compacto sem perder posição e foco.
-- [x] Ocultar o painel de histórico antes de comprometer o tabuleiro; medir o mínimo
-  real e mostrar aviso quando a janela não comportar o conteúdo.
+- [x] Distribuir o painel acima do tabuleiro e ocultar o histórico antes de comprometer
+  o tabuleiro; medir o mínimo real e mostrar aviso quando a janela não comportar o conteúdo.
 
 Aceite: promoção cancelada e erro preservam a partida; redimensionamento mantém
 estado e controles acessíveis. O tabuleiro existente continua sendo a base visual.

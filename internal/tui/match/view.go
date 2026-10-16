@@ -1,13 +1,12 @@
 package match
 
 import (
-	"github.com/gabrzb/chess-go/internal/tui/render"
-
 	"fmt"
 
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/gabrzb/chess-go/internal/chess"
+	"github.com/gabrzb/chess-go/internal/tui/render"
 )
 
 func (m Model) View() tea.View {

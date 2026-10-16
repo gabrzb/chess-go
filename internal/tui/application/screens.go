@@ -1,13 +1,12 @@
 package application
 
 import (
-	"github.com/gabrzb/chess-go/internal/tui/match"
-
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/gabrzb/chess-go/internal/chess"
+	"github.com/gabrzb/chess-go/internal/tui/match"
 )
 
 func (m application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

@@ -1,8 +1,9 @@
 package render
 
 import (
-	"charm.land/lipgloss/v2"
 	"strings"
+
+	"charm.land/lipgloss/v2"
 )
 
 const (
@@ -25,14 +26,14 @@ var Logo = strings.Join([]string{
 }, "\n")
 
 func Paint(text, color string) string {
-	return lipgloss.NewStyle().Foreground(lipgloss.Color(color)).Render(text)
-}
-
-func CenteredBlock(text string, width int) string {
-	left := strings.Repeat(" ", max(0, (width-lipgloss.Width(text))/2))
+	style := lipgloss.NewStyle().Foreground(lipgloss.Color(color))
 	lines := strings.Split(text, "\n")
 	for index, line := range lines {
-		lines[index] = left + line + strings.Repeat(" ", max(0, width-len(left)-lipgloss.Width(line)))
+		lines[index] = style.Render(line)
 	}
 	return strings.Join(lines, "\n")
+}
+
+func Center(text string, width int) string {
+	return lipgloss.NewStyle().Width(width).Align(lipgloss.Center).Render(text)
 }

@@ -1,6 +1,7 @@
 package tui_test
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -40,20 +41,45 @@ func contains(t *testing.T, m tea.Model, text string) {
 func TestApplicationLocalGameAndResult(t *testing.T) {
 	m := app(t, tui.Options{})
 	contains(t, m, "Jogador vs Jogador")
-	column := -1
 	for _, line := range strings.Split(ansi.Strip(m.View().Content), "\n") {
 		for _, label := range []string{"Jogador vs Jogador", "Jogador vs IA", "Sair"} {
 			if index := strings.Index(line, label); index >= 0 {
-				got := ansi.StringWidth(line[:index])
-				if column >= 0 && column != got {
-					t.Fatal("Menu options are not aligned")
+				midpoint := ansi.StringWidth(line[:index]) + ansi.StringWidth(label)/2
+				if midpoint < 39 || midpoint > 41 {
+					t.Fatal("Menu option is not centered")
 				}
-				column = got
 			}
 		}
 	}
 	m = keys(t, m, tea.KeyEnter)
 	contains(t, m, "Vez das brancas")
+	cursorSpans := regexp.MustCompile("\x1b\\[[0-9;]*48;2;126;156;216[0-9;]*m([^\x1b]*)").FindAllStringSubmatch(m.View().Content, -1)
+	if len(cursorSpans) != 1 || ansi.StringWidth(cursorSpans[0][1]) != 1 {
+		t.Fatal("Cursor style extends beyond one symbol in the complete UI")
+	}
+	view := ansi.Strip(m.View().Content)
+	boardStart := strings.Index(view, "TABULEIRO")
+	if boardStart < 0 || strings.Index(view, "PARTIDA") > boardStart || strings.Index(view, "HISTÓRICO") > boardStart {
+		t.Fatal("Match details must be above the board")
+	}
+	boardLines := 0
+	for _, original := range strings.Split(view, "\n") {
+		line := strings.TrimSpace(original)
+		if len(line) > 1 && line[0] >= '1' && line[0] <= '8' && line[1] == ' ' {
+			if len(strings.Fields(line)) != chess.BoardSize+1 {
+				t.Fatal("Board row contains side panels")
+			}
+			left := len(original) - len(strings.TrimLeft(original, " "))
+			gap := 80 - ansi.StringWidth(line) - 2*left
+			if gap < -1 || gap > 1 {
+				t.Fatal("Board row is not centered")
+			}
+			boardLines++
+		}
+	}
+	if boardLines != chess.BoardSize {
+		t.Fatal("Missing complete centered board")
+	}
 	m = keys(t, m, 'd', 'd', 'd', 'd', tea.KeyEnter, 'w', 'w', tea.KeyEnter)
 	contains(t, m, "Vez das pretas")
 	contains(t, m, "1. e4")
@@ -79,7 +105,7 @@ func TestApplicationLocalGameAndResult(t *testing.T) {
 	m = updateModel(t, m, tea.WindowSizeMsg{Width: 28, Height: 12})
 	contains(t, m, "Terminal pequeno demais.")
 	m = updateModel(t, m, tea.WindowSizeMsg{Width: 80, Height: 24})
-	contains(t, m, "Último lance: e2 → e4")
+	contains(t, m, "e2 → e4")
 	m = keys(t, m, tea.KeyEscape, tea.KeyEnter)
 	contains(t, m, "Vez das brancas")
 }
@@ -122,7 +148,7 @@ func TestApplicationPromotionAndNotation(t *testing.T) {
 	m = keys(t, m, tea.KeyDown, tea.KeyDown, tea.KeyEnter)
 	contains(t, m, "Vez das pretas")
 	contains(t, m, "bxa8=B")
-	contains(t, m, "Último lance: b7 → a8")
+	contains(t, m, "b7 → a8")
 }
 
 func TestApplicationSpecialNotation(t *testing.T) {

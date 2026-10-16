@@ -45,7 +45,7 @@ func visibleCursor(t *testing.T, m tea.Model) chess.Square {
 	t.Helper()
 	cursor := chess.NoSquare
 	for square, cell := range boardCells(t, m) {
-		if strings.Contains(cell, ansi.NewStyle(ansi.AttrReverse).String()) {
+		if strings.Contains(cell, "48;2;") {
 			if cursor.Valid() {
 				t.Fatal("Multiple cursors")
 			}
