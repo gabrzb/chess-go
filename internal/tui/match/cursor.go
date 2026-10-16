@@ -1,6 +1,6 @@
-package tui
+package match
 
-func (m *model) moveCursor(colStep, rowStep int) {
+func (m *Model) moveCursor(colStep, rowStep int) {
 	if m.flipped {
 		colStep, rowStep = -colStep, -rowStep
 	}

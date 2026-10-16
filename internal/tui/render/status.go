@@ -1,11 +1,11 @@
-package tui
+package render
 
 import (
 	"github.com/gabrzb/chess-go/internal/chess"
 	"github.com/gabrzb/chess-go/internal/chess/game"
 )
 
-func colorName(color chess.Color) string {
+func ColorName(color chess.Color) string {
 	switch color {
 	case chess.White:
 		return "White"
@@ -16,7 +16,7 @@ func colorName(color chess.Color) string {
 	}
 }
 
-func statusText(snapshot game.Snapshot) string {
+func StatusText(snapshot game.Snapshot) string {
 	switch snapshot.Status {
 	case chess.StatusCheckmate:
 		winner := chess.White
@@ -25,12 +25,12 @@ func statusText(snapshot game.Snapshot) string {
 			winner = chess.Black
 		}
 
-		return "Checkmate! " + colorName(winner) + " wins."
+		return "Checkmate! " + ColorName(winner) + " wins."
 	case chess.StatusStalemate:
 		return "Stalemate! Draw."
 	}
 
-	text := "Turn: " + colorName(snapshot.SideToMove)
+	text := "Turn: " + ColorName(snapshot.SideToMove)
 	if snapshot.Check {
 		text += " (check)"
 	}

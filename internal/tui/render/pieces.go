@@ -1,10 +1,10 @@
-package tui
+package render
 
 import (
 	"github.com/gabrzb/chess-go/internal/chess"
 )
 
-func pieceSymbol(piece chess.Piece) string {
+func Piece(piece chess.Piece) string {
 	symbols := map[chess.PieceType]struct {
 		white string
 		black string

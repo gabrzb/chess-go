@@ -1,4 +1,4 @@
-package tui
+package match
 
 import (
 	"context"
@@ -23,22 +23,25 @@ type aiResultMessage struct {
 	err       error
 }
 
-func NewModelWithAI(ctx context.Context, g *game.Game, chooser ai.MoveChooser, color chess.Color) (tea.Model, error) {
+func NewWithAI(ctx context.Context, g *game.Game, chooser ai.MoveChooser, color chess.Color, session uint64) (Model, error) {
 	if ctx == nil || g == nil || chooser == nil || (color != chess.White && color != chess.Black) {
-		return nil, ErrInvalidAIConfig
+		return Model{}, ErrInvalidAIConfig
 	}
-	m := NewModel(g).(model)
+	m := New(g, session)
 	m.aiContext = ctx
 	m.opponent = chooser
 	m.aiColor = color
+	if color == chess.White {
+		m.cursor = chess.A7
+	}
 	return m, nil
 }
 
-func (m model) isAITurn() bool {
+func (m Model) isAITurn() bool {
 	return m.opponent != nil && m.game.Position().SideToMove == m.aiColor
 }
 
-func (m *model) startAITurn() tea.Cmd {
+func (m *Model) StartAI() tea.Cmd {
 	if !m.isAITurn() || m.thinking || m.reviewing || len(m.promotionMoves) > 0 {
 		return nil
 	}
@@ -62,7 +65,7 @@ func (m *model) startAITurn() tea.Cmd {
 	}
 }
 
-func (m *model) stopAITurn() {
+func (m *Model) StopAI() {
 	if m.cancelAI != nil {
 		m.cancelAI()
 		m.cancelAI = nil
@@ -70,12 +73,12 @@ func (m *model) stopAITurn() {
 	m.thinking = false
 }
 
-func (m model) receiveAIResult(result aiResultMessage) (tea.Model, tea.Cmd) {
+func (m Model) receiveAIResult(result aiResultMessage) (tea.Model, tea.Cmd) {
 	// A canceled search may finish after review closes and another search starts.
 	if !m.thinking || result.requestID != m.requestID || result.sessionID != m.sessionID {
 		return m, nil
 	}
-	m.stopAITurn()
+	m.StopAI()
 	if result.position != m.game.Position() {
 		m.message = "AI result discarded: the position changed. Press Enter to retry."
 		return m, nil
@@ -90,4 +93,9 @@ func (m model) receiveAIResult(result aiResultMessage) (tea.Model, tea.Cmd) {
 	}
 	m.cursor = result.move.To
 	return m, nil
+}
+
+func IsAIResult(msg tea.Msg, session uint64) bool {
+	result, ok := msg.(aiResultMessage)
+	return ok && result.sessionID == session
 }

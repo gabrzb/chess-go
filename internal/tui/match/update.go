@@ -1,11 +1,11 @@
-package tui
+package match
 
 import tea "charm.land/bubbletea/v2"
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case startAIMessage:
-		cmd := m.startAITurn()
+		cmd := m.StartAI()
 		return m, cmd
 	case aiResultMessage:
 		return m.receiveAIResult(msg)
@@ -13,23 +13,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if key, ok := msg.(tea.KeyPressMsg); ok {
 		if key.String() == "ctrl+c" {
-			m.stopAITurn()
+			m.StopAI()
 			return m, tea.Quit
 		}
 
 		if len(m.promotionMoves) > 0 {
-			m.handlePromotionKey(key.String())
-			cmd := m.startAITurn()
+			m.PromotionKey(key.String())
+			cmd := m.StartAI()
 			return m, cmd
 		}
 
 		if key.String() == "h" {
 			m.toggleReview()
 			if m.reviewing {
-				m.stopAITurn()
+				m.StopAI()
 				return m, nil
 			}
-			cmd := m.startAITurn()
+			cmd := m.StartAI()
 			return m, cmd
 		}
 
@@ -40,11 +40,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "right", "d":
 				m.moveHistory(1)
 			case "q":
-				m.stopAITurn()
+				m.StopAI()
 				return m, tea.Quit
 			case "esc":
 				m.toggleReview()
-				cmd := m.startAITurn()
+				cmd := m.StartAI()
 				return m, cmd
 			}
 
@@ -53,7 +53,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch key.String() {
 		case "q":
-			m.stopAITurn()
+			m.StopAI()
 			return m, tea.Quit
 		case "up", "w":
 			m.moveCursor(0, 1)
@@ -65,7 +65,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.moveCursor(1, 0)
 		case "enter":
 			if m.isAITurn() {
-				cmd := m.startAITurn()
+				cmd := m.StartAI()
 				return m, cmd
 			}
 			var err error
@@ -81,10 +81,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.message = ""
 			}
-			cmd := m.startAITurn()
+			cmd := m.StartAI()
 			return m, cmd
 		case "esc":
-			m.clearSelection()
+			m.ClearSelection()
 		}
 	}
 

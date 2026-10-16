@@ -1,9 +1,9 @@
-package tui
+package match
 
 import "github.com/gabrzb/chess-go/internal/chess/game"
 
-func (m *model) toggleReview() {
-	m.clearSelection()
+func (m *Model) toggleReview() {
+	m.ClearSelection()
 	m.reviewing = !m.reviewing
 
 	if m.reviewing {
@@ -11,7 +11,7 @@ func (m *model) toggleReview() {
 	}
 }
 
-func (m model) displayedSnapshot() (game.Snapshot, error) {
+func (m Model) DisplayedSnapshot() (game.Snapshot, error) {
 	if m.reviewing {
 		return m.game.HistorySnapshot(m.historyIndex)
 	}
@@ -19,7 +19,7 @@ func (m model) displayedSnapshot() (game.Snapshot, error) {
 	return m.game.Snapshot()
 }
 
-func (m *model) moveHistory(step int) {
+func (m *Model) moveHistory(step int) {
 	next := m.historyIndex + step
 
 	if next >= 0 && next < m.game.HistoryLen() {

@@ -1,6 +1,8 @@
-package tui
+package application
 
 import (
+	"github.com/gabrzb/chess-go/internal/tui/match"
+
 	"context"
 	"errors"
 	"io"
@@ -53,7 +55,7 @@ type settings struct {
 type application struct {
 	ctx                context.Context
 	logger             *log.Logger
-	match              model
+	match              match.Model
 	config             settings
 	screen, helpBack   screen
 	choice, helpChoice int
@@ -67,7 +69,7 @@ type application struct {
 	animationID        uint64
 }
 
-func NewApplication(ctx context.Context, options Options) (tea.Model, error) {
+func New(ctx context.Context, options Options) (tea.Model, error) {
 	if ctx == nil {
 		return nil, errors.New("application requires a context")
 	}
@@ -107,7 +109,7 @@ func (m *application) show(next screen) {
 		m.introDone = true
 	}
 	if next != playingScreen && next != finalBoardScreen {
-		m.match.stopAITurn()
+		m.match.StopAI()
 	}
 	m.screen, m.choice = next, 0
 	m.frame = 0
@@ -116,14 +118,13 @@ func (m *application) show(next screen) {
 
 func (m *application) resume() tea.Cmd {
 	m.show(playingScreen)
-	return m.match.startAITurn()
+	return m.match.StartAI()
 }
 
 func (m *application) beginMatch() tea.Cmd {
-	m.match.stopAITurn()
+	m.match.StopAI()
 	m.session++
-	m.match = NewModel(game.NewGame()).(model)
-	m.match.sessionID = m.session
+	m.match = match.New(game.NewGame(), m.session)
 	m.labels = nil
 	if m.config.computer {
 		human := chess.White
@@ -136,9 +137,11 @@ func (m *application) beginMatch() tea.Cmd {
 			m.show(errorScreen)
 			return nil
 		}
-		m.match.opponent, m.match.aiContext, m.match.aiColor = player, m.ctx, opposite(human)
-		if human == chess.Black {
-			m.match.cursor = chess.A7
+		m.match, err = match.NewWithAI(m.ctx, m.match.Game(), player, opposite(human), m.session)
+		if err != nil {
+			m.logger.Print(err)
+			m.show(errorScreen)
+			return nil
 		}
 	}
 	return m.resume()
@@ -163,7 +166,7 @@ func sideText(color chess.Color) string {
 
 func (m application) resigningSide() chess.Color {
 	if m.config.computer {
-		return opposite(m.match.aiColor)
+		return opposite(m.match.State().AIColor)
 	}
-	return m.match.game.Position().SideToMove
+	return m.match.Game().Position().SideToMove
 }

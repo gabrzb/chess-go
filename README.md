@@ -101,7 +101,10 @@ internal/
 │   ├── game/           # partida, snapshots e histórico
 │   ├── ai/             # avaliação e busca de jogadas
 │   └── tests/          # testes do motor separados por assunto
-└── tui/                # telas, teclado, renderização e revisão da partida
+└── tui/                # inicialização e API de entrada
+    ├── application/    # telas, navegação e ciclo das sessões
+    ├── match/          # interação com a partida, histórico e IA
+    ├── render/         # tema, componentes, tabuleiro e notação SAN
     └── tests/          # testes da interface
 ```
 
@@ -111,9 +114,17 @@ Os tipos compartilhados pertencem ao pacote `chess`, na raiz de
 ```mermaid
 flowchart TD
     cmd["cmd/chess-tui"] --> tui
-    tui --> game
-    tui --> chess
-    tui --> ai
+    tui --> application
+    tui --> match
+    application --> match
+    application --> render
+    application --> game
+    application --> ai
+    match --> render
+    match --> game
+    match --> ai
+    render --> rules
+    render --> chess
     ai --> rules
     ai --> chess
     game --> rules
@@ -128,6 +139,11 @@ flowchart TD
 Uma seta representa um import. O pacote `chess` não importa os pacotes de
 comportamento, evitando dependências circulares. Os testes importam os pacotes
 que verificam; o motor não depende dos testes.
+
+Na TUI, `application` coordena as telas e consulta uma cópia do estado visual de
+`match`. A interação com peças, promoção, revisão e buscas pertence a `match`.
+`render` recebe os dados necessários para desenhar a interface, sem controlar
+sessões ou iniciar buscas. Esses pacotes não importam a raiz `tui`.
 
 ## Funções principais
 

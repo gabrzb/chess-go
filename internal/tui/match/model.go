@@ -1,4 +1,4 @@
-package tui
+package match
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess/game"
 )
 
-type model struct {
+type Model struct {
 	game           *game.Game
 	cursor         chess.Square
 	selected       chess.Square
@@ -29,15 +29,16 @@ type model struct {
 	flipped        bool
 }
 
-func NewModel(g *game.Game) tea.Model {
-	return model{
-		game:     g,
-		cursor:   chess.A2,
-		selected: chess.NoSquare,
+func New(g *game.Game, session uint64) Model {
+	return Model{
+		game:      g,
+		sessionID: session,
+		cursor:    chess.A2,
+		selected:  chess.NoSquare,
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	if m.opponent != nil {
 		return func() tea.Msg { return startAIMessage{} }
 	}

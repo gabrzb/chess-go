@@ -1,8 +1,8 @@
-package tui
+package match
 
 import "github.com/gabrzb/chess-go/internal/chess"
 
-func (m *model) playSelectedMove() error {
+func (m *Model) playSelectedMove() error {
 	if m.preparePromotion() {
 		return nil
 	}
@@ -15,11 +15,11 @@ func (m *model) playSelectedMove() error {
 	return m.playMove(move)
 }
 
-func (m *model) playMove(move chess.Move) error {
+func (m *Model) playMove(move chess.Move) error {
 	if _, err := m.game.Play(move); err != nil {
 		return err
 	}
 
-	m.clearSelection()
+	m.ClearSelection()
 	return nil
 }

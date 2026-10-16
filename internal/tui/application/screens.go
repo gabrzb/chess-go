@@ -1,6 +1,8 @@
-package tui
+package application
 
 import (
+	"github.com/gabrzb/chess-go/internal/tui/match"
+
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -34,12 +36,12 @@ func (m application) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width, m.height = max(1, size.Width), max(1, size.Height)
 		return m, nil
 	}
-	if result, ok := msg.(aiResultMessage); ok {
-		if m.match.game == nil || result.sessionID != m.session {
+	if match.IsAIResult(msg, m.session) {
+		if m.match.Game() == nil {
 			return m, nil
 		}
 		next, cmd := m.match.Update(msg)
-		m.match = next.(model)
+		m.match = next.(match.Model)
 		m.afterMatch()
 		return m, cmd
 	}
@@ -48,7 +50,7 @@ func (m application) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	if key.String() == "ctrl+c" {
-		m.match.stopAITurn()
+		m.match.StopAI()
 		return m, tea.Quit
 	}
 	if m.screen == mainScreen {
@@ -120,8 +122,8 @@ func (m application) back() (tea.Model, tea.Cmd) {
 	case resignScreen, abandonScreen:
 		m.show(pauseScreen)
 	case drawScreen:
-		s, _ := m.match.game.Snapshot()
-		if err := m.match.game.RespondDraw(opposite(s.DrawOffer), false); err != nil {
+		s, _ := m.match.Game().Snapshot()
+		if err := m.match.Game().RespondDraw(opposite(s.DrawOffer), false); err != nil {
 			m.logger.Print(err)
 		}
 		cmd := m.resume()
@@ -130,7 +132,7 @@ func (m application) back() (tea.Model, tea.Cmd) {
 		m.show(m.helpBack)
 		m.choice = m.helpChoice
 		if m.screen == playingScreen {
-			cmd := m.match.startAITurn()
+			cmd := m.match.StartAI()
 			return m, cmd
 		}
 	case resultScreen:
@@ -173,7 +175,7 @@ func (m *application) activate() tea.Cmd {
 			return m.resume()
 		}
 		if target == drawScreen {
-			if err := m.match.game.OfferDraw(m.match.game.Position().SideToMove); err != nil {
+			if err := m.match.Game().OfferDraw(m.match.Game().Position().SideToMove); err != nil {
 				m.logger.Print(err)
 				return nil
 			}
@@ -183,7 +185,7 @@ func (m *application) activate() tea.Cmd {
 		if m.choice == 0 {
 			return m.resume()
 		}
-		if err := m.match.game.Resign(m.resigningSide()); err != nil {
+		if err := m.match.Game().Resign(m.resigningSide()); err != nil {
 			m.logger.Print(err)
 			return nil
 		}
@@ -192,13 +194,13 @@ func (m *application) activate() tea.Cmd {
 		if m.choice == 0 {
 			return m.resume()
 		}
-		m.match.stopAITurn()
-		m.match = model{}
+		m.match.StopAI()
+		m.match = match.Model{}
 		m.show(mainScreen)
 	case drawScreen:
-		s, _ := m.match.game.Snapshot()
+		s, _ := m.match.Game().Snapshot()
 		accept := m.choice == 1
-		if err := m.match.game.RespondDraw(opposite(s.DrawOffer), accept); err != nil {
+		if err := m.match.Game().RespondDraw(opposite(s.DrawOffer), accept); err != nil {
 			m.logger.Print(err)
 			return nil
 		}
@@ -212,16 +214,16 @@ func (m *application) activate() tea.Cmd {
 		case 0:
 			return m.beginMatch()
 		case 1:
-			m.match.clearSelection()
-			m.match.reviewing = false
+			m.match.ClearSelection()
+			m.match.EndReview()
 			m.show(finalBoardScreen)
 		case 2:
-			m.match = model{}
+			m.match = match.Model{}
 			m.show(mainScreen)
 		}
 	case errorScreen:
 		if m.choice == 0 {
-			m.match.message = ""
+			m.match.ClearMessage()
 			return m.resume()
 		}
 		m.show(abandonScreen)
@@ -230,7 +232,7 @@ func (m *application) activate() tea.Cmd {
 }
 
 func (m application) updateBoard(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	if len(m.match.promotionMoves) > 0 && m.screen == playingScreen {
+	if m.match.State().PromotionPending && m.screen == playingScreen {
 		switch key.String() {
 		case "up", "w":
 			m.choice = (m.choice + 3) % 4
@@ -238,28 +240,26 @@ func (m application) updateBoard(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			m.choice = (m.choice + 1) % 4
 		case "enter":
 			kind := []chess.PieceType{chess.Queen, chess.Rook, chess.Bishop, chess.Knight}[m.choice]
-			if err := m.match.choosePromotion(kind); err != nil {
-				m.match.message = err.Error()
-			}
+			m.match.Promote(kind)
 		default:
-			m.match.handlePromotionKey(key.String())
+			m.match.PromotionKey(key.String())
 		}
 		m.afterMatch()
 		if m.screen == playingScreen {
-			cmd := m.match.startAITurn()
+			cmd := m.match.StartAI()
 			return m, cmd
 		}
 		return m, nil
 	}
 	if key.String() == "f" {
-		m.match.flipped = !m.match.flipped
+		m.match.Flip()
 		return m, nil
 	}
-	if key.String() == "esc" && !m.match.reviewing {
+	if key.String() == "esc" && !m.match.State().Reviewing {
 		if m.screen == finalBoardScreen {
 			m.show(resultScreen)
-		} else if m.match.selected.Valid() || m.match.message != "" {
-			m.match.clearSelection()
+		} else if m.match.State().Selected.Valid() || m.match.State().Message != "" {
+			m.match.ClearSelection()
 		} else {
 			m.show(pauseScreen)
 		}
@@ -273,16 +273,16 @@ func (m application) updateBoard(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	}
-	if m.screen == finalBoardScreen && key.String() != "h" && !m.match.reviewing {
+	if m.screen == finalBoardScreen && key.String() != "h" && !m.match.State().Reviewing {
 		return m, nil
 	}
 	if !m.boardFits() && key.String() != "h" && key.String() != "esc" {
 		return m, nil
 	}
-	wasPromotion := len(m.match.promotionMoves) > 0
+	wasPromotion := m.match.State().PromotionPending
 	next, cmd := m.match.Update(key)
-	m.match = next.(model)
-	if !wasPromotion && len(m.match.promotionMoves) > 0 {
+	m.match = next.(match.Model)
+	if !wasPromotion && m.match.State().PromotionPending {
 		m.choice = 0
 	}
 	m.afterMatch()
@@ -290,13 +290,13 @@ func (m application) updateBoard(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *application) afterMatch() {
-	if strings.HasPrefix(m.match.message, "AI failed:") || strings.HasPrefix(m.match.message, "AI result discarded:") {
-		m.logger.Print(m.match.message)
-		m.match.message = ""
+	if strings.HasPrefix(m.match.State().Message, "AI failed:") || strings.HasPrefix(m.match.State().Message, "AI result discarded:") {
+		m.logger.Print(m.match.State().Message)
+		m.match.ClearMessage()
 		m.show(errorScreen)
 		return
 	}
-	snapshot, err := m.match.game.Snapshot()
+	snapshot, err := m.match.Game().Snapshot()
 	if err != nil {
 		m.logger.Print(err)
 		m.show(errorScreen)

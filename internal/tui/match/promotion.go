@@ -1,8 +1,8 @@
-package tui
+package match
 
 import "github.com/gabrzb/chess-go/internal/chess"
 
-func (m *model) preparePromotion() bool {
+func (m *Model) preparePromotion() bool {
 	m.promotionMoves = nil
 
 	for _, move := range m.legalMoves {
@@ -14,7 +14,7 @@ func (m *model) preparePromotion() bool {
 	return len(m.promotionMoves) > 0
 }
 
-func (m *model) choosePromotion(pieceType chess.PieceType) error {
+func (m *Model) choosePromotion(pieceType chess.PieceType) error {
 	for _, move := range m.promotionMoves {
 		if move.Promotion == pieceType {
 			return m.playMove(move)
@@ -24,9 +24,9 @@ func (m *model) choosePromotion(pieceType chess.PieceType) error {
 	return chess.ErrIllegalMove
 }
 
-func (m *model) handlePromotionKey(key string) {
+func (m *Model) PromotionKey(key string) {
 	if key == "esc" {
-		m.clearSelection()
+		m.ClearSelection()
 		return
 	}
 

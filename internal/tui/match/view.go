@@ -1,6 +1,8 @@
-package tui
+package match
 
 import (
+	"github.com/gabrzb/chess-go/internal/tui/render"
+
 	"fmt"
 
 	tea "charm.land/bubbletea/v2"
@@ -8,17 +10,17 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess"
 )
 
-func (m model) View() tea.View {
+func (m Model) View() tea.View {
 	content := "Chess Go\n\n"
 
-	snapshot, err := m.displayedSnapshot()
+	snapshot, err := m.DisplayedSnapshot()
 	if err != nil {
 		content += "Failed to load game: " + err.Error()
 	} else {
-		content += m.renderBoard(snapshot.Board)
-		content += "\n\n" + statusText(snapshot)
+		content += m.RenderBoard(snapshot.Board)
+		content += "\n\n" + render.StatusText(snapshot)
 		if m.opponent != nil {
-			content += "\nAI: " + colorName(m.aiColor)
+			content += "\nAI: " + render.ColorName(m.aiColor)
 			if m.thinking {
 				content += " (thinking...)"
 			}

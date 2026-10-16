@@ -1,4 +1,4 @@
-package tui
+package render
 
 import (
 	"slices"
@@ -10,7 +10,7 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess/rules"
 )
 
-func san(before, next game.Snapshot, move chess.Move) string {
+func SAN(before, next game.Snapshot, move chess.Move) string {
 	piece, _ := before.Board.PieceAt(move.From)
 	captured, _ := before.Board.PieceAt(move.To)
 	letters := map[chess.PieceType]string{chess.Knight: "N", chess.Bishop: "B", chess.Rook: "R", chess.Queen: "Q", chess.King: "K"}
@@ -70,20 +70,4 @@ func abs(value int) int {
 		return -value
 	}
 	return value
-}
-
-func (m *application) refreshLabels() {
-	for len(m.labels)+1 < m.match.game.HistoryLen() {
-		index := len(m.labels) + 1
-		before, err := m.match.game.HistorySnapshot(index - 1)
-		if err != nil {
-			m.logger.Print(err)
-			return
-		}
-		next, err := m.match.game.HistorySnapshot(index)
-		if err != nil || next.LastMove == nil {
-			return
-		}
-		m.labels = append(m.labels, san(before, next, *next.LastMove))
-	}
 }
