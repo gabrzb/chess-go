@@ -62,6 +62,9 @@ type application struct {
 	initial            tea.Cmd
 	noAnimations       bool
 	labels             []string
+	introDone          bool
+	frame              int
+	animationID        uint64
 }
 
 func NewApplication(ctx context.Context, options Options) (tea.Model, error) {
@@ -93,16 +96,22 @@ func NewApplication(ctx context.Context, options Options) (tea.Model, error) {
 	if options.StartGame {
 		m.initial = m.beginMatch()
 	}
+	m.initial = combineCommands(m.initial, m.animationTick())
 	return m, nil
 }
 
 func (m application) Init() tea.Cmd { return m.initial }
 
 func (m *application) show(next screen) {
+	if m.screen == mainScreen && next != mainScreen {
+		m.introDone = true
+	}
 	if next != playingScreen && next != finalBoardScreen {
 		m.match.stopAITurn()
 	}
 	m.screen, m.choice = next, 0
+	m.frame = 0
+	m.animationID++
 }
 
 func (m *application) resume() tea.Cmd {

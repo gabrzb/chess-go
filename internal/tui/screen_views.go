@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -35,6 +34,15 @@ func paint(text, color string) string {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(color)).Render(text)
 }
 
+func centeredBlock(text string, width int) string {
+	left := strings.Repeat(" ", max(0, (width-lipgloss.Width(text))/2))
+	lines := strings.Split(text, "\n")
+	for index, line := range lines {
+		lines[index] = left + line + strings.Repeat(" ", max(0, width-len(left)-lipgloss.Width(line)))
+	}
+	return strings.Join(lines, "\n")
+}
+
 func (m application) menuOptions() []string {
 	switch m.screen {
 	case mainScreen:
@@ -63,10 +71,7 @@ func (m application) menuOptions() []string {
 
 func (m application) card(title, body, footer string, double bool) string {
 	width := min(52, max(18, m.width-4))
-	bar := paint(strings.Repeat("=", width), muted)
-	if double {
-		bar += "\n" + bar
-	}
+	bar := m.band(width, double)
 	center := lipgloss.NewStyle().Width(width).Align(lipgloss.Center)
 	content := bar + "\n\n" + center.Bold(true).Render(title) + "\n\n" + bar
 	if body != "" {
@@ -82,7 +87,7 @@ func (m application) card(title, body, footer string, double bool) string {
 			}
 		}
 		menu := strings.Join(items, "\n")
-		content += "\n\n" + center.Render(menu)
+		content += "\n\n" + centeredBlock(menu, width)
 	}
 	if footer != "" {
 		content += "\n\n" + center.Render(paint(ansi.Wrap(footer, width, " "), muted))
@@ -95,11 +100,15 @@ func (m application) View() tea.View {
 	footer := "↑↓ navegar · Enter selecionar"
 	switch m.screen {
 	case mainScreen:
-		title := paint(logo, accent)
+		title := m.logoText()
 		if m.width < 48 || m.height < 23 {
 			title = paint("CHESS", accent)
 		}
-		content = m.card(title, "", footer+"\n? ajuda", true)
+		setting := "ligadas"
+		if m.noAnimations {
+			setting = "desligadas"
+		}
+		content = m.card(title, "", footer+"\n? ajuda · A animações: "+setting, true)
 	case configScreen:
 		content = m.card("NOVA PARTIDA\nJOGADOR VS IA", "", "↑↓ navegar · ←→ alterar\nEnter confirmar · Esc voltar", true)
 	case playingScreen, finalBoardScreen:
@@ -116,7 +125,7 @@ func (m application) View() tea.View {
 		content = m.card("ENCERRAR PARTIDA?", "A partida atual será descartada.", footer+"\nEsc voltar", false)
 	case drawScreen:
 		s, _ := m.match.game.Snapshot()
-		content = m.card("OFERTA DE EMPATE", "As "+sideText(s.DrawOffer)+" propuseram empate.\n"+strings.Title(sideText(opposite(s.DrawOffer)))+", desejam aceitar?", footer, false)
+		content = m.card("OFERTA DE EMPATE", "As "+sideText(s.DrawOffer)+" propuseram empate.\nAs "+sideText(opposite(s.DrawOffer))+" desejam aceitar?", footer, false)
 	case resultScreen:
 		title, body, color := m.resultText()
 		content = m.card(paint(title, color), body, footer, true)
@@ -146,13 +155,14 @@ func (m application) promotionCard() string {
 	kinds := []chess.PieceType{chess.Queen, chess.Rook, chess.Bishop, chess.Knight}
 	var items []string
 	for index, name := range names {
-		text := "  " + pieceSymbol(chess.Piece{Type: kinds[index], Color: m.match.game.Position().SideToMove}) + "  " + name
+		option := pieceSymbol(chess.Piece{Type: kinds[index], Color: m.match.game.Position().SideToMove}) + "  " + name
+		text := "  " + option
 		if index == m.choice {
-			text = paint("▸ "+strings.TrimSpace(text), accent)
+			text = paint("▸ "+option, accent)
 		}
 		items = append(items, text)
 	}
-	return bar + "\n\n" + center.Bold(true).Render("PROMOÇÃO DE PEÃO") + "\n" + center.Render("Escolha a nova peça para "+m.match.cursor.String()+".") + "\n\n" + bar + "\n\n" + center.Render(strings.Join(items, "\n")) + "\n\n" + center.Render("↑↓ escolher · Enter confirmar\nQ/R/B/N atalhos · Esc cancelar")
+	return bar + "\n\n" + center.Bold(true).Render("PROMOÇÃO DE PEÃO") + "\n" + center.Render("Escolha a nova peça para "+m.match.cursor.String()+".") + "\n\n" + bar + "\n\n" + centeredBlock(strings.Join(items, "\n"), width) + "\n\n" + center.Render("↑↓ escolher · Enter confirmar\nQ/R/B/N atalhos · Esc cancelar")
 }
 
 func (m application) resultText() (string, string, string) {
@@ -168,56 +178,4 @@ func (m application) resultText() (string, string, string) {
 		return "DERROTA", "O computador venceu.\n\n" + reason, alert
 	}
 	return "VITÓRIA", "Você venceu de " + sideText(s.Outcome.Winner) + ".\n\n" + reason, victory
-}
-
-func (m application) boardContent() string {
-	s, err := m.match.displayedSnapshot()
-	if err != nil {
-		return "Não foi possível carregar a posição."
-	}
-	width := min(76, max(18, m.width-4))
-	bar := paint(strings.Repeat("=", width), muted)
-	mode := "LOCAL · JOGADOR VS JOGADOR"
-	if m.config.computer {
-		mode = "JOGADOR VS IA · " + levelNames[m.config.level]
-	}
-	status := "Vez das " + sideText(s.SideToMove)
-	if m.config.computer {
-		status += "\nVocê joga de " + sideText(opposite(m.match.aiColor)) + "."
-	}
-	if m.match.thinking {
-		status += "\nCalculando jogada…"
-	}
-	if s.Check {
-		status += "\n" + paint("XEQUE · "+strings.ToUpper(sideText(s.SideToMove)), alert)
-	}
-	if m.match.reviewing {
-		status += fmt.Sprintf("\nREVISÃO · posição %d/%d", m.match.historyIndex+1, m.match.game.HistoryLen())
-	}
-	if m.screen == finalBoardScreen {
-		title, _, _ := m.resultText()
-		status = "PARTIDA ENCERRADA · " + title
-	}
-	foot := "Setas/WASD: mover · Enter: selecionar\nEsc: menu · F: inverter · H: histórico · ?: ajuda"
-	if m.match.selected.Valid() {
-		foot = "Escolha uma casa de destino.\nEnter: confirmar · Esc: cancelar seleção"
-	}
-	if m.match.reviewing {
-		foot = "←/A anterior · →/D próximo · H/Esc retornar\nF inverter · ? ajuda"
-	}
-	if m.screen == finalBoardScreen && !m.match.reviewing {
-		foot = "F inverter · H histórico · Esc voltar ao resultado"
-	}
-	if m.match.message != "" {
-		status += "\n" + paint("Movimento inválido. Escolha uma casa destacada.", alert)
-	}
-	return bar + "\n" + ansi.Wrap("CHESS · "+mode, width, " ") + "\n" + bar + "\n\n" + m.match.renderBoard(s.Board) + "\n\n" + status + "\n\n" + paint(ansi.Wrap(foot, width, " "), muted)
-}
-
-func (m application) boardFits() bool {
-	if m.match.game == nil {
-		return false
-	}
-	content := m.boardContent()
-	return lipgloss.Width(content) <= m.width && lipgloss.Height(content) <= m.height
 }

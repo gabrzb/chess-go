@@ -9,6 +9,27 @@ import (
 )
 
 func (m application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if tick, ok := msg.(animationMessage); ok {
+		if tick.id != m.animationID || !m.animating() {
+			return m, nil
+		}
+		m.frame++
+		if m.screen == mainScreen && m.frame >= introFrames {
+			m.introDone = true
+		}
+		return m, m.animationTick()
+	}
+	next, cmd := m.update(msg)
+	n := next.(application)
+	if n.animating() && (n.animationID != m.animationID || !m.animating()) {
+		n.frame = 0
+		n.animationID++
+		cmd = combineCommands(cmd, n.animationTick())
+	}
+	return n, cmd
+}
+
+func (m application) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if size, ok := msg.(tea.WindowSizeMsg); ok {
 		m.width, m.height = max(1, size.Width), max(1, size.Height)
 		return m, nil
@@ -29,6 +50,19 @@ func (m application) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if key.String() == "ctrl+c" {
 		m.match.stopAITurn()
 		return m, tea.Quit
+	}
+	if m.screen == mainScreen {
+		if key.String() == "a" {
+			m.noAnimations = !m.noAnimations
+			m.introDone = true
+			m.animationID++
+			return m, nil
+		}
+		if key.String() == "enter" && !m.noAnimations && !m.introDone {
+			m.introDone = true
+			m.animationID++
+			return m, nil
+		}
 	}
 	if key.String() == "?" && m.screen != helpScreen {
 		m.helpBack, m.helpChoice = m.screen, m.choice
@@ -268,6 +302,7 @@ func (m *application) afterMatch() {
 		m.show(errorScreen)
 		return
 	}
+	m.refreshLabels()
 	if snapshot.Status != chess.StatusOngoing && m.screen == playingScreen {
 		m.show(resultScreen)
 	}
