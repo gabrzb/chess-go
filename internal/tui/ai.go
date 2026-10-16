@@ -17,6 +17,7 @@ type startAIMessage struct{}
 
 type aiResultMessage struct {
 	requestID uint64
+	sessionID uint64
 	position  chess.Position
 	move      chess.Move
 	err       error
@@ -54,10 +55,10 @@ func (m *model) startAITurn() tea.Cmd {
 	m.thinking = true
 	m.message = ""
 	m.requestID++
-	id, position, chooser := m.requestID, m.game.Position(), m.opponent
+	id, session, position, chooser := m.requestID, m.sessionID, m.game.Position(), m.opponent
 	return func() tea.Msg {
 		move, err := chooser.ChooseMove(ctx, position)
-		return aiResultMessage{requestID: id, position: position, move: move, err: err}
+		return aiResultMessage{requestID: id, sessionID: session, position: position, move: move, err: err}
 	}
 }
 
@@ -71,7 +72,7 @@ func (m *model) stopAITurn() {
 
 func (m model) receiveAIResult(result aiResultMessage) (tea.Model, tea.Cmd) {
 	// A canceled search may finish after review closes and another search starts.
-	if !m.thinking || result.requestID != m.requestID {
+	if !m.thinking || result.requestID != m.requestID || result.sessionID != m.sessionID {
 		return m, nil
 	}
 	m.stopAITurn()

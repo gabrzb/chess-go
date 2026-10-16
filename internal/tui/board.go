@@ -10,10 +10,18 @@ import (
 func (m model) renderBoard(board chess.Board) string {
 	var text strings.Builder
 
-	for row := chess.A8.Row(); row >= chess.A1.Row(); row-- {
+	for rowIndex := 0; rowIndex < chess.BoardSize; rowIndex++ {
+		row := chess.BoardSize - 1 - rowIndex
+		if m.flipped {
+			row = rowIndex
+		}
 		fmt.Fprintf(&text, "%d", row+1)
 
-		for col := 0; col < chess.BoardSize; col++ {
+		for colIndex := 0; colIndex < chess.BoardSize; colIndex++ {
+			col := colIndex
+			if m.flipped {
+				col = chess.BoardSize - 1 - colIndex
+			}
 			square, _ := chess.A1.Offset(col, row)
 			piece, _ := board.PieceAt(square)
 
@@ -32,6 +40,10 @@ func (m model) renderBoard(board chess.Board) string {
 		text.WriteString("\n")
 	}
 
-	text.WriteString("  a b c d e f g h")
+	if m.flipped {
+		text.WriteString("  h g f e d c b a")
+	} else {
+		text.WriteString("  a b c d e f g h")
+	}
 	return text.String()
 }

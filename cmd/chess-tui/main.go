@@ -14,7 +14,14 @@ func main() {
 	difficulty := flag.String("ai", "off", "AI opponent: off, easy, medium or hard")
 	humanColor := flag.String("color", "white", "Your color against AI: white or black")
 	seed := flag.Int64("seed", 1, "Seed for ties between equally evaluated AI moves")
+	noAnimations := flag.Bool("no-animation", false, "Disable UI animations")
 	flag.Parse()
+	direct := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "ai" {
+			direct = true
+		}
+	})
 
 	human := chess.White
 	var err error
@@ -26,11 +33,11 @@ func main() {
 		if *humanColor == "black" {
 			human = chess.Black
 		}
+		level := ai.Difficulty(*difficulty)
 		if *difficulty == "off" {
-			err = tui.Run()
-		} else {
-			err = tui.RunWithAI(ai.Difficulty(*difficulty), human, *seed)
+			level = ""
 		}
+		err = tui.RunWithOptions(tui.Options{Difficulty: level, HumanColor: human, Seed: *seed, StartGame: direct, NoAnimations: *noAnimations})
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to run TUI:", err)

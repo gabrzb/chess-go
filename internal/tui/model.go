@@ -25,6 +25,8 @@ type model struct {
 	cancelAI       context.CancelFunc
 	thinking       bool
 	requestID      uint64
+	sessionID      uint64
+	flipped        bool
 }
 
 func NewModel(g *game.Game) tea.Model {
