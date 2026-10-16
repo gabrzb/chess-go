@@ -9,6 +9,23 @@ o histórico sem alterar a partida. O motor possui testes de regras e perft.
 
 ## Executar
 
+Com o [Task instalado](https://taskfile.dev/docs/installation/), os comandos
+principais ficam disponíveis na raiz do projeto:
+
+```sh
+task                         # listar comandos
+task run                     # dois jogadores locais
+task ai                      # contra a IA em dificuldade média
+task ai -- -ai hard -color black
+task test                    # testes
+task vet                     # análise estática
+task fmt                     # formatação
+task build                   # executável em bin/
+task check                   # testes, análise e compilação em sequência
+```
+
+Os comandos Go abaixo continuam disponíveis sem o Task.
+
 Na raiz do projeto:
 
 ```sh
