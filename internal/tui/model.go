@@ -14,6 +14,8 @@ type model struct {
 	legalMoves     []chess.Move
 	message        string
 	promotionMoves []chess.Move
+	reviewing      bool
+	historyIndex   int
 }
 
 func NewModel(g *game.Game) tea.Model {

@@ -127,6 +127,7 @@ func TestPromotionIgnoresOtherEvents(t *testing.T) {
 		{"WASD", tea.KeyPressMsg{Code: 'd', Text: "d"}},
 		{"Enter", tea.KeyPressMsg{Code: tea.KeyEnter}},
 		{"unknown choice", tea.KeyPressMsg{Code: 'x', Text: "x"}},
+		{"history shortcut", tea.KeyPressMsg{Code: 'h', Text: "h"}},
 		{"queen key release", tea.KeyReleaseMsg{Code: 'q', Text: "q"}},
 		{"Escape release", tea.KeyReleaseMsg{Code: tea.KeyEscape}},
 		{"window event", tea.WindowSizeMsg{}},

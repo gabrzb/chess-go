@@ -12,6 +12,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handlePromotionKey(key.String())
 			return m, nil
 		}
+
+		if key.String() == "h" {
+			m.toggleReview()
+
+			return m, nil
+		}
+
+		if m.reviewing {
+			switch key.String() {
+			case "left", "a":
+				m.moveHistory(-1)
+			case "right", "d":
+				m.moveHistory(1)
+			case "q":
+				return m, tea.Quit
+			case "esc":
+				m.toggleReview()
+			}
+
+			return m, nil
+		}
+
 		switch key.String() {
 		case "q":
 			return m, tea.Quit
