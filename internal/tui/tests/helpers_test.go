@@ -1,7 +1,6 @@
 package tui_test
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -11,112 +10,129 @@ import (
 
 	"github.com/gabrzb/chess-go/internal/chess"
 	"github.com/gabrzb/chess-go/internal/chess/game"
-	"github.com/gabrzb/chess-go/internal/tui"
 )
 
 func boardText(t *testing.T, m tea.Model) string {
 	t.Helper()
-	sections := strings.SplitN(m.View().Content, "\n\n", 3)
-	if len(sections) != 3 {
-		t.Fatalf("Expected title, board and controls in view, got %q", m.View().Content)
+	parts := strings.SplitN(m.View().Content, "\n\n", 3)
+	if len(parts) != 3 {
+		t.Fatalf("Missing board in %q", m.View().Content)
 	}
-	return sections[1]
+	return parts[1]
 }
 
 func boardCells(t *testing.T, m tea.Model) map[chess.Square]string {
 	t.Helper()
 	lines := strings.Split(boardText(t, m), "\n")
 	if len(lines) != chess.BoardSize+1 {
-		t.Fatalf("Expected %d board ranks and coordinate footer, got %q", chess.BoardSize, lines)
+		t.Fatalf("Incorrect board dimensions: %q", lines)
 	}
-	result := make(map[chess.Square]string)
-	for _, line := range lines[:chess.BoardSize] {
-		cells := strings.Fields(line)
-		if len(cells) != chess.BoardSize+1 {
-			t.Fatalf("Expected rank label and %d cells, got %q", chess.BoardSize, line)
+	cells := make(map[chess.Square]string)
+	for row, line := range lines[:chess.BoardSize] {
+		fields := strings.Fields(line)
+		if len(fields) != chess.BoardSize+1 {
+			t.Fatalf("Incorrect rank: %q", line)
 		}
-		for col, cell := range cells[1:] {
-			square, err := chess.ParseSquare(fmt.Sprintf("%c%s", 'a'+rune(col), cells[0]))
-			if err != nil {
-				t.Fatalf("Invalid board cell coordinate: %v", err)
-			}
-			result[square] = cell
+		for col, cell := range fields[1:] {
+			square, _ := chess.A8.Offset(col, -row)
+			cells[square] = cell
 		}
 	}
-	if len(result) != chess.SquareCount {
-		t.Fatalf("Expected %d distinct board cells, got %d", chess.SquareCount, len(result))
-	}
-	return result
+	return cells
 }
 
 func visibleCursor(t *testing.T, m tea.Model) chess.Square {
 	t.Helper()
 	cursor := chess.NoSquare
-	reverse := ansi.NewStyle(ansi.AttrReverse).String()
 	for square, cell := range boardCells(t, m) {
-		if !strings.Contains(cell, reverse) {
-			continue
+		if strings.Contains(cell, ansi.NewStyle(ansi.AttrReverse).String()) {
+			if cursor.Valid() {
+				t.Fatal("Multiple cursors")
+			}
+			cursor = square
 		}
-		if cursor.Valid() {
-			t.Fatal("Expected exactly one cursor cell with reverse video")
-		}
-		cursor = square
 	}
 	if !cursor.Valid() {
-		t.Fatal("Expected a highlighted cursor cell")
+		t.Fatal("Missing cursor")
 	}
 	return cursor
 }
 
 func updateModel(t *testing.T, m tea.Model, msg tea.Msg) tea.Model {
 	t.Helper()
-	updated, cmd := m.Update(msg)
-	if cmd != nil {
-		t.Fatalf("Expected event without a command, got %T", msg)
+	next, cmd := m.Update(msg)
+	if next == nil || cmd != nil {
+		t.Fatalf("Expected state update without command for %T", msg)
 	}
-	if updated == nil {
-		t.Fatal("Expected updated TUI model")
-	}
-	return updated
+	return next
 }
 
-func modelAt(t *testing.T, target chess.Square) (tea.Model, *game.Game) {
-	t.Helper()
-	g := game.NewGame()
-	return moveCursorTo(t, tui.NewModel(g), target), g
-}
-
-func moveCursorTo(t *testing.T, m tea.Model, target chess.Square) tea.Model {
+func moveCursorTo(t *testing.T, m tea.Model, to chess.Square) tea.Model {
 	t.Helper()
 	from := visibleCursor(t, m)
 	for _, axis := range []struct {
 		delta              int
 		positive, negative rune
 	}{
-		{target.Column() - from.Column(), tea.KeyRight, tea.KeyLeft},
-		{target.Row() - from.Row(), tea.KeyUp, tea.KeyDown},
+		{to.Column() - from.Column(), tea.KeyRight, tea.KeyLeft}, {to.Row() - from.Row(), tea.KeyUp, tea.KeyDown},
 	} {
-		key, steps := axis.positive, axis.delta
+		code, steps := axis.positive, axis.delta
 		if steps < 0 {
-			key, steps = axis.negative, -steps
+			code, steps = axis.negative, -steps
 		}
-		for step := 0; step < steps; step++ {
-			m = updateModel(t, m, tea.KeyPressMsg{Code: key})
+		for range steps {
+			m = updateModel(t, m, tea.KeyPressMsg{Code: code})
 		}
 	}
-	if got := visibleCursor(t, m); got != target {
-		t.Fatalf("Failed to position cursor: expected %v, got %v", target, got)
+	if got := visibleCursor(t, m); got != to {
+		t.Fatalf("Cursor: got %v, want %v", got, to)
 	}
 	return m
 }
 
-func assertGameUnchanged(t *testing.T, g *game.Game, before game.Snapshot, historyLength int) {
+func submit(t *testing.T, m tea.Model, move chess.Move) (tea.Model, tea.Cmd) {
 	t.Helper()
-	after, err := g.Snapshot()
-	if err != nil {
-		t.Fatalf("Failed to get current game snapshot: %v", err)
+	m = moveCursorTo(t, m, move.From)
+	m = updateModel(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	m = moveCursorTo(t, m, move.To)
+	return m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+}
+
+func gameWith(t *testing.T, moves ...chess.Move) *game.Game {
+	t.Helper()
+	g := game.NewGame()
+	for _, move := range moves {
+		if _, err := g.Play(move); err != nil {
+			t.Fatalf("Setup %v: %v", move, err)
+		}
 	}
-	if !reflect.DeepEqual(after, before) || g.HistoryLen() != historyLength {
-		t.Error("Expected interface action to preserve game state and history")
+	return g
+}
+
+func assertUnchanged(t *testing.T, g *game.Game, position chess.Position, length int) {
+	t.Helper()
+	if g.Position() != position || g.HistoryLen() != length {
+		t.Fatal("Interface changed the live game or history")
+	}
+}
+
+func assertHighlights(t *testing.T, m tea.Model, selected chess.Square, destinations ...chess.Square) {
+	t.Helper()
+	cursor := visibleCursor(t, m)
+	for square, cell := range boardCells(t, m) {
+		expected := square == cursor || square == selected
+		for _, to := range destinations {
+			expected = expected || square == to
+		}
+		if (cell != ansi.Strip(cell)) != expected {
+			t.Errorf("Incorrect highlight at %v", square)
+		}
+	}
+}
+
+func assertSameView(t *testing.T, a, b tea.Model) {
+	t.Helper()
+	if !reflect.DeepEqual(a.View(), b.View()) {
+		t.Error("Unexpected interface state")
 	}
 }
