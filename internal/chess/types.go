@@ -31,6 +31,8 @@ const (
 	StatusOngoing Status = iota
 	StatusCheckmate
 	StatusStalemate
+	StatusResigned
+	StatusDrawAgreed
 )
 
 type Direction struct {

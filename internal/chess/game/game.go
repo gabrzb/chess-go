@@ -6,10 +6,12 @@ import (
 )
 
 type Game struct {
-	position chess.Position
-	history  []Snapshot
-	status   chess.Status
-	lastMove *chess.Move
+	position  chess.Position
+	history   []Snapshot
+	status    chess.Status
+	lastMove  *chess.Move
+	outcome   Outcome
+	drawOffer chess.Color
 }
 
 func NewGame() *Game {

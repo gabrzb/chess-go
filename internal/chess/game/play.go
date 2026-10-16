@@ -9,6 +9,9 @@ func (g *Game) Play(move chess.Move) (MoveResult, error) {
 	if g.status != chess.StatusOngoing {
 		return MoveResult{}, ErrGameOver
 	}
+	if g.drawOffer != chess.NoColor {
+		return MoveResult{}, ErrDrawOffer
+	}
 
 	nextPosition, err := rules.PositionAfterMove(g.position, move)
 	if err != nil {
@@ -24,6 +27,7 @@ func (g *Game) Play(move chess.Move) (MoveResult, error) {
 		position: nextPosition,
 		status:   nextStatus,
 		lastMove: &move,
+		outcome:  outcomeFor(nextStatus, nextPosition.SideToMove),
 	}
 
 	snapshot, err := next.Snapshot()
@@ -40,6 +44,7 @@ func (g *Game) Play(move chess.Move) (MoveResult, error) {
 	g.position = nextPosition
 	g.status = nextStatus
 	g.lastMove = &move
+	g.outcome = next.outcome
 
 	return MoveResult{
 		Move:  move,

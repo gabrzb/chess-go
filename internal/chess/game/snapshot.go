@@ -11,6 +11,8 @@ type Snapshot struct {
 	Status     chess.Status
 	Check      bool
 	LastMove   *chess.Move
+	Outcome    Outcome
+	DrawOffer  chess.Color
 }
 
 func (g *Game) Snapshot() (Snapshot, error) {
@@ -24,6 +26,8 @@ func (g *Game) Snapshot() (Snapshot, error) {
 		SideToMove: g.position.SideToMove,
 		Status:     g.status,
 		Check:      inCheck,
+		Outcome:    g.outcome,
+		DrawOffer:  g.drawOffer,
 	}
 
 	if g.lastMove != nil {
