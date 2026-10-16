@@ -3,6 +3,7 @@
 Aplicação de xadrez em Go com interface de terminal (TUI) para dois jogadores
 locais ou para jogar contra a IA. Implementa movimentos legais, xeque,
 xeque-mate, afogamento, roque, en passant e promoção com escolha da peça.
+Também permite desistência e empate por acordo entre jogadores locais.
 
 A interface permite selecionar peças, visualizar destinos legais e revisar
 o histórico sem alterar a partida. O motor possui testes de regras e perft.
@@ -14,7 +15,7 @@ principais ficam disponíveis na raiz do projeto:
 
 ```sh
 task                         # listar comandos
-task run                     # dois jogadores locais
+task run                     # abrir o menu principal
 task ai                      # contra a IA em dificuldade média
 task ai -- -ai hard -color black
 task test                    # testes
@@ -32,6 +33,14 @@ Na raiz do projeto:
 go run ./cmd/chess-tui
 ```
 
+O menu permite iniciar uma partida local ou configurar a IA: escolha suas peças
+(brancas, pretas ou aleatório) e a dificuldade. Após o resultado, é possível jogar
+novamente, consultar o tabuleiro e o histórico ou voltar ao menu. A revanche usa
+as mesmas configurações; a opção aleatória faz um novo sorteio.
+
+Os comandos com `-ai` iniciam diretamente a partida. Para entrar diretamente no
+modo local, use `go run ./cmd/chess-tui -ai off`.
+
 Para jogar de brancas contra a IA:
 
 ```sh
@@ -46,22 +55,37 @@ go run ./cmd/chess-tui -ai hard -color black
 
 | Opção | Valores | Padrão |
 | --- | --- | --- |
-| `-ai` | `off`, `easy`, `medium`, `hard` | `off`: dois jogadores locais |
+| `-ai` | `off`, `easy`, `medium`, `hard`; inicia sem passar pelo menu | Sem a flag: menu principal |
 | `-color` | `white`, `black`: sua cor contra a IA | `white` |
 | `-seed` | Inteiro usado no desempate da IA | `1` |
+| `-no-animation` | Desativar animações | Animações ligadas |
+
+O tabuleiro atual foi preservado. Em terminais largos, o painel lateral mostra
+a situação da partida e os últimos lances, agrupados por cor em notação algébrica
+(SAN). Janelas menores usam um layout compacto; se o tabuleiro não couber, a
+interface pede para ampliar a janela e preserva a posição. As peças requerem
+uma fonte com suporte aos símbolos Unicode de xadrez.
 
 ### Controles
 
-- Setas ou WASD: mover o cursor.
-- Enter: selecionar uma peça ou executar a jogada.
-- Esc: cancelar a seleção.
+- Nos menus, ↑/↓ e Enter navegam e selecionam; ←/→ alteram as configurações.
+- Na partida, setas ou WASD movem o cursor; Enter seleciona ou confirma a jogada.
+- Esc: cancelar seleção/promoção; sem seleção, abrir o menu da partida.
+- No menu da partida, continuar, desistir ou voltar ao menu principal. No modo
+  local, também oferecer empate; recusar mantém a partida.
+- F: inverter a orientação do tabuleiro.
+- ?: abrir a ajuda; Esc retorna à tela anterior.
 - H: abrir ou fechar a revisão do histórico.
 - Na revisão, ←/A e →/D percorrem as posições; Esc retorna à partida.
-- Na promoção, Q/R/B/N escolhem dama, torre, bispo ou cavalo.
-- Q encerra fora da promoção; Ctrl+C encerra em qualquer modo.
-- Durante o cálculo da IA, H pausa a busca e abre o histórico. Ao retornar,
-  a busca recomeça na posição atual.
-- Se a busca falhar, Enter tenta novamente, preservando a partida.
+- Na promoção, ↑/↓ e Enter escolhem a peça; Q/R/B/N são atalhos para dama,
+  torre, bispo ou cavalo. Esc cancela sem executar o movimento.
+- Q abre o menu da partida; no menu principal, encerra. Ctrl+C encerra sempre.
+- No menu principal, A liga ou desliga animações nesta execução. Enter pula
+  a abertura sem iniciar uma partida; pressione novamente para selecionar.
+- Durante o cálculo da IA, é possível abrir menu, ajuda ou histórico. A busca
+  é cancelada e recomeça ao retornar à partida.
+- Se a IA falhar, a tela permite tentar novamente ou voltar ao menu. Detalhes
+  técnicos ficam em `chess-go.log`, na pasta de execução.
 
 ## Organização
 
@@ -77,7 +101,7 @@ internal/
 │   ├── game/           # partida, snapshots e histórico
 │   ├── ai/             # avaliação e busca de jogadas
 │   └── tests/          # testes do motor separados por assunto
-└── tui/                # teclado, renderização e revisão da partida
+└── tui/                # telas, teclado, renderização e revisão da partida
     └── tests/          # testes da interface
 ```
 
@@ -113,9 +137,9 @@ que verificam; o motor não depende dos testes.
 | `movegen` | Movimentos antes da filtragem de xeque | `PseudoLegalMoves`, `RookMoves`, `PawnMoves` |
 | `attacks` | Casas atacadas, incluindo peças protegidas | `IsSquareAttacked` |
 | `rules` | Validação de jogadas e situação da posição | `LegalMovesFrom`, `PositionAfterMove`, `EvaluateStatus` |
-| `game` | Controle da partida e histórico | `NewGame`, `Play`, `Snapshot`, `HistorySnapshot` |
+| `game` | Controle da partida, resultado e histórico | `NewGame`, `Play`, `Snapshot`, `HistorySnapshot`, `Resign`, `OfferDraw`, `RespondDraw` |
 | `ai` | Avaliação e escolha de jogadas | `Evaluate`, `NewPlayer`, `ChooseMove` |
-| `tui` | Interface de terminal | `Run`, `NewModel` |
+| `tui` | Interface de terminal | `Run`, `RunWithOptions`, `NewApplication` |
 
 ## Regras implementadas
 
@@ -125,6 +149,7 @@ que verificam; o motor não depende dos testes.
 - Roque pequeno e grande.
 - En passant.
 - Promoção para dama, torre, bispo ou cavalo.
+- Desistência e empate por acordo no modo local.
 
 ## Como a IA funciona
 
@@ -194,9 +219,9 @@ brancas e uma resposta das pretas correspondem a dois plies.
 
 | Dificuldade | Profundidade | O que considera a partir da posição atual |
 | --- | ---: | --- |
-| `easy` | 1 | Jogada da IA |
-| `medium` | 2 | Jogada da IA e resposta adversária |
-| `hard` | 3 | Jogada da IA, resposta adversária e próxima jogada da IA |
+| Fácil (`easy`) | 1 | Jogada da IA |
+| Normal (`medium`) | 2 | Jogada da IA e resposta adversária |
+| Difícil (`hard`) | 3 | Jogada da IA, resposta adversária e próxima jogada da IA |
 
 As três dificuldades usam o mesmo avaliador. Aumentar a profundidade exige mais
 cálculo; esses nomes não correspondem a uma classificação Elo.
@@ -218,8 +243,10 @@ posições no histórico. Somente a jogada escolhida é enviada ao controle da p
 que a valida e a registra como qualquer outra jogada.
 
 O cálculo roda em segundo plano enquanto a TUI continua recebendo teclas.
-Ao abrir a revisão ou encerrar o programa, a busca recebe um cancelamento.
-Resultados de buscas antigas são ignorados. A IA também escolhe a peça de
+Ao abrir menu, ajuda ou revisão, abandonar a partida ou encerrar o programa,
+a busca recebe um cancelamento. Resultados antigos são associados à sessão,
+ao pedido e à posição original, impedindo que alterem outra partida ou revanche.
+A IA também escolhe a peça de
 promoção durante a busca, sem solicitar uma escolha ao jogador humano.
 
 ## Limitações
@@ -234,6 +261,10 @@ promoção durante a busca, sem solicitar uma escolha ao jogador humano.
   ainda não são detectados.
 - A revisão do histórico permite consultar posições anteriores sem
   desfazer jogadas ou modificar a partida.
+- Não há salvamento de partidas nem relógio. Voltar ao menu descarta a partida
+  após confirmação; encerrar o programa também não a salva.
+- Oferta de empate contra a IA não está disponível: o motor ainda não possui
+  uma política para aceitar ou recusar.
 
 ## Testes
 
