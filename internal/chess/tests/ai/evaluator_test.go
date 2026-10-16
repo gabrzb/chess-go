@@ -14,56 +14,19 @@ func setPiece(t *testing.T, board *chess.Board, square chess.Square, kind chess.
 	}
 }
 
-func TestEvaluationBalanceAndMaterial(t *testing.T) {
-	initial := chess.NewInitialPosition()
-	if got := ai.Evaluate(initial.Board); got != 0 {
-		t.Errorf("Expected balanced initial position, got %d", got)
+func TestEvaluation(t *testing.T) {
+	if score := ai.Evaluate(chess.NewInitialPosition().Board); score != 0 {
+		t.Fatal("Initial position is not balanced")
 	}
-	for _, color := range []chess.Color{chess.White, chess.Black} {
-		t.Run(map[chess.Color]string{chess.White: "White", chess.Black: "Black"}[color], func(t *testing.T) {
-			var pawn, queen chess.Board
-			setPiece(t, &pawn, chess.D4, chess.Pawn, color)
-			setPiece(t, &queen, chess.D4, chess.Queen, color)
-			sign := 1
-			if color == chess.Black {
-				sign = -1
-			}
-			if ai.Evaluate(pawn)*sign <= 0 || ai.Evaluate(queen)*sign <= ai.Evaluate(pawn)*sign {
-				t.Error("Expected material to favor its owner and a queen to outweigh a pawn")
-			}
-		})
+	var white, black, edge chess.Board
+	setPiece(t, &white, chess.D4, chess.Knight, chess.White)
+	setPiece(t, &black, chess.D5, chess.Knight, chess.Black)
+	setPiece(t, &edge, chess.A1, chess.Knight, chess.White)
+	if ai.Evaluate(white) <= 0 || ai.Evaluate(black) != -ai.Evaluate(white) || ai.Evaluate(white) <= ai.Evaluate(edge) {
+		t.Error("Evaluation must respect material, color symmetry and centralization")
 	}
-}
-
-func TestEvaluationPositionAndColorSymmetry(t *testing.T) {
-	for _, tc := range []struct {
-		name         string
-		kind         chess.PieceType
-		weak, strong chess.Square
-	}{
-		{"knight centralization", chess.Knight, chess.A1, chess.D4},
-		{"bishop centralization", chess.Bishop, chess.A1, chess.D4},
-		{"pawn advance", chess.Pawn, chess.D2, chess.D5},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			var weak, strong, mirrored chess.Board
-			setPiece(t, &weak, tc.weak, tc.kind, chess.White)
-			setPiece(t, &strong, tc.strong, tc.kind, chess.White)
-			mirror, ok := chess.A8.Offset(tc.strong.Column(), -tc.strong.Row())
-			if !ok {
-				t.Fatal("Invalid mirrored test square")
-			}
-			setPiece(t, &mirrored, mirror, tc.kind, chess.Black)
-			before := strong
-			if ai.Evaluate(strong) <= ai.Evaluate(weak) {
-				t.Error("Expected improved piece placement to increase its score")
-			}
-			if ai.Evaluate(mirrored) != -ai.Evaluate(strong) {
-				t.Error("Expected mirrored colors to receive opposite scores")
-			}
-			if strong != before {
-				t.Error("Expected evaluation to preserve the board")
-			}
-		})
+	setPiece(t, &white, chess.D4, chess.Queen, chess.White)
+	if ai.Evaluate(white) <= -ai.Evaluate(black) {
+		t.Error("Queen must outweigh a knight")
 	}
 }

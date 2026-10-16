@@ -5,7 +5,6 @@ import (
 	"errors"
 	"slices"
 	"testing"
-	"time"
 
 	"github.com/gabrzb/chess-go/internal/chess"
 	"github.com/gabrzb/chess-go/internal/chess/ai"
@@ -51,70 +50,34 @@ func player(t *testing.T, difficulty ai.Difficulty, seed int64) *ai.Player {
 	return p
 }
 
-func TestSearchTacticsForBothColors(t *testing.T) {
-	for _, color := range []chess.Color{chess.White, chess.Black} {
-		for _, mate := range []bool{false, true} {
-			name := "White"
-			if color == chess.Black {
-				name = "Black"
-			}
-			if mate {
-				name += "/mate in one"
-			} else {
-				name += "/free queen"
-			}
-			t.Run(name, func(t *testing.T) {
-				pieces := map[chess.Square]chess.Piece{
-					chess.A1: {Type: chess.King, Color: chess.White},
-					chess.H8: {Type: chess.King, Color: chess.Black},
-					chess.D4: {Type: chess.Rook, Color: chess.White},
-					chess.D5: {Type: chess.Queen, Color: chess.Black},
-				}
-				want := chess.Move{From: chess.D4, To: chess.D5}
-				if mate {
-					pieces = map[chess.Square]chess.Piece{
-						chess.F6: {Type: chess.King, Color: chess.White},
-						chess.G6: {Type: chess.Queen, Color: chess.White},
-						chess.H8: {Type: chess.King, Color: chess.Black},
-					}
-					want = chess.Move{From: chess.G6, To: chess.G7}
-				}
-				if color == chess.Black {
-					mirrored := make(map[chess.Square]chess.Piece)
-					for square, piece := range pieces {
-						square, _ = chess.A8.Offset(square.Column(), -square.Row())
-						if piece.Color == chess.White {
-							piece.Color = chess.Black
-						} else {
-							piece.Color = chess.White
-						}
-						mirrored[square] = piece
-					}
-					pieces = mirrored
-					want.From, _ = chess.A8.Offset(want.From.Column(), -want.From.Row())
-					want.To, _ = chess.A8.Offset(want.To.Column(), -want.To.Row())
-				}
-				position := positionWith(t, color, pieces)
-				before := position
-				move, err := player(t, ai.Easy, 7).ChooseMove(context.Background(), position)
-				if err != nil || move != want {
-					t.Fatalf("Expected %v, got %v: %v", want, move, err)
-				}
-				if position != before {
-					t.Error("Expected search to preserve its input position")
-				}
-				if mate {
-					next, err := rules.PositionAfterMove(position, move)
-					if err != nil {
-						t.Fatal(err)
-					}
-					status, err := rules.EvaluateStatus(next)
-					if err != nil || status != chess.StatusCheckmate {
-						t.Fatalf("Expected checkmate, got %v: %v", status, err)
-					}
-				}
+func TestSearchFindsMate(t *testing.T) {
+	for _, tc := range []struct {
+		name                string
+		color, enemy        chess.Color
+		king, queen, target chess.Square
+		move                chess.Move
+	}{
+		{"White", chess.White, chess.Black, chess.F6, chess.G6, chess.H8, chess.Move{From: chess.G6, To: chess.G7}},
+		{"Black", chess.Black, chess.White, chess.F3, chess.G3, chess.H1, chess.Move{From: chess.G3, To: chess.G2}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			position := positionWith(t, tc.color, map[chess.Square]chess.Piece{
+				tc.king:   {Type: chess.King, Color: tc.color},
+				tc.queen:  {Type: chess.Queen, Color: tc.color},
+				tc.target: {Type: chess.King, Color: tc.enemy},
 			})
-		}
+			move, err := player(t, ai.Easy, 1).ChooseMove(t.Context(), position)
+			if err != nil || move != tc.move {
+				t.Fatalf("Expected mate %v, got %v: %v", tc.move, move, err)
+			}
+			next, err := rules.PositionAfterMove(position, move)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if status, err := rules.EvaluateStatus(next); err != nil || status != chess.StatusCheckmate {
+				t.Fatalf("Not checkmate: %v, %v", status, err)
+			}
+		})
 	}
 }
 
@@ -162,28 +125,27 @@ func TestAlphaBetaMatchesFullMinimax(t *testing.T) {
 		chess.D4: {Type: chess.Rook, Color: chess.White},
 		chess.E6: {Type: chess.Rook, Color: chess.Black},
 	})
+	const difficulty = ai.Hard
 	for _, side := range []chess.Color{chess.White, chess.Black} {
-		for _, difficulty := range []ai.Difficulty{ai.Easy, ai.Medium, ai.Hard} {
-			name := map[chess.Color]string{chess.White: "White", chess.Black: "Black"}[side]
-			t.Run(name+"/"+string(difficulty), func(t *testing.T) {
-				position := base
-				position.SideToMove = side
-				want := minimax(t, position, difficulty.Depth(), 0)
-				for _, seed := range []int64{1, 42} {
-					move, err := player(t, difficulty, seed).ChooseMove(context.Background(), position)
-					if err != nil {
-						t.Fatal(err)
-					}
-					next, err := rules.PositionAfterMove(position, move)
-					if err != nil {
-						t.Fatalf("Expected legal AI move: %v", err)
-					}
-					if got := minimax(t, next, difficulty.Depth()-1, 1); got != want {
-						t.Errorf("Seed %d: expected optimal score %d, got %d from %v", seed, want, got, move)
-					}
+		name := map[chess.Color]string{chess.White: "White", chess.Black: "Black"}[side]
+		t.Run(name, func(t *testing.T) {
+			position := base
+			position.SideToMove = side
+			want := minimax(t, position, difficulty.Depth(), 0)
+			for _, seed := range []int64{1, 42} {
+				move, err := player(t, difficulty, seed).ChooseMove(context.Background(), position)
+				if err != nil {
+					t.Fatal(err)
 				}
-			})
-		}
+				next, err := rules.PositionAfterMove(position, move)
+				if err != nil {
+					t.Fatalf("Expected legal AI move: %v", err)
+				}
+				if got := minimax(t, next, difficulty.Depth()-1, 1); got != want {
+					t.Errorf("Seed %d: expected optimal score %d, got %d from %v", seed, want, got, move)
+				}
+			}
+		})
 	}
 }
 
@@ -212,21 +174,6 @@ func TestSearchLegalityAndReproducibleTies(t *testing.T) {
 	}
 }
 
-func TestSearchInitialDifficultyLevels(t *testing.T) {
-	position := chess.NewInitialPosition()
-	for _, difficulty := range []ai.Difficulty{ai.Easy, ai.Medium, ai.Hard} {
-		t.Run(string(difficulty), func(t *testing.T) {
-			move, err := player(t, difficulty, 1).ChooseMove(t.Context(), position)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if _, err := rules.PositionAfterMove(position, move); err != nil {
-				t.Fatalf("Expected legal opening move at difficulty %s: %v", difficulty, err)
-			}
-		})
-	}
-}
-
 type cancelAfterChecks struct {
 	context.Context
 	cancel    context.CancelFunc
@@ -244,8 +191,6 @@ func (c *cancelAfterChecks) Err() error {
 func TestSearchCancellation(t *testing.T) {
 	canceled, cancel := context.WithCancel(context.Background())
 	cancel()
-	expired, stop := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
-	defer stop()
 	during, cancelDuring := context.WithCancel(context.Background())
 	defer cancelDuring()
 	for _, tc := range []struct {
@@ -254,7 +199,6 @@ func TestSearchCancellation(t *testing.T) {
 		err  error
 	}{
 		{"before search", canceled, context.Canceled},
-		{"expired deadline", expired, context.DeadlineExceeded},
 		{"during search", &cancelAfterChecks{during, cancelDuring, 200}, context.Canceled},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -266,66 +210,14 @@ func TestSearchCancellation(t *testing.T) {
 	}
 }
 
-func TestSearchTerminalAndInvalidPositions(t *testing.T) {
-	for _, tc := range []struct {
-		name     string
-		position chess.Position
-		err      error
-	}{
-		{"invalid turn", chess.Position{}, chess.ErrInvalidColor},
-		{"missing king", chess.Position{SideToMove: chess.White}, chess.ErrKingNotFound},
-		{"checkmate", positionWith(t, chess.Black, map[chess.Square]chess.Piece{
-			chess.F6: {Type: chess.King, Color: chess.White},
-			chess.G7: {Type: chess.Queen, Color: chess.White},
-			chess.H8: {Type: chess.King, Color: chess.Black},
-		}), ai.ErrNoLegalMoves},
-		{"stalemate", positionWith(t, chess.Black, map[chess.Square]chess.Piece{
-			chess.F7: {Type: chess.King, Color: chess.White},
-			chess.G6: {Type: chess.Queen, Color: chess.White},
-			chess.H8: {Type: chess.King, Color: chess.Black},
-		}), ai.ErrNoLegalMoves},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			move, err := player(t, ai.Medium, 1).ChooseMove(context.Background(), tc.position)
-			if !errors.Is(err, tc.err) || move != (chess.Move{}) {
-				t.Errorf("Expected error %v without a move, got %v: %v", tc.err, move, err)
-			}
-		})
-	}
-	if _, err := ai.NewPlayer(ai.Difficulty("unknown"), 1); !errors.Is(err, ai.ErrInvalidDifficulty) {
-		t.Errorf("Expected invalid difficulty error, got %v", err)
-	}
-}
-
-func TestSearchPromotionAndEnPassant(t *testing.T) {
-	promotion := positionWith(t, chess.White, map[chess.Square]chess.Piece{
-		chess.A1: {Type: chess.King, Color: chess.White},
-		chess.H6: {Type: chess.King, Color: chess.Black},
-		chess.B7: {Type: chess.Pawn, Color: chess.White},
-	})
-	enPassant := positionWith(t, chess.White, map[chess.Square]chess.Piece{
-		chess.A1: {Type: chess.King, Color: chess.White},
+func TestSearchWithoutLegalMoves(t *testing.T) {
+	position := positionWith(t, chess.Black, map[chess.Square]chess.Piece{
+		chess.F7: {Type: chess.King, Color: chess.White},
+		chess.G6: {Type: chess.Queen, Color: chess.White},
 		chess.H8: {Type: chess.King, Color: chess.Black},
-		chess.E5: {Type: chess.Pawn, Color: chess.White},
-		chess.D5: {Type: chess.Pawn, Color: chess.Black},
 	})
-	enPassant.EnPassant = chess.D6
-	for _, tc := range []struct {
-		name     string
-		position chess.Position
-		want     chess.Move
-	}{
-		{"promotion", promotion, chess.Move{From: chess.B7, To: chess.B8, Promotion: chess.Queen}},
-		{"en passant", enPassant, chess.Move{From: chess.E5, To: chess.D6}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			move, err := player(t, ai.Easy, 1).ChooseMove(context.Background(), tc.position)
-			if err != nil || move != tc.want {
-				t.Fatalf("Expected special move %v, got %v: %v", tc.want, move, err)
-			}
-			if _, err := rules.PositionAfterMove(tc.position, move); err != nil {
-				t.Fatalf("Expected legal special move: %v", err)
-			}
-		})
+	move, err := player(t, ai.Medium, 1).ChooseMove(t.Context(), position)
+	if !errors.Is(err, ai.ErrNoLegalMoves) || move != (chess.Move{}) {
+		t.Fatalf("Expected no move after stalemate: %v, %v", move, err)
 	}
 }

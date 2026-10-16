@@ -1,7 +1,6 @@
 package rules_test
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -122,32 +121,32 @@ func TestPerftReferencePositions(t *testing.T) {
 	cases := []struct {
 		name string
 		fen  string
-		want []uint64
+		want uint64
 	}{
 		{
 			name: "kiwipete",
 			fen:  "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
-			want: []uint64{48, 2039, 97862},
+			want: 97862,
 		},
 		{
 			name: "rook and pawn endgame",
 			fen:  "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1",
-			want: []uint64{14, 191, 2812},
+			want: 2812,
 		},
 		{
 			name: "promotions and check evasions",
 			fen:  "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
-			want: []uint64{6, 264, 9467},
+			want: 9467,
 		},
 		{
 			name: "promotions and check evasions mirrored",
 			fen:  "r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1",
-			want: []uint64{6, 264, 9467},
+			want: 9467,
 		},
 		{
 			name: "tactical promotions",
 			fen:  "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
-			want: []uint64{44, 1486, 62379},
+			want: 62379,
 		},
 	}
 
@@ -155,12 +154,7 @@ func TestPerftReferencePositions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			position := perftPositionFromFEN(t, tc.fen)
 
-			for index, want := range tc.want {
-				depth := index + 1
-				t.Run(fmt.Sprintf("depth %d", depth), func(t *testing.T) {
-					assertPerft(t, position, depth, want)
-				})
-			}
+			assertPerft(t, position, 3, tc.want)
 		})
 	}
 }

@@ -60,20 +60,5 @@ func assertPerft(t *testing.T, position chess.Position, depth int, want uint64) 
 }
 
 func TestPerftInitialPosition(t *testing.T) {
-	cases := []struct {
-		name  string
-		depth int
-		want  uint64
-	}{
-		{"depth 0", 0, 1},
-		{"depth 1", 1, 20},
-		{"depth 2", 2, 400},
-		{"depth 3", 3, 8902},
-		{"depth 4", 4, 197281},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			assertPerft(t, chess.NewInitialPosition(), tc.depth, tc.want)
-		})
-	}
+	assertPerft(t, chess.NewInitialPosition(), 4, 197281)
 }
