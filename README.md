@@ -98,7 +98,6 @@ uma fonte com suporte aos símbolos Unicode de xadrez.
 ## Organização
 
 ```text
-
 cmd/
 └── chess-tui/          # inicialização da aplicação
 internal/
@@ -116,14 +115,39 @@ internal/
     └── tests/          # testes da interface
 ```
 
-Os tipos compartilhados pertencem ao pacote `chess`, na raiz de
-`internal/chess`. Os pacotes de comportamento usam esses tipos:
+### Interface e controle da partida
+
+`cmd/chess-tui` interpreta as flags e chama a API de entrada em `tui`.
+`application` coordena as telas e as sessões; `match` controla a interação com
+a partida e o ciclo de busca da IA. `render` transforma dados em conteúdo de
+terminal, sem executar jogadas ou iniciar buscas.
+
+As setas abaixo representam imports internos. A vista omite somente os imports
+do pacote base `chess`, usado diretamente por todos os cinco pacotes de entrada
+e interface (`cmd/chess-tui`, `tui`, `application`, `match` e `render`).
 
 ```mermaid
-flowchart TD
-    cmd["cmd/chess-tui"] --> tui
-    tui --> application
-    tui --> match
+flowchart LR
+    cli["cmd/chess-tui"]
+
+    subgraph ui["internal/tui"]
+        entry["tui<br/>API de entrada"]
+        application["application<br/>Telas e sessões"]
+        match["match<br/>Interação e busca assíncrona"]
+        render["render<br/>Apresentação"]
+    end
+
+    subgraph engine["Pacotes do motor usados pela TUI"]
+        game["chess/game<br/>Partida e snapshots"]
+        ai["chess/ai<br/>Escolha de jogadas"]
+    end
+
+    cli --> entry
+    cli --> ai
+    entry --> application
+    entry --> match
+    entry --> game
+    entry --> ai
     application --> match
     application --> render
     application --> game
@@ -132,26 +156,43 @@ flowchart TD
     match --> game
     match --> ai
     render --> game
-    render --> chess
+```
+
+O pacote `tui` também oferece `NewModel` e `NewModelWithAI`, que expõem o modelo
+de `match` sem a navegação de telas de `application`; por isso ele importa
+`match`, `game` e `ai` diretamente. O import de `ai` no executável serve à
+configuração da dificuldade. `render` importa `game` para apresentar snapshots
+e resultados, mas não depende das regras nem da busca.
+
+### Motor e regras
+
+Todos os nomes desta vista pertencem a `internal/chess`. Aqui estão todos os
+imports internos desses pacotes, incluindo as dependências dos tipos base.
+
+```mermaid
+flowchart TB
+    game["game<br/>Partida, histórico e SAN"]
+    ai["ai<br/>Avaliação e busca"]
+    rules["rules<br/>Legalidade e situação da posição"]
+    movegen["movegen<br/>Movimentos pseudolegais"]
+    attacks["attacks<br/>Casas atacadas"]
+    chess["chess<br/>Tipos, tabuleiro e posição"]
+
     ai --> rules
-    ai --> chess
     game --> rules
-    game --> chess
     rules --> movegen
     rules --> attacks
+    ai --> chess
+    game --> chess
     rules --> chess
     movegen --> chess
     attacks --> chess
 ```
 
-Uma seta representa um import. O pacote `chess` não importa os pacotes de
-comportamento, evitando dependências circulares. Os testes importam os pacotes
-que verificam; o motor não depende dos testes.
-
-Na TUI, `application` coordena as telas e consulta uma cópia do estado visual de
-`match`. A interação com peças, promoção, revisão e buscas pertence a `match`.
-`render` recebe os dados necessários para desenhar a interface, sem controlar
-sessões ou iniciar buscas. Esses pacotes não importam a raiz `tui`.
+O pacote base `chess` contém os dados compartilhados e não importa outros pacotes
+do projeto. `rules` filtra movimentos e determina a situação de uma posição;
+`game` mantém o estado da partida, os resultados e as repetições. `ai` simula
+posições pelas regras e devolve uma jogada, sem modificar a partida real.
 
 Cada opção de menu reúne seu rótulo e sua ação em `application/menus.go`;
 o desenho e o comando executado usam a mesma definição. A configuração mantém
@@ -159,20 +200,32 @@ dificuldades tipadas, e as escolhas de promoção vêm dos movimentos da partida
 `match.State` fornece cópias dos dados de interação, enquanto medidas, cores,
 componentes e quadros de animação pertencem a `render`. A notação SAN pertence a
 `chess/game`, junto dos snapshots que descreve; o renderer não consulta regras.
-O pacote `application`
-coordena eventos, telas e o agendamento das animações.
+O pacote `application` coordena eventos, telas e o agendamento das animações.
+
+O motor não importa a TUI. `application`, `match` e `render` não importam a raiz
+`tui`, e nenhum pacote de produção importa os testes. Os testes ficam nas pastas
+`tests` e dependem das APIs públicas dos pacotes que verificam.
+
+Para conferir os imports reais, sem incluir dependências exclusivas dos testes:
+
+```sh
+go list -f '{{.ImportPath}} {{.Imports}}' ./cmd/... ./internal/...
+```
 
 ## Funções principais
 
 | Pacote | Responsabilidade | Exemplos |
 | --- | --- | --- |
-| `chess` | Dados e notação | `Board`, `Piece`, `Move`, `ParseSquare` |
+| `chess` | Tipos base e coordenadas | `Board`, `Piece`, `Move`, `Position`, `ParseSquare` |
 | `movegen` | Movimentos antes da filtragem de xeque | `PseudoLegalMoves`, `RookMoves`, `PawnMoves` |
 | `attacks` | Casas atacadas, incluindo peças protegidas | `IsSquareAttacked` |
 | `rules` | Validação de jogadas e situação da posição | `LegalMovesFrom`, `PositionAfterMove`, `EvaluateStatus` |
-| `game` | Controle da partida, resultado e histórico | `NewGame`, `Play`, `Snapshot`, `HistorySnapshot`, `Resign`, `OfferDraw`, `RespondDraw` |
+| `game` | Partida, resultado, histórico e SAN | `NewGame`, `Play`, `Snapshot`, `HistorySnapshot`, `ClaimDraw`, `SAN` |
 | `ai` | Avaliação e escolha de jogadas | `Evaluate`, `NewPlayer`, `ChooseMove` |
-| `tui` | Interface de terminal | `Run`, `RunWithOptions`, `NewApplication` |
+| `tui` | Inicialização e API de entrada | `Run`, `RunWithOptions`, `NewApplication` |
+| `tui/application` | Telas, navegação e sessões | `New`, `Options` |
+| `tui/match` | Interação com a partida e ciclo da IA | `New`, `State`, `StartAI`, `StopAI` |
+| `tui/render` | Composição visual e layout | `Window`, `Match`, `Board`, `Turn`, `Menu` |
 
 ## Regras implementadas
 
