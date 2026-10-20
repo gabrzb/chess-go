@@ -15,16 +15,16 @@ func TestBoardRendering(t *testing.T) {
 	m := tui.NewModel(gameWith(t))
 	board := ansi.Strip(boardText(t, m))
 	rawBoard := boardText(t, m)
-	if strings.Contains(rawBoard, "48;2;") || strings.Contains(rawBoard, ansi.NewStyle(ansi.AttrReverse).String()) {
-		t.Fatal("Focus must use a marker without background or reverse video")
+	if strings.Contains(rawBoard, ansi.NewStyle(ansi.AttrReverse).String()) {
+		t.Fatal("Focus must not use reverse video")
 	}
 	if len(boardCells(t, m)) != chess.SquareCount || !strings.Contains(board, "  a b c d e f g h") || !strings.Contains(m.View().Content, "Turn: White") {
 		t.Fatal("Missing initial board, coordinates or turn")
 	}
-	if got := ansi.Strip(boardCells(t, m)[chess.E1]); got != "\u2654" {
+	if got := strings.TrimSpace(ansi.Strip(boardCells(t, m)[chess.E1])); got != "\u2654" {
 		t.Errorf("White king glyph: %q", got)
 	}
-	if got := ansi.Strip(boardCells(t, m)[chess.E8]); got != "\u265a" {
+	if got := strings.TrimSpace(ansi.Strip(boardCells(t, m)[chess.E8])); got != "\u265a" {
 		t.Errorf("Black king glyph: %q", got)
 	}
 	m = moveCursorTo(t, m, chess.H8)

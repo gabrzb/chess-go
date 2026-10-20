@@ -98,7 +98,7 @@ func (m application) boardContent() string {
 	return render.Match(render.MatchPanel{
 		Width: m.width, Height: m.height, Mode: mode, CompactMode: compactMode,
 		Status: m.playerInfo(s, false), CompactStatus: m.playerInfo(s, true),
-		LastMove: lastMove, Board: render.Board(s.Board, render.BoardState{Cursor: state.Cursor, Selected: state.Selected, LegalMoves: state.LegalMoves, Flipped: state.Flipped}), Footer: m.gameFooter(),
+		LastMove: lastMove, Board: s.Board, BoardState: render.BoardState{Cursor: state.Cursor, Selected: state.Selected, LegalMoves: state.LegalMoves, Flipped: state.Flipped}, Footer: m.gameFooter(),
 		Notice: render.Paint(strings.Join(notices, "\n"), render.Alert), Moves: m.labels[:end],
 	})
 }

@@ -7,13 +7,18 @@ import (
 )
 
 const (
-	Background = "#16161D"
-	Foreground = "#DCD7BA"
-	Muted      = "#72727F"
-	Accent     = "#7E9CD8"
-	Victory    = "#98BB6C"
-	Draw       = "#E6C384"
-	Alert      = "#E46876"
+	Background  = "#16161D"
+	Foreground  = "#DCD7BA"
+	Muted       = "#8B8B98"
+	Accent      = "#7E9CD8"
+	Victory     = "#98BB6C"
+	Draw        = "#E6C384"
+	Alert       = "#E46876"
+	LightSquare = "#87927C"
+	DarkSquare  = "#63715D"
+	WhitePiece  = "#FFF9E8"
+	BlackPiece  = "#0C100B"
+	BoardMarker = "#0C100B"
 )
 
 var Logo = strings.Join([]string{

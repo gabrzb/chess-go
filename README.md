@@ -62,7 +62,12 @@ go run ./cmd/chess-tui -ai hard -color black
 
 O tabuleiro fica centralizado, com turno, último lance e histórico distribuídos
 acima dele. Os lances são agrupados por cor em notação algébrica (SAN). O cursor
-destaca somente sua casa. Janelas menores usam um layout compacto; se o tabuleiro
+usa apenas uma seta (`▸`), sem pintar linhas nem alterar o fundo das casas.
+A seleção usa `●` e os destinos legais usam `·`. Nos menus, somente a seta recebe
+a cor de foco. As casas alternam cores e as peças têm cores próprias para brancas
+e pretas. Casas de 2×1 ou 4×2 caracteres preservam a proporção aproximada de
+quadrados em fontes de terminal usuais. Janelas menores usam o layout compacto;
+se o tabuleiro
 não couber, a interface pede para ampliar a janela e preserva a posição. As peças requerem
 uma fonte com suporte aos símbolos Unicode de xadrez.
 

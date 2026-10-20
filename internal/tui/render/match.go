@@ -6,21 +6,35 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/gabrzb/chess-go/internal/chess"
 )
 
 type MatchPanel struct {
-	Width, Height                   int
-	Mode, CompactMode               string
-	Status, CompactStatus           string
-	LastMove, Board, Footer, Notice string
-	Moves                           []string
+	Width, Height            int
+	Mode, CompactMode        string
+	Status, CompactStatus    string
+	LastMove, Footer, Notice string
+	Board                    chess.Board
+	BoardState               BoardState
+	Moves                    []string
 }
 
 func Match(panel MatchPanel) string {
+	for _, scale := range []BoardScale{LargeBoard, CompactBoard} {
+		content := matchContent(panel, scale)
+		if Fits(content, panel.Width, panel.Height) {
+			return content
+		}
+	}
+	return matchContent(panel, CompactBoard)
+}
+
+func matchContent(panel MatchPanel, scale BoardScale) string {
 	width := ContentWidth(panel.Width, MatchWidth)
 	center := func(text string) string { return Center(ansi.Wrap(text, width, " "), width) }
 	bar := Band(width, width, false)
-	board := Center("TABULEIRO\n"+panel.Board, width)
+	panel.BoardState.Scale = scale
+	board := Center("TABULEIRO\n"+Board(panel.Board, panel.BoardState), width)
 	footer := center(Paint(panel.Footer, Muted))
 	compose := func(mode, info string) string {
 		header := bar + "\n" + center("CHESS · "+mode) + "\n" + bar
