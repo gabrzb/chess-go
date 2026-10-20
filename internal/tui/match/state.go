@@ -9,20 +9,24 @@ import (
 type State struct {
 	Cursor, Selected                      chess.Square
 	Message                               string
+	AIError                               error
 	PromotionPending, Reviewing, Thinking bool
 	HistoryIndex                          int
 	AIColor                               chess.Color
 }
 
 func (m Model) State() State {
-	return State{Cursor: m.cursor, Selected: m.selected, Message: m.message,
+	return State{Cursor: m.cursor, Selected: m.selected, Message: m.message, AIError: m.aiError,
 		PromotionPending: len(m.promotionMoves) > 0, Reviewing: m.reviewing, Thinking: m.thinking,
 		HistoryIndex: m.historyIndex, AIColor: m.aiColor}
 }
 
 func (m Model) Game() *game.Game { return m.game }
 
-func (m *Model) ClearMessage() { m.message = "" }
+func (m *Model) ClearMessage() {
+	m.message = ""
+	m.aiError = nil
+}
 
 func (m *Model) EndReview() { m.reviewing = false }
 

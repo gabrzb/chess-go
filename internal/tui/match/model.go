@@ -16,6 +16,7 @@ type Model struct {
 	selected       chess.Square
 	legalMoves     []chess.Move
 	message        string
+	aiError        error
 	promotionMoves []chess.Move
 	reviewing      bool
 	historyIndex   int

@@ -1,8 +1,6 @@
 package application
 
 import (
-	"strings"
-
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/gabrzb/chess-go/internal/chess"
@@ -289,8 +287,8 @@ func (m application) updateBoard(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *application) afterMatch() {
-	if strings.HasPrefix(m.match.State().Message, "AI failed:") || strings.HasPrefix(m.match.State().Message, "AI result discarded:") {
-		m.logger.Print(m.match.State().Message)
+	if err := m.match.State().AIError; err != nil {
+		m.logger.Print(err)
 		m.match.ClearMessage()
 		m.show(errorScreen)
 		return

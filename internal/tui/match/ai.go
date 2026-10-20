@@ -3,6 +3,7 @@ package match
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -57,6 +58,7 @@ func (m *Model) StartAI() tea.Cmd {
 	m.cancelAI = cancel
 	m.thinking = true
 	m.message = ""
+	m.aiError = nil
 	m.requestID++
 	id, session, position, chooser := m.requestID, m.sessionID, m.game.Position(), m.opponent
 	return func() tea.Msg {
@@ -80,14 +82,17 @@ func (m Model) receiveAIResult(result aiResultMessage) (tea.Model, tea.Cmd) {
 	}
 	m.StopAI()
 	if result.position != m.game.Position() {
+		m.aiError = errors.New("AI result discarded: the position changed")
 		m.message = "AI result discarded: the position changed. Press Enter to retry."
 		return m, nil
 	}
 	if result.err != nil {
+		m.aiError = fmt.Errorf("AI failed: %w", result.err)
 		m.message = "AI failed: " + result.err.Error() + ". Press Enter to retry."
 		return m, nil
 	}
 	if err := m.playMove(result.move); err != nil {
+		m.aiError = fmt.Errorf("AI failed: %w", err)
 		m.message = "AI failed: " + err.Error() + ". Press Enter to retry."
 		return m, nil
 	}
