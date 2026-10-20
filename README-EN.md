@@ -189,6 +189,11 @@ copies all 64 squares without allocating slices or sharing pointers.
 `rules.PositionAfterMove` validates and returns a new position. Search uses
 `PositionAfterLegalMove` only with legal moves generated for that exact position.
 
+`NewPosition` builds editable positions. `Position.Validate` checks pieces, kings,
+counters, castling rights, and en passant metadata; it does not prove reachability
+through legal play. The engine validates input once before searching, without
+repeating this check for every simulated position.
+
 ### Engine and rules
 
 All names in this view belong to `internal/domain` and `internal/engine`. It shows all internal imports

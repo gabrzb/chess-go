@@ -41,3 +41,12 @@ func TestParentDeadlineDoesNotReturnFallback(t *testing.T) {
 		t.Fatal("parent cancellation returned a move", move, err)
 	}
 }
+
+func TestSearchRejectsInvalidPosition(t *testing.T) {
+	position := chess.NewInitialPosition()
+	position.FullmoveNumber = 0
+	move, err := player(t, engine.Easy, 1).ChooseMove(t.Context(), position)
+	if !errors.Is(err, chess.ErrInvalidPosition) || move != (chess.Move{}) {
+		t.Fatalf("invalid input produced a move: %v, %v", move, err)
+	}
+}

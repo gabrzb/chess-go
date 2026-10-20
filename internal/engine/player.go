@@ -60,13 +60,8 @@ func (p *Player) ChooseMove(ctx context.Context, position chess.Position) (chess
 	if depth == 0 {
 		return chess.Move{}, ErrInvalidDifficulty
 	}
-	if position.SideToMove != chess.White && position.SideToMove != chess.Black {
-		return chess.Move{}, chess.ErrInvalidColor
-	}
-	for _, color := range []chess.Color{chess.White, chess.Black} {
-		if !rules.FindKing(position.Board, color).Valid() {
-			return chess.Move{}, chess.ErrKingNotFound
-		}
+	if err := position.Validate(); err != nil {
+		return chess.Move{}, err
 	}
 	moves, err := legalMoves(ctx, position)
 	if err != nil {

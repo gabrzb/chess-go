@@ -37,6 +37,9 @@ func TestApplyingGeneratedMovesMatchesValidatedPath(t *testing.T) {
 				if err != nil || got != want {
 					t.Fatalf("%s, %v: position differs: %v", fen, move, err)
 				}
+				if err := got.Validate(); err != nil {
+					t.Fatalf("%s, %v: generated invalid position: %v", fen, move, err)
+				}
 			}
 		}
 	}

@@ -10,6 +10,7 @@ type Position struct {
 	FullmoveNumber uint16
 }
 
+// NewPosition builds an editable position; call Validate before accepting it as input.
 func NewPosition(board Board, sideToMove Color) (Position, error) {
 	if sideToMove != White && sideToMove != Black {
 		return Position{}, ErrInvalidColor

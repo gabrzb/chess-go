@@ -189,6 +189,11 @@ posição também copia suas 64 casas, sem alocar slices ou compartilhar ponteir
 `rules.PositionAfterMove` valida e devolve uma nova posição. A busca usa
 `PositionAfterLegalMove` somente com movimentos legais gerados para aquela posição.
 
+`NewPosition` permite construir posições editáveis. `Position.Validate` verifica
+peças, reis, contadores, direitos de roque e metadados de en passant; não comprova
+que a posição pode ser alcançada numa partida legal. O motor valida a entrada
+uma vez antes da busca, sem repetir essa verificação em cada posição simulada.
+
 ### Motor e regras
 
 Todos os nomes desta vista pertencem a `internal/domain` e `internal/engine`. Aqui estão todos os
