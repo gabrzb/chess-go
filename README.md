@@ -77,14 +77,14 @@ go run ./cmd/chess-tui -ai hard -color black
 O CI executa testes, `go vet` e compilação no Windows e no Linux.
 
 Todos os arquivos `*_test.go`, incluindo benchmarks, ficam em
-`internal/chess/tests` ou `internal/tui/tests`, separados por assunto.
+`internal/domain/tests`, `internal/engine/tests` ou `internal/delivery/tui/tests`, separados por assunto.
 Os testes usam as APIs públicas dos pacotes; os fluxos da TUI são exercitados
 por eventos de teclado e pela saída renderizada.
 
 ```sh
 go test ./...
 go vet ./...
-go test ./internal/chess/tests/ai -run '^$' -bench BenchmarkChooseMove -benchmem
+go test ./internal/engine/tests -run '^$' -bench BenchmarkChooseMove -benchmem
 ```
 
 ### Controles
@@ -113,20 +113,22 @@ go test ./internal/chess/tests/ai -run '^$' -bench BenchmarkChooseMove -benchmem
 
 ```text
 cmd/
-└── chess-tui/          # inicialização da aplicação
+└── chess-tui/          # CLI entry point
 internal/
-├── chess/              # tipos, tabuleiro, posições e notação
-│   ├── movegen/        # geração de movimentos pseudolegais
-│   ├── attacks/        # consultas de casas atacadas
-│   ├── rules/          # movimentos legais e regras especiais
-│   ├── game/           # partida, snapshots, histórico e notação SAN
-│   ├── ai/             # avaliação e busca de jogadas
-│   └── tests/          # testes do motor separados por assunto
-└── tui/                # inicialização e API de entrada
-    ├── application/    # telas, navegação e ciclo das sessões
-    ├── match/          # interação com a partida, histórico e IA
-    ├── render/         # tema, componentes e tabuleiro
-    └── tests/          # testes da interface
+├── domain/             # pure chess types and rules; standard library only
+│   ├── movegen/        # pseudolegal moves
+│   ├── attacks/        # attacked squares
+│   ├── rules/          # legal moves and position transitions
+│   ├── game/           # game, snapshots, history and SAN
+│   └── tests/          # domain tests
+├── engine/             # AI evaluation and search
+│   └── tests/          # search tests and benchmarks
+└── delivery/
+    └── tui/            # terminal interface and entry API
+        ├── application/ # screens and sessions
+        ├── match/       # interaction and asynchronous search
+        ├── render/      # presentation
+        └── tests/       # interface tests
 ```
 
 ### Interface e controle da partida
@@ -137,14 +139,14 @@ a partida e o ciclo de busca da IA. `render` transforma dados em conteúdo de
 terminal, sem executar jogadas ou iniciar buscas.
 
 As setas abaixo representam imports internos. A vista omite somente os imports
-do pacote base `chess`, usado diretamente por todos os cinco pacotes de entrada
+do pacote base `domain`, usado diretamente por todos os cinco pacotes de entrada
 e interface (`cmd/chess-tui`, `tui`, `application`, `match` e `render`).
 
 ```mermaid
 flowchart LR
     cli["cmd/chess-tui"]
 
-    subgraph ui["internal/tui"]
+    subgraph ui["internal/delivery/tui"]
         entry["tui<br/>API de entrada"]
         application["application<br/>Telas e sessões"]
         match["match<br/>Interação e busca assíncrona"]
@@ -152,8 +154,8 @@ flowchart LR
     end
 
     subgraph engine["Pacotes do motor usados pela TUI"]
-        game["chess/game<br/>Partida e snapshots"]
-        ai["chess/ai<br/>Escolha de jogadas"]
+        game["domain/game<br/>Partida e snapshots"]
+        ai["engine<br/>Escolha de jogadas"]
     end
 
     cli --> entry
@@ -174,13 +176,13 @@ flowchart LR
 
 O pacote `tui` também oferece `NewModel` e `NewModelWithAI`, que expõem o modelo
 de `match` sem a navegação de telas de `application`; por isso ele importa
-`match`, `game` e `ai` diretamente. O import de `ai` no executável serve à
+`match`, `game` e `engine` diretamente. O import de `engine` no executável serve à
 configuração da dificuldade. `render` importa `game` para apresentar snapshots
 e resultados, mas não depende das regras nem da busca.
 
 ### Motor e regras
 
-Todos os nomes desta vista pertencem a `internal/chess`. Aqui estão todos os
+Todos os nomes desta vista pertencem a `internal/domain` e `internal/engine`. Aqui estão todos os
 imports internos desses pacotes, incluindo as dependências dos tipos base.
 
 ```mermaid
@@ -190,7 +192,7 @@ flowchart TB
     rules["rules<br/>Legalidade e situação da posição"]
     movegen["movegen<br/>Movimentos pseudolegais"]
     attacks["attacks<br/>Casas atacadas"]
-    chess["chess<br/>Tipos, tabuleiro e posição"]
+    chess["domain<br/>Tipos, tabuleiro e posição"]
 
     ai --> rules
     game --> rules
@@ -203,9 +205,9 @@ flowchart TB
     attacks --> chess
 ```
 
-O pacote base `chess` contém os dados compartilhados e não importa outros pacotes
+O pacote base `domain` contém os dados compartilhados e não importa outros pacotes
 do projeto. `rules` filtra movimentos e determina a situação de uma posição;
-`game` mantém o estado da partida, os resultados e as repetições. `ai` simula
+`game` mantém o estado da partida, os resultados e as repetições. `engine` simula
 posições pelas regras e devolve uma jogada, sem modificar a partida real.
 
 Cada opção de menu reúne seu rótulo e sua ação em `application/menus.go`;
@@ -213,7 +215,7 @@ o desenho e o comando executado usam a mesma definição. A configuração mant�
 dificuldades tipadas, e as escolhas de promoção vêm dos movimentos da partida.
 `match.State` fornece cópias dos dados de interação, enquanto medidas, cores,
 componentes e quadros de animação pertencem a `render`. A notação SAN pertence a
-`chess/game`, junto dos snapshots que descreve; o renderer não consulta regras.
+`domain/game`, junto dos snapshots que descreve; o renderer não consulta regras.
 O pacote `application` coordena eventos, telas e o agendamento das animações.
 
 O motor não importa a TUI. `application`, `match` e `render` não importam a raiz

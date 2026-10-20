@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gabrzb/chess-go/internal/chess"
-	"github.com/gabrzb/chess-go/internal/chess/ai"
-	"github.com/gabrzb/chess-go/internal/tui"
+	"github.com/gabrzb/chess-go/internal/delivery/tui"
+	chess "github.com/gabrzb/chess-go/internal/domain"
+	"github.com/gabrzb/chess-go/internal/engine"
 )
 
 func main() {
@@ -33,7 +33,7 @@ func main() {
 		if *humanColor == "black" {
 			human = chess.Black
 		}
-		level := ai.Difficulty(*difficulty)
+		level := engine.Difficulty(*difficulty)
 		if *difficulty == "off" {
 			level = ""
 		}

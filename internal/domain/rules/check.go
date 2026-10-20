@@ -1,0 +1,40 @@
+package rules
+
+import (
+	chess "github.com/gabrzb/chess-go/internal/domain"
+	"github.com/gabrzb/chess-go/internal/domain/attacks"
+)
+
+func FindKing(board chess.Board, color chess.Color) chess.Square {
+	if color != chess.White && color != chess.Black {
+		return chess.NoSquare
+	}
+
+	for square := chess.Square(0); square < chess.NoSquare; square++ {
+		piece, _ := board.PieceAt(square)
+
+		if piece.Type == chess.King && piece.Color == color {
+			return square
+		}
+	}
+
+	return chess.NoSquare
+}
+
+func IsInCheck(board chess.Board, color chess.Color) (bool, error) {
+	if color != chess.White && color != chess.Black {
+		return false, chess.ErrInvalidColor
+	}
+
+	kingSquare := FindKing(board, color)
+	if kingSquare == chess.NoSquare {
+		return false, chess.ErrKingNotFound
+	}
+
+	enemyColor := chess.Black
+	if color == chess.Black {
+		enemyColor = chess.White
+	}
+
+	return attacks.IsSquareAttacked(board, kingSquare, enemyColor), nil
+}
