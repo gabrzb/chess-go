@@ -3,6 +3,7 @@ package render_test
 import (
 	"github.com/gabrzb/chess-go/internal/tui/render"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -17,14 +18,14 @@ func TestTurnBlockMatchesSideAndContext(t *testing.T) {
 		state                    render.TurnState
 		title, label, background string
 	}{
-		{render.TurnState{Color: chess.White}, "VEZ DAS", "BRANCAS", render.WhitePiece},
-		{render.TurnState{Color: chess.Black}, "VEZ DAS", "PRETAS", render.BlackPiece},
-		{render.TurnState{Color: chess.White, Reviewing: true}, "REVISÃO", "BRANCAS", render.WhitePiece},
+		{render.TurnState{Color: chess.White}, "VEZ DAS", "W", render.WhitePiece},
+		{render.TurnState{Color: chess.Black}, "VEZ DAS", "B", render.BlackPiece},
+		{render.TurnState{Color: chess.White, Reviewing: true}, "REVISÃO", "W", render.WhitePiece},
 		{render.TurnState{Color: chess.Black, Finished: true}, "PARTIDA", "ENCERRADA", render.Background},
 	} {
 		block := render.Turn(tc.state, render.CompactBoard)
 		text := ansi.Strip(block)
-		if !strings.Contains(text, tc.title) || !strings.Contains(text, tc.label) {
+		if !strings.Contains(text, tc.title) || !regexp.MustCompile(`│\s+`+regexp.QuoteMeta(tc.label)+`\s+│`).MatchString(text) {
 			t.Fatal("incorrect turn context", text)
 		}
 		colored := 0

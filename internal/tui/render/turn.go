@@ -27,7 +27,7 @@ func Turn(state TurnState, scale BoardScale) string {
 	background, foreground := WhitePiece, BlackPiece
 
 	if state.Color == chess.Black {
-		label, background, foreground = "P", BlackPiece, WhitePiece
+		label, background, foreground = "B", BlackPiece, WhitePiece
 	}
 
 	if state.Reviewing {
