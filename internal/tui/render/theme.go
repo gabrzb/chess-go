@@ -33,9 +33,11 @@ var Logo = strings.Join([]string{
 func Paint(text, color string) string {
 	style := lipgloss.NewStyle().Foreground(lipgloss.Color(color))
 	lines := strings.Split(text, "\n")
+
 	for index, line := range lines {
 		lines[index] = style.Render(line)
 	}
+
 	return strings.Join(lines, "\n")
 }
 

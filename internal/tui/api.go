@@ -27,5 +27,6 @@ func NewModelWithAI(ctx context.Context, g *game.Game, chooser ai.MoveChooser, c
 	if err != nil {
 		return nil, err
 	}
+
 	return m, nil
 }

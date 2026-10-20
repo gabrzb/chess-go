@@ -43,17 +43,22 @@ func (m application) menuItems() []menuItem {
 		return []menuItem{
 			{"Suas peças    ‹ " + sideNames[m.config.side] + " ›", changeSide},
 			{"Dificuldade   ‹ " + difficultyLabel(m.config.level) + " ›", changeDifficulty},
-			{"Iniciar partida", startMatch}, {"Voltar", returnToMenu},
+			{"Iniciar partida", startMatch},
+			{"Voltar", returnToMenu},
 		}
 	case pauseScreen:
 		items := []menuItem{{"Continuar", continueMatch}}
+
 		if !m.config.computer {
 			items = append(items, menuItem{"Oferecer empate", offerDraw})
 		}
+
 		items = append(items, menuItem{"Desistir", showResignation}, menuItem{"Voltar ao menu principal", showAbandonment})
+
 		if m.match.Game().ClaimableDraw() != game.NoReason {
 			items = append(items, menuItem{"Reivindicar empate", claimDraw})
 		}
+
 		return items
 	case resignScreen:
 		return []menuItem{{"Continuar jogando", continueMatch}, {"Confirmar desistência", confirmResignation}}
@@ -73,17 +78,21 @@ func (m application) menuItems() []menuItem {
 func (m application) menuOptions() []string {
 	items := m.menuItems()
 	labels := make([]string, len(items))
+
 	for index, item := range items {
 		labels[index] = item.label
 	}
+
 	return labels
 }
 
 func (m *application) activate() tea.Cmd {
 	items := m.menuItems()
+
 	if m.choice < 0 || m.choice >= len(items) {
 		return nil
 	}
+
 	switch action := items[m.choice].action; action {
 	case startLocal:
 		m.config.computer = false

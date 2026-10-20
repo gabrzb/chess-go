@@ -1,9 +1,9 @@
 package application
 
 import (
-	"github.com/gabrzb/chess-go/internal/tui/render"
-
 	"strings"
+
+	"github.com/gabrzb/chess-go/internal/tui/render"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -13,22 +13,27 @@ import (
 
 func (m application) card(title, body, footer string, double bool) string {
 	width := render.ContentWidth(m.width, render.MenuWidth)
+
 	return render.Card(title, body, footer, m.band(width, double), m.menuOptions(), m.choice, width)
 }
 
 func (m application) View() tea.View {
 	var content string
 	footer := "↑↓ navegar · Enter selecionar"
+
 	switch m.screen {
 	case mainScreen:
 		title := m.logoText()
 		if m.width < render.LogoMinWidth || m.height < render.LogoMinHeight {
 			title = render.Paint("CHESS", render.Accent)
 		}
+
 		setting := "ligadas"
+
 		if m.noAnimations {
 			setting = "desligadas"
 		}
+
 		content = m.card(title, "", footer+"\n? ajuda · A animações: "+setting, true)
 	case configScreen:
 		content = m.card("NOVA PARTIDA\nJOGADOR VS IA", "", "↑↓ navegar · ←→ alterar\nEnter confirmar · Esc voltar", true)
@@ -62,6 +67,7 @@ func (m application) View() tea.View {
 func (m application) resultText() (string, string, string) {
 	s, _ := m.match.Game().Snapshot()
 	reason := map[game.EndReason]string{game.Checkmate: "Xeque-mate.", game.Stalemate: "Empate por afogamento.\nSem jogadas legais e sem xeque.", game.Resignation: "Partida encerrada por desistência.", game.Agreement: "Empate por acordo."}[s.Outcome.Reason]
+
 	switch s.Outcome.Reason {
 	case game.InsufficientMaterial:
 		reason = "Empate por material insuficiente."
@@ -74,14 +80,18 @@ func (m application) resultText() (string, string, string) {
 	case game.SeventyFiveMoves:
 		reason = "Empate automático pela regra dos 75 movimentos."
 	}
+
 	if s.Outcome.Winner == chess.NoColor {
 		return "EMPATE", "Nenhum vencedor.\n\n" + reason, render.Draw
 	}
+
 	if !m.config.computer {
 		return strings.ToUpper(sideText(s.Outcome.Winner)) + " VENCERAM", "Jogador " + map[chess.Color]string{chess.White: "1", chess.Black: "2"}[s.Outcome.Winner] + "\n\n" + reason, render.Accent
 	}
+
 	if s.Outcome.Winner == m.match.State().AIColor {
 		return "DERROTA", "O computador venceu.\n\n" + reason, render.Alert
 	}
+
 	return "VITÓRIA", "Você venceu de " + sideText(s.Outcome.Winner) + ".\n\n" + reason, render.Victory
 }

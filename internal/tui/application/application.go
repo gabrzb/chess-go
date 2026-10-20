@@ -70,29 +70,39 @@ func New(ctx context.Context, options Options) (tea.Model, error) {
 	if ctx == nil {
 		return nil, errors.New("application requires a context")
 	}
+
 	if options.HumanColor != chess.NoColor && options.HumanColor != chess.White && options.HumanColor != chess.Black {
 		return nil, chess.ErrInvalidColor
 	}
+
 	if options.Difficulty != "" && options.Difficulty.Depth() == 0 {
 		return nil, ai.ErrInvalidDifficulty
 	}
-	m := application{ctx: ctx, width: render.DefaultWidth, height: render.DefaultHeight, noAnimations: options.NoAnimations, logger: options.Logger,
-		config: settings{computer: options.Difficulty != "", level: ai.Medium, seed: options.Seed}}
+	m := application{
+		ctx: ctx, width: render.DefaultWidth, height: render.DefaultHeight, noAnimations: options.NoAnimations, logger: options.Logger,
+		config: settings{computer: options.Difficulty != "", level: ai.Medium, seed: options.Seed},
+	}
+
 	if m.logger == nil {
 		m.logger = log.New(io.Discard, "", 0)
 	}
+
 	if options.HumanColor == chess.Black {
 		m.config.side = blackSide
 	}
+
 	if options.RandomColor {
 		m.config.side = randomSide
 	}
+
 	if options.Difficulty != "" {
 		m.config.level = options.Difficulty
 	}
+
 	if options.StartGame {
 		m.initial = m.beginMatch()
 	}
+
 	m.initial = combineCommands(m.initial, m.animationTick())
 	return m, nil
 }
@@ -103,9 +113,11 @@ func (m *application) show(next screen) {
 	if m.screen == mainScreen && next != mainScreen {
 		m.introDone = true
 	}
+
 	if next != playingScreen && next != finalBoardScreen {
 		m.match.StopAI()
 	}
+
 	m.screen, m.choice = next, 0
 	m.frame = 0
 	m.animationID++
@@ -121,24 +133,30 @@ func (m *application) beginMatch() tea.Cmd {
 	m.session++
 	m.match = match.New(game.NewGame(), m.session)
 	m.labels = nil
+
 	if m.config.computer {
 		human := chess.White
+
 		if m.config.side == blackSide || (m.config.side == randomSide && rand.IntN(2) == 1) {
 			human = chess.Black
 		}
+
 		player, err := ai.NewPlayer(m.config.level, m.config.seed)
 		if err != nil {
 			m.logger.Print(err)
 			m.show(errorScreen)
 			return nil
 		}
+
 		m.match, err = match.NewWithAI(m.ctx, m.match.Game(), player, opposite(human), m.session)
 		if err != nil {
 			m.logger.Print(err)
 			m.show(errorScreen)
+
 			return nil
 		}
 	}
+
 	return m.resume()
 }
 
@@ -146,6 +164,7 @@ func opposite(color chess.Color) chess.Color {
 	if color == chess.White {
 		return chess.Black
 	}
+
 	return chess.White
 }
 
@@ -153,9 +172,11 @@ func sideText(color chess.Color) string {
 	if color == chess.White {
 		return "brancas"
 	}
+
 	if color == chess.Black {
 		return "pretas"
 	}
+
 	return "—"
 }
 
@@ -163,5 +184,6 @@ func (m application) resigningSide() chess.Color {
 	if m.config.computer {
 		return opposite(m.match.State().AIColor)
 	}
+
 	return m.match.Game().Position().SideToMove
 }

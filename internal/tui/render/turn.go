@@ -21,20 +21,25 @@ func Turn(state TurnState, scale BoardScale) string {
 	if scale == LargeBoard {
 		height = largeTurnHeight
 	}
+
 	width := height * terminalCellAspect
-	title, label := "VEZ DAS", "BRANCAS"
+	title, label := "VEZ DAS", "W"
 	background, foreground := WhitePiece, BlackPiece
+
 	if state.Color == chess.Black {
-		label, background, foreground = "PRETAS", BlackPiece, WhitePiece
+		label, background, foreground = "P", BlackPiece, WhitePiece
 	}
+
 	if state.Reviewing {
 		title = "REVISÃO"
 	} else if state.Finished {
 		title, label = "PARTIDA", "ENCERRADA"
 		background, foreground = Background, Foreground
 	}
+
 	block := lipgloss.NewStyle().Width(width).Height(height).Align(lipgloss.Center, lipgloss.Center).
 		Foreground(lipgloss.Color(foreground)).Background(lipgloss.Color(background)).Render(label)
 	framed := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color(Muted)).Render(block)
+
 	return Center(title, lipgloss.Width(framed)) + "\n" + framed
 }

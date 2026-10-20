@@ -43,5 +43,6 @@ func (m Model) Init() tea.Cmd {
 	if m.opponent != nil {
 		return func() tea.Msg { return startAIMessage{} }
 	}
+
 	return nil
 }

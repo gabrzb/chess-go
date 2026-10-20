@@ -10,10 +10,13 @@ func (m *application) refreshLabels() {
 			m.logger.Print(err)
 			return
 		}
+
 		next, err := m.match.Game().HistorySnapshot(index)
+
 		if err != nil || next.LastMove == nil {
 			return
 		}
+
 		m.labels = append(m.labels, game.SAN(before, next, *next.LastMove))
 	}
 }

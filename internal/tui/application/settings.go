@@ -36,9 +36,11 @@ func cycleIndex(index, step, count int) int {
 
 func (m *application) adjustConfig(step int) {
 	items := m.menuItems()
+
 	if m.choice < 0 || m.choice >= len(items) {
 		return
 	}
+
 	switch items[m.choice].action {
 	case changeSide:
 		m.config.side = sideChoice(cycleIndex(int(m.config.side), step, len(sideNames)))
