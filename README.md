@@ -85,7 +85,8 @@ uma fonte com suporte aos símbolos Unicode de xadrez.
 - Durante o cálculo da IA, é possível abrir menu, ajuda ou histórico. A busca
   é cancelada e recomeça ao retornar à partida.
 - Se a IA falhar, a tela permite tentar novamente ou voltar ao menu. Detalhes
-  técnicos ficam em `chess-go.log`, na pasta de execução.
+  técnicos ficam em `chess-go/chess-go.log`, dentro da pasta de cache do usuário
+  (`os.UserCacheDir`). Se o log não puder ser aberto, o jogo continua sem gravá-lo.
 
 ## Organização
 

@@ -2,8 +2,10 @@ package tui
 
 import (
 	"context"
+	"io"
 	"log"
 	"os"
+	"path/filepath"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -26,12 +28,10 @@ func RunWithOptions(options Options) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	if options.Logger == nil {
-		file, err := os.OpenFile("chess-go.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		options.Logger = log.New(file, "", log.LstdFlags)
+		dir, _ := os.UserCacheDir()
+		logger, closeLog := defaultLogger(dir)
+		defer closeLog()
+		options.Logger = logger
 	}
 	m, err := NewApplication(ctx, options)
 	if err != nil {
@@ -39,4 +39,22 @@ func RunWithOptions(options Options) error {
 	}
 	_, err = tea.NewProgram(m).Run()
 	return err
+}
+
+func defaultLogger(cacheDir string) (*log.Logger, func()) {
+	logger := log.New(io.Discard, "", log.LstdFlags)
+	noop := func() {}
+	if cacheDir == "" {
+		return logger, noop
+	}
+	dir := filepath.Join(cacheDir, "chess-go")
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return logger, noop
+	}
+	file, err := os.OpenFile(filepath.Join(dir, "chess-go.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		return logger, noop
+	}
+	logger.SetOutput(file)
+	return logger, func() { _ = file.Close() }
 }
