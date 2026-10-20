@@ -11,38 +11,8 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess/game"
 )
 
-func (m application) menuOptions() []string {
-	switch m.screen {
-	case mainScreen:
-		return []string{"Jogador vs Jogador", "Jogador vs IA", "Sair"}
-	case configScreen:
-		return []string{"Suas peças    ‹ " + sideNames[m.config.side] + " ›", "Dificuldade   ‹ " + levelNames[m.config.level] + " ›", "Iniciar partida", "Voltar"}
-	case pauseScreen:
-		options := []string{"Continuar", "Oferecer empate", "Desistir", "Voltar ao menu principal"}
-		if m.config.computer {
-			options = []string{"Continuar", "Desistir", "Voltar ao menu principal"}
-		}
-		if m.match.Game().ClaimableDraw() != game.NoReason {
-			options = append(options, "Reivindicar empate")
-		}
-		return options
-	case resignScreen:
-		return []string{"Continuar jogando", "Confirmar desistência"}
-	case abandonScreen:
-		return []string{"Continuar jogando", "Encerrar e voltar ao menu"}
-	case drawScreen:
-		return []string{"Recusar e continuar", "Aceitar empate"}
-	case resultScreen:
-		return []string{"Jogar novamente", "Ver tabuleiro", "Menu principal"}
-	case errorScreen:
-		return []string{"Tentar novamente", "Voltar ao menu principal"}
-	default:
-		return nil
-	}
-}
-
 func (m application) card(title, body, footer string, double bool) string {
-	width := min(52, max(18, m.width-4))
+	width := render.ContentWidth(m.width, render.MenuWidth)
 	return render.Card(title, body, footer, m.band(width, double), m.menuOptions(), m.choice, width)
 }
 
@@ -52,7 +22,7 @@ func (m application) View() tea.View {
 	switch m.screen {
 	case mainScreen:
 		title := m.logoText()
-		if m.width < 48 || m.height < 23 {
+		if m.width < render.LogoMinWidth || m.height < render.LogoMinHeight {
 			title = render.Paint("CHESS", render.Accent)
 		}
 		setting := "ligadas"
@@ -64,7 +34,7 @@ func (m application) View() tea.View {
 		content = m.card("NOVA PARTIDA\nJOGADOR VS IA", "", "↑↓ navegar · ←→ alterar\nEnter confirmar · Esc voltar", true)
 	case playingScreen, finalBoardScreen:
 		if m.match.State().PromotionPending && m.screen == playingScreen {
-			content = render.Promotion(m.match.State().Cursor, m.match.Game().Position().SideToMove, m.choice, min(48, max(18, m.width-4)))
+			content = render.Promotion(m.match.State().Cursor, m.match.Game().Position().SideToMove, m.choice, m.match.State().PromotionChoices, render.ContentWidth(m.width, render.PromotionWidth))
 		} else {
 			content = m.boardContent()
 		}

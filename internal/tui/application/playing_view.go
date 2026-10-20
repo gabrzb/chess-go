@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"charm.land/lipgloss/v2"
-
 	"github.com/gabrzb/chess-go/internal/chess"
 	"github.com/gabrzb/chess-go/internal/chess/game"
 	"github.com/gabrzb/chess-go/internal/tui/render"
@@ -26,14 +24,14 @@ func (m application) playerInfo(s game.Snapshot, compact bool) string {
 			} else {
 				status += "\nVocê joga de " + sideText(opposite(state.AIColor)) + "."
 				if s.SideToMove == state.AIColor {
-					status += "\nComputador · " + levelNames[m.config.level]
+					status += "\nComputador · " + difficultyLabel(m.config.level)
 				}
 			}
 		} else if !compact {
 			status += "\nJogador " + map[chess.Color]string{chess.White: "1", chess.Black: "2"}[s.SideToMove]
 		}
 		if state.Thinking {
-			status += "\n" + m.thinkingText()
+			status += "\n" + render.Thinking(m.frame, !m.noAnimations)
 		}
 	}
 	if state.Reviewing {
@@ -52,7 +50,7 @@ func (m application) gameFooter() string {
 	}
 	if state.Selected.Valid() {
 		piece, _ := m.match.Game().Position().Board.PieceAt(state.Selected)
-		name := map[chess.PieceType]string{chess.Pawn: "PEÃO", chess.Knight: "CAVALO", chess.Bishop: "BISPO", chess.Rook: "TORRE", chess.Queen: "DAMA", chess.King: "REI"}[piece.Type]
+		name := strings.ToUpper(render.PieceName(piece.Type))
 		return name + " · " + state.Selected.String() + " — escolha o destino.\nEnter confirmar · Esc cancelar seleção · ? ajuda"
 	}
 	if state.Thinking {
@@ -69,7 +67,7 @@ func (m application) boardContent() string {
 	state := m.match.State()
 	mode, compactMode := "LOCAL · JOGADOR VS JOGADOR", "LOCAL"
 	if m.config.computer {
-		mode, compactMode = "JOGADOR VS IA · "+levelNames[m.config.level], "VS IA · "+levelNames[m.config.level]
+		mode, compactMode = "JOGADOR VS IA · "+difficultyLabel(m.config.level), "VS IA · "+difficultyLabel(m.config.level)
 	}
 	lastMove := "—"
 	if s.LastMove != nil {
@@ -100,7 +98,7 @@ func (m application) boardContent() string {
 	return render.Match(render.MatchPanel{
 		Width: m.width, Height: m.height, Mode: mode, CompactMode: compactMode,
 		Status: m.playerInfo(s, false), CompactStatus: m.playerInfo(s, true),
-		LastMove: lastMove, Board: m.match.RenderBoard(s.Board), Footer: m.gameFooter(),
+		LastMove: lastMove, Board: render.Board(s.Board, render.BoardState{Cursor: state.Cursor, Selected: state.Selected, LegalMoves: state.LegalMoves, Flipped: state.Flipped}), Footer: m.gameFooter(),
 		Notice: render.Paint(strings.Join(notices, "\n"), render.Alert), Moves: m.labels[:end],
 	})
 }
@@ -110,5 +108,5 @@ func (m application) boardFits() bool {
 		return false
 	}
 	content := m.boardContent()
-	return lipgloss.Width(content) <= m.width && lipgloss.Height(content) <= m.height
+	return render.Fits(content, m.width, m.height)
 }

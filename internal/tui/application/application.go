@@ -13,6 +13,7 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess/ai"
 	"github.com/gabrzb/chess-go/internal/chess/game"
 	"github.com/gabrzb/chess-go/internal/tui/match"
+	"github.com/gabrzb/chess-go/internal/tui/render"
 )
 
 type screen uint8
@@ -31,10 +32,6 @@ const (
 	errorScreen
 )
 
-var levels = []ai.Difficulty{ai.Easy, ai.Medium, ai.Hard}
-var levelNames = []string{"Fácil", "Normal", "Difícil"}
-var sideNames = []string{"Brancas", "Pretas", "Aleatório"}
-
 type Options struct {
 	Difficulty   ai.Difficulty
 	HumanColor   chess.Color
@@ -46,9 +43,10 @@ type Options struct {
 }
 
 type settings struct {
-	computer    bool
-	side, level int
-	seed        int64
+	computer bool
+	side     sideChoice
+	level    ai.Difficulty
+	seed     int64
 }
 
 type application struct {
@@ -78,21 +76,19 @@ func New(ctx context.Context, options Options) (tea.Model, error) {
 	if options.Difficulty != "" && options.Difficulty.Depth() == 0 {
 		return nil, ai.ErrInvalidDifficulty
 	}
-	m := application{ctx: ctx, width: 80, height: 24, noAnimations: options.NoAnimations, logger: options.Logger,
-		config: settings{computer: options.Difficulty != "", level: 1, seed: options.Seed}}
+	m := application{ctx: ctx, width: render.DefaultWidth, height: render.DefaultHeight, noAnimations: options.NoAnimations, logger: options.Logger,
+		config: settings{computer: options.Difficulty != "", level: ai.Medium, seed: options.Seed}}
 	if m.logger == nil {
 		m.logger = log.New(io.Discard, "", 0)
 	}
 	if options.HumanColor == chess.Black {
-		m.config.side = 1
+		m.config.side = blackSide
 	}
 	if options.RandomColor {
-		m.config.side = 2
+		m.config.side = randomSide
 	}
-	for index, level := range levels {
-		if level == options.Difficulty {
-			m.config.level = index
-		}
+	if options.Difficulty != "" {
+		m.config.level = options.Difficulty
 	}
 	if options.StartGame {
 		m.initial = m.beginMatch()
@@ -127,10 +123,10 @@ func (m *application) beginMatch() tea.Cmd {
 	m.labels = nil
 	if m.config.computer {
 		human := chess.White
-		if m.config.side == 1 || (m.config.side == 2 && rand.IntN(2) == 1) {
+		if m.config.side == blackSide || (m.config.side == randomSide && rand.IntN(2) == 1) {
 			human = chess.Black
 		}
-		player, err := ai.NewPlayer(levels[m.config.level], m.config.seed)
+		player, err := ai.NewPlayer(m.config.level, m.config.seed)
 		if err != nil {
 			m.logger.Print(err)
 			m.show(errorScreen)

@@ -124,7 +124,7 @@ flowchart TD
     match --> render
     match --> game
     match --> ai
-    render --> rules
+    render --> game
     render --> chess
     ai --> rules
     ai --> chess
@@ -145,6 +145,15 @@ Na TUI, `application` coordena as telas e consulta uma cópia do estado visual d
 `match`. A interação com peças, promoção, revisão e buscas pertence a `match`.
 `render` recebe os dados necessários para desenhar a interface, sem controlar
 sessões ou iniciar buscas. Esses pacotes não importam a raiz `tui`.
+
+Cada opção de menu reúne seu rótulo e sua ação em `application/menus.go`;
+o desenho e o comando executado usam a mesma definição. A configuração mantém
+dificuldades tipadas, e as escolhas de promoção vêm dos movimentos da partida.
+`match.State` fornece cópias dos dados de interação, enquanto medidas, cores,
+componentes e quadros de animação pertencem a `render`. A notação SAN pertence a
+`chess/game`, junto dos snapshots que descreve; o renderer não consulta regras.
+O pacote `application`
+coordena eventos, telas e o agendamento das animações.
 
 ## Funções principais
 

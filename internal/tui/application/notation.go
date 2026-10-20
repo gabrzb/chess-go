@@ -1,6 +1,6 @@
 package application
 
-import "github.com/gabrzb/chess-go/internal/tui/render"
+import "github.com/gabrzb/chess-go/internal/chess/game"
 
 func (m *application) refreshLabels() {
 	for len(m.labels)+1 < m.match.Game().HistoryLen() {
@@ -14,6 +14,6 @@ func (m *application) refreshLabels() {
 		if err != nil || next.LastMove == nil {
 			return
 		}
-		m.labels = append(m.labels, render.SAN(before, next, *next.LastMove))
+		m.labels = append(m.labels, game.SAN(before, next, *next.LastMove))
 	}
 }

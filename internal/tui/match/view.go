@@ -16,7 +16,7 @@ func (m Model) View() tea.View {
 	if err != nil {
 		content += "Failed to load game: " + err.Error()
 	} else {
-		content += m.RenderBoard(snapshot.Board)
+		content += render.Board(snapshot.Board, render.BoardState{Cursor: m.cursor, Selected: m.selected, LegalMoves: m.legalMoves, Flipped: m.flipped})
 		content += "\n\n" + render.StatusText(snapshot)
 		if m.opponent != nil {
 			content += "\nAI: " + render.ColorName(m.aiColor)

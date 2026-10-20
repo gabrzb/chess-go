@@ -1,4 +1,4 @@
-package render
+package game
 
 import (
 	"slices"
@@ -6,11 +6,10 @@ import (
 	"strings"
 
 	"github.com/gabrzb/chess-go/internal/chess"
-	"github.com/gabrzb/chess-go/internal/chess/game"
 	"github.com/gabrzb/chess-go/internal/chess/rules"
 )
 
-func SAN(before, next game.Snapshot, move chess.Move) string {
+func SAN(before, next Snapshot, move chess.Move) string {
 	piece, _ := before.Board.PieceAt(move.From)
 	captured, _ := before.Board.PieceAt(move.To)
 	letters := map[chess.PieceType]string{chess.Knight: "N", chess.Bishop: "B", chess.Rook: "R", chess.Queen: "Q", chess.King: "K"}

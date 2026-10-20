@@ -4,6 +4,25 @@ import (
 	"github.com/gabrzb/chess-go/internal/chess"
 )
 
+func PieceName(kind chess.PieceType) string {
+	switch kind {
+	case chess.Pawn:
+		return "Peão"
+	case chess.Knight:
+		return "Cavalo"
+	case chess.Bishop:
+		return "Bispo"
+	case chess.Rook:
+		return "Torre"
+	case chess.Queen:
+		return "Dama"
+	case chess.King:
+		return "Rei"
+	default:
+		return ""
+	}
+}
+
 func Piece(piece chess.Piece) string {
 	symbols := map[chess.PieceType]struct {
 		white string

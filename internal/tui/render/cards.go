@@ -24,14 +24,12 @@ func Card(title, body, footer, bar string, options []string, choice, width int) 
 	return content
 }
 
-func Promotion(cursor chess.Square, color chess.Color, choice, width int) string {
-	bar := Paint(strings.Repeat("=", width), Muted)
+func Promotion(cursor chess.Square, color chess.Color, choice int, kinds []chess.PieceType, width int) string {
+	bar := Band(width, width, false)
 	center := lipgloss.NewStyle().Width(width).Align(lipgloss.Center)
-	names := []string{"Dama", "Torre", "Bispo", "Cavalo"}
-	kinds := []chess.PieceType{chess.Queen, chess.Rook, chess.Bishop, chess.Knight}
 	var items []string
-	for index, name := range names {
-		option := Piece(chess.Piece{Type: kinds[index], Color: color}) + "  " + name
+	for _, kind := range kinds {
+		option := Piece(chess.Piece{Type: kind, Color: color}) + "  " + PieceName(kind)
 		items = append(items, option)
 	}
 	return bar + "\n\n" + center.Bold(true).Render("PROMOÇÃO DE PEÃO") + "\n" + center.Render("Escolha a nova peça para "+cursor.String()+".") + "\n\n" + bar + "\n\n" + Menu(items, choice, width) + "\n\n" + center.Render("↑↓ escolher · Enter confirmar\nQ/R/B/N atalhos · Esc cancelar")

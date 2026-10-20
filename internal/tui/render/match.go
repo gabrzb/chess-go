@@ -17,9 +17,9 @@ type MatchPanel struct {
 }
 
 func Match(panel MatchPanel) string {
-	width := min(76, max(18, panel.Width-4))
+	width := ContentWidth(panel.Width, MatchWidth)
 	center := func(text string) string { return Center(ansi.Wrap(text, width, " "), width) }
-	bar := Paint(strings.Repeat("=", width), Muted)
+	bar := Band(width, width, false)
 	board := Center("TABULEIRO\n"+panel.Board, width)
 	footer := center(Paint(panel.Footer, Muted))
 	compose := func(mode, info string) string {
@@ -29,18 +29,18 @@ func Match(panel MatchPanel) string {
 		}
 		return strings.Join([]string{header, info, board, footer}, "\n\n")
 	}
-	if panel.Width >= 72 {
-		for rows := 4; rows >= 0; rows-- {
+	if panel.Width >= WideMatchMinWidth {
+		for rows := MaxHistoryRows; rows >= 0; rows-- {
 			columns := []string{"PARTIDA\n" + panel.Status, "ÚLTIMO LANCE\n" + panel.LastMove}
 			if rows > 0 {
 				columns = append(columns, History(panel.Moves, rows))
 			}
-			columnWidth := (width - (len(columns)-1)*2) / len(columns)
+			columnWidth := (width - (len(columns)-1)*ColumnGap) / len(columns)
 			for index, column := range columns {
 				columns[index] = Center(ansi.Wrap(column, columnWidth, " "), columnWidth)
 			}
-			content := compose(panel.Mode, Center(lipgloss.JoinHorizontal(lipgloss.Top, interleave(columns, "  ")...), width))
-			if lipgloss.Height(content) <= panel.Height && lipgloss.Width(content) <= panel.Width {
+			content := compose(panel.Mode, Center(lipgloss.JoinHorizontal(lipgloss.Top, interleave(columns, strings.Repeat(" ", ColumnGap))...), width))
+			if Fits(content, panel.Width, panel.Height) {
 				return content
 			}
 		}

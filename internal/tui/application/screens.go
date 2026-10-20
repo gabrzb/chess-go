@@ -81,9 +81,9 @@ func (m application) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	switch key.String() {
 	case "up", "w":
-		m.choice = (m.choice + len(options) - 1) % len(options)
+		m.choice = cycleIndex(m.choice, -1, len(options))
 	case "down", "s":
-		m.choice = (m.choice + 1) % len(options)
+		m.choice = cycleIndex(m.choice, 1, len(options))
 	case "left", "a", "right", "d":
 		if m.screen == configScreen {
 			step := 1
@@ -97,15 +97,6 @@ func (m application) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 	return m, nil
-}
-
-func (m *application) adjustConfig(step int) {
-	if m.choice == 0 {
-		m.config.side = (m.config.side + step + len(sideNames)) % len(sideNames)
-	}
-	if m.choice == 1 {
-		m.config.level = (m.config.level + step + len(levels)) % len(levels)
-	}
 }
 
 func (m application) back() (tea.Model, tea.Cmd) {
@@ -141,111 +132,15 @@ func (m application) back() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *application) activate() tea.Cmd {
-	switch m.screen {
-	case mainScreen:
-		switch m.choice {
-		case 0:
-			m.config.computer = false
-			return m.beginMatch()
-		case 1:
-			m.config.computer = true
-			m.show(configScreen)
-		case 2:
-			return tea.Quit
-		}
-	case configScreen:
-		switch m.choice {
-		case 0, 1:
-			m.adjustConfig(1)
-		case 2:
-			return m.beginMatch()
-		case 3:
-			m.show(mainScreen)
-		}
-	case pauseScreen:
-		targets := []screen{playingScreen, drawScreen, resignScreen, abandonScreen}
-		if m.config.computer {
-			targets = []screen{playingScreen, resignScreen, abandonScreen}
-		}
-		if m.choice == len(targets) && m.match.Game().ClaimableDraw() != game.NoReason {
-			if err := m.match.Game().ClaimDraw(); err != nil {
-				m.logger.Print(err)
-				return nil
-			}
-			m.show(resultScreen)
-			return nil
-		}
-		target := targets[m.choice]
-		if target == playingScreen {
-			return m.resume()
-		}
-		if target == drawScreen {
-			if err := m.match.Game().OfferDraw(m.match.Game().Position().SideToMove); err != nil {
-				m.logger.Print(err)
-				return nil
-			}
-		}
-		m.show(target)
-	case resignScreen:
-		if m.choice == 0 {
-			return m.resume()
-		}
-		if err := m.match.Game().Resign(m.resigningSide()); err != nil {
-			m.logger.Print(err)
-			return nil
-		}
-		m.show(resultScreen)
-	case abandonScreen:
-		if m.choice == 0 {
-			return m.resume()
-		}
-		m.match.StopAI()
-		m.match = match.Model{}
-		m.show(mainScreen)
-	case drawScreen:
-		s, _ := m.match.Game().Snapshot()
-		accept := m.choice == 1
-		if err := m.match.Game().RespondDraw(opposite(s.DrawOffer), accept); err != nil {
-			m.logger.Print(err)
-			return nil
-		}
-		if accept {
-			m.show(resultScreen)
-		} else {
-			return m.resume()
-		}
-	case resultScreen:
-		switch m.choice {
-		case 0:
-			return m.beginMatch()
-		case 1:
-			m.match.ClearSelection()
-			m.match.EndReview()
-			m.show(finalBoardScreen)
-		case 2:
-			m.match = match.Model{}
-			m.show(mainScreen)
-		}
-	case errorScreen:
-		if m.choice == 0 {
-			m.match.ClearMessage()
-			return m.resume()
-		}
-		m.show(abandonScreen)
-	}
-	return nil
-}
-
 func (m application) updateBoard(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.match.State().PromotionPending && m.screen == playingScreen {
 		switch key.String() {
 		case "up", "w":
-			m.choice = (m.choice + 3) % 4
+			m.choice = cycleIndex(m.choice, -1, len(m.match.State().PromotionChoices))
 		case "down", "s":
-			m.choice = (m.choice + 1) % 4
+			m.choice = cycleIndex(m.choice, 1, len(m.match.State().PromotionChoices))
 		case "enter":
-			kind := []chess.PieceType{chess.Queen, chess.Rook, chess.Bishop, chess.Knight}[m.choice]
+			kind := m.match.State().PromotionChoices[m.choice]
 			m.match.Promote(kind)
 		default:
 			m.match.PromotionKey(key.String())
