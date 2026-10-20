@@ -16,15 +16,7 @@ func Card(title, body, footer, bar string, options []string, choice, width int) 
 		content += "\n\n" + center.Render(ansi.Wrap(body, width, " "))
 	}
 	if len(options) > 0 {
-		items := make([]string, len(options))
-		for index, option := range options {
-			items[index] = "  " + option
-			if index == choice {
-				items[index] = Paint("▸ "+option, Accent)
-			}
-		}
-		menu := strings.Join(items, "\n")
-		content += "\n\n" + Center(menu, width)
+		content += "\n\n" + Menu(options, choice, width)
 	}
 	if footer != "" {
 		content += "\n\n" + center.Render(Paint(ansi.Wrap(footer, width, " "), Muted))
@@ -40,11 +32,22 @@ func Promotion(cursor chess.Square, color chess.Color, choice, width int) string
 	var items []string
 	for index, name := range names {
 		option := Piece(chess.Piece{Type: kinds[index], Color: color}) + "  " + name
-		text := "  " + option
-		if index == choice {
-			text = Paint("▸ "+option, Accent)
-		}
-		items = append(items, text)
+		items = append(items, option)
 	}
-	return bar + "\n\n" + center.Bold(true).Render("PROMOÇÃO DE PEÃO") + "\n" + center.Render("Escolha a nova peça para "+cursor.String()+".") + "\n\n" + bar + "\n\n" + Center(strings.Join(items, "\n"), width) + "\n\n" + center.Render("↑↓ escolher · Enter confirmar\nQ/R/B/N atalhos · Esc cancelar")
+	return bar + "\n\n" + center.Bold(true).Render("PROMOÇÃO DE PEÃO") + "\n" + center.Render("Escolha a nova peça para "+cursor.String()+".") + "\n\n" + bar + "\n\n" + Menu(items, choice, width) + "\n\n" + center.Render("↑↓ escolher · Enter confirmar\nQ/R/B/N atalhos · Esc cancelar")
+}
+
+const MenuCursor = "▸"
+
+// Menu keeps the focus style on the arrow; labels and padding never inherit it.
+func Menu(options []string, choice, width int) string {
+	items := make([]string, len(options))
+	for index, option := range options {
+		marker := " "
+		if index == choice {
+			marker = Paint(MenuCursor, Accent)
+		}
+		items[index] = marker + " " + option
+	}
+	return Center(strings.Join(items, "\n"), width)
 }

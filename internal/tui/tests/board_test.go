@@ -15,8 +15,8 @@ func TestBoardRendering(t *testing.T) {
 	m := tui.NewModel(gameWith(t))
 	board := ansi.Strip(boardText(t, m))
 	rawBoard := boardText(t, m)
-	if strings.Count(rawBoard, "48;2;") != 1 || strings.Contains(rawBoard, ansi.NewStyle(ansi.AttrReverse).String()) {
-		t.Fatal("Cursor background must affect only its cell, without reverse video")
+	if strings.Contains(rawBoard, "48;2;") || strings.Contains(rawBoard, ansi.NewStyle(ansi.AttrReverse).String()) {
+		t.Fatal("Focus must use a marker without background or reverse video")
 	}
 	if len(boardCells(t, m)) != chess.SquareCount || !strings.Contains(board, "  a b c d e f g h") || !strings.Contains(m.View().Content, "Turn: White") {
 		t.Fatal("Missing initial board, coordinates or turn")
@@ -28,7 +28,7 @@ func TestBoardRendering(t *testing.T) {
 		t.Errorf("Black king glyph: %q", got)
 	}
 	m = moveCursorTo(t, m, chess.H8)
-	if ansi.Strip(boardText(t, m)) != board {
+	if strings.ReplaceAll(ansi.Strip(boardText(t, m)), "▸", " ") != strings.ReplaceAll(board, "▸", " ") {
 		t.Error("Moving the cursor altered the rendered position")
 	}
 	assertHighlights(t, m, chess.NoSquare)

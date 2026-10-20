@@ -22,7 +22,7 @@ func Board(board chess.Board, state BoardState) string {
 		if state.Flipped {
 			row = rowIndex
 		}
-		fmt.Fprintf(&text, "%d", row+1)
+		fmt.Fprintf(&text, "%d ", row+1)
 
 		for colIndex := 0; colIndex < chess.BoardSize; colIndex++ {
 			col := colIndex
@@ -33,24 +33,25 @@ func Board(board chess.Board, state BoardState) string {
 			piece, _ := board.PieceAt(square)
 
 			symbol := Piece(piece)
+			marker := " "
 			if square == state.Cursor {
-				symbol = cursorStyle.Render(symbol)
+				marker = Paint(MenuCursor, Accent)
 			} else if square == state.Selected {
-				symbol = selectedStyle.Render(symbol)
+				marker = selectedStyle.Render("●")
 			} else if slices.ContainsFunc(state.LegalMoves, func(move chess.Move) bool { return move.To == square }) {
-				symbol = legalMoveStyle.Render(symbol)
+				marker = legalMoveStyle.Render("·")
 			}
 
-			fmt.Fprintf(&text, " %s", symbol)
+			fmt.Fprintf(&text, "%s%s", marker, symbol)
 		}
 
 		text.WriteString("\n")
 	}
 
 	if state.Flipped {
-		text.WriteString("  h g f e d c b a")
+		text.WriteString("   h g f e d c b a")
 	} else {
-		text.WriteString("  a b c d e f g h")
+		text.WriteString("   a b c d e f g h")
 	}
 	return text.String()
 }

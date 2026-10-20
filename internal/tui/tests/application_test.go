@@ -53,9 +53,9 @@ func TestApplicationLocalGameAndResult(t *testing.T) {
 	}
 	m = keys(t, m, tea.KeyEnter)
 	contains(t, m, "Vez das brancas")
-	cursorSpans := regexp.MustCompile("\x1b\\[[0-9;]*48;2;126;156;216[0-9;]*m([^\x1b]*)").FindAllStringSubmatch(m.View().Content, -1)
-	if len(cursorSpans) != 1 || ansi.StringWidth(cursorSpans[0][1]) != 1 {
-		t.Fatal("Cursor style extends beyond one symbol in the complete UI")
+	cursorSpans := regexp.MustCompile("\x1b\\[[0-9;]*38;2;126;156;216[0-9;]*m([^\x1b]*)").FindAllStringSubmatch(m.View().Content, -1)
+	if len(cursorSpans) != 1 || cursorSpans[0][1] != "▸" {
+		t.Fatal("Focus style must affect only the cursor marker in the complete UI")
 	}
 	view := ansi.Strip(m.View().Content)
 	boardStart := strings.Index(view, "TABULEIRO")
@@ -66,7 +66,7 @@ func TestApplicationLocalGameAndResult(t *testing.T) {
 	for _, original := range strings.Split(view, "\n") {
 		line := strings.TrimSpace(original)
 		if len(line) > 1 && line[0] >= '1' && line[0] <= '8' && line[1] == ' ' {
-			if len(strings.Fields(line)) != chess.BoardSize+1 {
+			if ansi.StringWidth(line) != 2+chess.BoardSize*2 {
 				t.Fatal("Board row contains side panels")
 			}
 			left := len(original) - len(strings.TrimLeft(original, " "))

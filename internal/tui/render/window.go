@@ -13,9 +13,10 @@ func Window(content string, width, height int) tea.View {
 		content = Center(content, width)
 	}
 	surface := lipgloss.NewStyle().Foreground(lipgloss.Color(Foreground)).Background(lipgloss.Color(Background))
-	content = lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, surface.Render(content), lipgloss.WithWhitespaceStyle(surface))
+	content = lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, content, lipgloss.WithWhitespaceStyle(surface))
 	view := tea.NewView(content)
 	view.AltScreen = true
 	view.BackgroundColor = lipgloss.Color(Background)
+	view.ForegroundColor = lipgloss.Color(Foreground)
 	return view
 }

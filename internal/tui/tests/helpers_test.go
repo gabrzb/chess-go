@@ -29,11 +29,11 @@ func boardCells(t *testing.T, m tea.Model) map[chess.Square]string {
 	}
 	cells := make(map[chess.Square]string)
 	for row, line := range lines[:chess.BoardSize] {
-		fields := strings.Fields(line)
-		if len(fields) != chess.BoardSize+1 {
+		if ansi.StringWidth(line) != 2+chess.BoardSize*2 {
 			t.Fatalf("Incorrect rank: %q", line)
 		}
-		for col, cell := range fields[1:] {
+		for col := range chess.BoardSize {
+			cell := strings.TrimSpace(ansi.Cut(line, 2+col*2, 2+(col+1)*2))
 			square, _ := chess.A8.Offset(col, -row)
 			cells[square] = cell
 		}
@@ -45,7 +45,7 @@ func visibleCursor(t *testing.T, m tea.Model) chess.Square {
 	t.Helper()
 	cursor := chess.NoSquare
 	for square, cell := range boardCells(t, m) {
-		if strings.Contains(cell, "48;2;") {
+		if strings.Contains(ansi.Strip(cell), "▸") {
 			if cursor.Valid() {
 				t.Fatal("Multiple cursors")
 			}
@@ -124,7 +124,8 @@ func assertHighlights(t *testing.T, m tea.Model, selected chess.Square, destinat
 		for _, to := range destinations {
 			expected = expected || square == to
 		}
-		if (cell != ansi.Strip(cell)) != expected {
+		highlighted := strings.ContainsAny(ansi.Strip(cell), "▸●·")
+		if highlighted != expected {
 			t.Errorf("Incorrect highlight at %v", square)
 		}
 	}
