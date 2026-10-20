@@ -1,6 +1,7 @@
-package render
+package render_test
 
 import (
+	"github.com/gabrzb/chess-go/internal/tui/render"
 	"strings"
 	"testing"
 )
@@ -8,15 +9,15 @@ import (
 func TestMenuStylesOnlyItsArrow(t *testing.T) {
 	options := []string{"Continuar", "Desistir", "Voltar ao menu"}
 	for choice := range options {
-		menu := Menu(options, choice, 40)
-		if strings.Count(menu, Paint(MenuCursor, Accent)) != 1 {
+		menu := render.Menu(options, choice, 40)
+		if strings.Count(menu, render.Paint(render.MenuCursor, render.Accent)) != 1 {
 			t.Fatal("menu must contain exactly one focused arrow")
 		}
 		if strings.Contains(menu, "48;") || strings.Contains(menu, "\x1b[7m") {
 			t.Fatal("menu focus must not paint a row background")
 		}
 		for _, option := range options {
-			if strings.Contains(menu, Paint(option, Accent)) {
+			if strings.Contains(menu, render.Paint(option, render.Accent)) {
 				t.Fatal("menu label inherited focus color")
 			}
 		}
