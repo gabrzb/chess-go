@@ -14,6 +14,11 @@ const (
 	Stalemate
 	Resignation
 	Agreement
+	InsufficientMaterial
+	Repetition
+	FiftyMoves
+	FivefoldRepetition
+	SeventyFiveMoves
 )
 
 type Outcome struct {
@@ -36,6 +41,16 @@ func outcomeFor(status chess.Status, side chess.Color) Outcome {
 		return Outcome{Winner: other(side), Reason: Checkmate}
 	case chess.StatusStalemate:
 		return Outcome{Reason: Stalemate}
+	case chess.StatusInsufficientMaterial:
+		return Outcome{Reason: InsufficientMaterial}
+	case chess.StatusRepetition:
+		return Outcome{Reason: Repetition}
+	case chess.StatusFiftyMoves:
+		return Outcome{Reason: FiftyMoves}
+	case chess.StatusFivefoldRepetition:
+		return Outcome{Reason: FivefoldRepetition}
+	case chess.StatusSeventyFiveMoves:
+		return Outcome{Reason: SeventyFiveMoves}
 	default:
 		return Outcome{}
 	}

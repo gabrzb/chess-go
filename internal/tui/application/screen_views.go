@@ -18,10 +18,14 @@ func (m application) menuOptions() []string {
 	case configScreen:
 		return []string{"Suas peças    ‹ " + sideNames[m.config.side] + " ›", "Dificuldade   ‹ " + levelNames[m.config.level] + " ›", "Iniciar partida", "Voltar"}
 	case pauseScreen:
+		options := []string{"Continuar", "Oferecer empate", "Desistir", "Voltar ao menu principal"}
 		if m.config.computer {
-			return []string{"Continuar", "Desistir", "Voltar ao menu principal"}
+			options = []string{"Continuar", "Desistir", "Voltar ao menu principal"}
 		}
-		return []string{"Continuar", "Oferecer empate", "Desistir", "Voltar ao menu principal"}
+		if m.match.Game().ClaimableDraw() != game.NoReason {
+			options = append(options, "Reivindicar empate")
+		}
+		return options
 	case resignScreen:
 		return []string{"Continuar jogando", "Confirmar desistência"}
 	case abandonScreen:
@@ -88,6 +92,18 @@ func (m application) View() tea.View {
 func (m application) resultText() (string, string, string) {
 	s, _ := m.match.Game().Snapshot()
 	reason := map[game.EndReason]string{game.Checkmate: "Xeque-mate.", game.Stalemate: "Empate por afogamento.\nSem jogadas legais e sem xeque.", game.Resignation: "Partida encerrada por desistência.", game.Agreement: "Empate por acordo."}[s.Outcome.Reason]
+	switch s.Outcome.Reason {
+	case game.InsufficientMaterial:
+		reason = "Empate por material insuficiente."
+	case game.Repetition:
+		reason = "Empate reivindicado por tripla repetição."
+	case game.FiftyMoves:
+		reason = "Empate reivindicado pela regra dos 50 movimentos."
+	case game.FivefoldRepetition:
+		reason = "Empate automático por quíntupla repetição."
+	case game.SeventyFiveMoves:
+		reason = "Empate automático pela regra dos 75 movimentos."
+	}
 	if s.Outcome.Winner == chess.NoColor {
 		return "EMPATE", "Nenhum vencedor.\n\n" + reason, render.Draw
 	}

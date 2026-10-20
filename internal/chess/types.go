@@ -33,6 +33,11 @@ const (
 	StatusStalemate
 	StatusResigned
 	StatusDrawAgreed
+	StatusInsufficientMaterial
+	StatusRepetition
+	StatusFiftyMoves
+	StatusFivefoldRepetition
+	StatusSeventyFiveMoves
 )
 
 type Direction struct {

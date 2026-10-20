@@ -4,6 +4,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/gabrzb/chess-go/internal/chess"
+	"github.com/gabrzb/chess-go/internal/chess/game"
 	"github.com/gabrzb/chess-go/internal/tui/match"
 )
 
@@ -167,6 +168,14 @@ func (m *application) activate() tea.Cmd {
 		if m.config.computer {
 			targets = []screen{playingScreen, resignScreen, abandonScreen}
 		}
+		if m.choice == len(targets) && m.match.Game().ClaimableDraw() != game.NoReason {
+			if err := m.match.Game().ClaimDraw(); err != nil {
+				m.logger.Print(err)
+				return nil
+			}
+			m.show(resultScreen)
+			return nil
+		}
 		target := targets[m.choice]
 		if target == playingScreen {
 			return m.resume()
@@ -300,6 +309,13 @@ func (m *application) afterMatch() {
 		return
 	}
 	m.refreshLabels()
+	if m.config.computer && snapshot.SideToMove == m.match.State().AIColor && m.match.Game().ClaimableDraw() != game.NoReason {
+		if err := m.match.Game().ClaimDraw(); err != nil {
+			m.logger.Print(err)
+			return
+		}
+		snapshot, _ = m.match.Game().Snapshot()
+	}
 	if snapshot.Status != chess.StatusOngoing && m.screen == playingScreen {
 		m.show(resultScreen)
 	}

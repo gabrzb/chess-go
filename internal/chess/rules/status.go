@@ -11,6 +11,12 @@ func EvaluateStatus(position chess.Position) (chess.Status, error) {
 	}
 
 	if canMove {
+		if InsufficientMaterial(position.Board) {
+			return chess.StatusInsufficientMaterial, nil
+		}
+		if position.HalfmoveClock >= 150 {
+			return chess.StatusSeventyFiveMoves, nil
+		}
 		return chess.StatusOngoing, nil
 	}
 

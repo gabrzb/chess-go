@@ -80,6 +80,9 @@ func (m application) boardContent() string {
 		end = min(end, state.HistoryIndex)
 	}
 	var notices []string
+	if !state.Reviewing && m.match.Game().ClaimableDraw() != game.NoReason {
+		notices = append(notices, "EMPATE DISPONÍVEL · Esc abre o menu para reivindicar.")
+	}
 	if s.Check && m.screen != finalBoardScreen {
 		warning := "O rei " + map[chess.Color]string{chess.White: "branco", chess.Black: "preto"}[s.SideToMove] + " está ameaçado."
 		if m.config.computer && s.SideToMove != state.AIColor {

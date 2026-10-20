@@ -22,6 +22,10 @@ func (g *Game) Play(move chess.Move) (MoveResult, error) {
 	if err != nil {
 		return MoveResult{}, err
 	}
+	key := rules.RepetitionKey(nextPosition)
+	if nextStatus == chess.StatusOngoing && g.repetitions[key]+1 >= 5 {
+		nextStatus = chess.StatusFivefoldRepetition
+	}
 
 	next := Game{
 		position: nextPosition,
@@ -41,6 +45,10 @@ func (g *Game) Play(move chess.Move) (MoveResult, error) {
 	}
 
 	g.history = append(g.history, previous)
+	if g.repetitions == nil {
+		g.repetitions = make(map[chess.Position]int)
+	}
+	g.repetitions[key]++
 	g.position = nextPosition
 	g.status = nextStatus
 	g.lastMove = &move

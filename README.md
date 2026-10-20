@@ -274,8 +274,14 @@ promoção durante a busca, sem solicitar uma escolha ao jogador humano.
 - Não há busca adicional de capturas no limite de profundidade (*quiescence*),
   livro de aberturas ou cache de posições. A dificuldade `hard` pode demorar mais
   em posições com muitas alternativas; não há limite fixo de tempo por jogada.
-- Empates por repetição, regra dos 50 movimentos e material insuficiente
-  ainda não são detectados.
+- Repetição tripla e regra dos 50 movimentos permitem reivindicar empate na
+  posição atual pelo menu da partida. A IA reivindica assim que pode. Não há
+  reivindicação antecipada indicando um lance ainda não executado.
+- Repetição quíntupla e 75 movimentos encerram automaticamente a partida,
+  preservando a prioridade do xeque-mate. Material insuficiente cobre reis
+  sozinhos, um único bispo ou cavalo e somente bispos da mesma cor de casas;
+  outras posições mortas, como bloqueios complexos, não são detectadas.
+  Referência: [regras da FIDE, artigos 5 e 9](https://handbook.fide.com/chapter/e012023).
 - A revisão do histórico permite consultar posições anteriores sem
   desfazer jogadas ou modificar a partida.
 - Não há salvamento de partidas nem relógio. Voltar ao menu descarta a partida
