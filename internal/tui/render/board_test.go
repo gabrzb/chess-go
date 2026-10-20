@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/gabrzb/chess-go/internal/chess"
+	"github.com/gabrzb/chess-go/internal/chess/game"
 )
 
 func sameColor(got color.Color, hex string) bool {
@@ -47,6 +48,9 @@ func TestBoardCellsKeepTheirColorsAndProportions(t *testing.T) {
 					if (file+rank)%2 == 0 {
 						background = DarkSquare
 					}
+					if file == chess.C3.Column() && rank == chess.C3.Row() {
+						background = LegalSquare
+					}
 					cell := line[x]
 					if !sameColor(cell.Style.Bg, background) {
 						t.Fatalf("cell (%d,%d) lost its tile background", x, y)
@@ -62,6 +66,53 @@ func TestBoardCellsKeepTheirColorsAndProportions(t *testing.T) {
 					}
 					if !sameColor(cell.Style.Fg, foreground) {
 						t.Fatalf("piece %v lost its color", square)
+					}
+				}
+			}
+		}
+	}
+}
+
+func TestLegalSquaresStayRedUnderCursorIncludingCaptures(t *testing.T) {
+	g := game.NewGame()
+	for _, move := range []chess.Move{{From: chess.E2, To: chess.E4}, {From: chess.D7, To: chess.D5}} {
+		if _, err := g.Play(move); err != nil {
+			t.Fatal(err)
+		}
+	}
+	moves, err := g.LegalMovesFrom(chess.E4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, scale := range []BoardScale{CompactBoard, LargeBoard} {
+		width, height := scale.CellDimensions()
+		for _, cursor := range []chess.Square{chess.D5, chess.E5} {
+			state := BoardState{Cursor: cursor, Selected: chess.E4, LegalMoves: moves, Scale: scale}
+			for _, destination := range []chess.Square{chess.D5, chess.E5} {
+				arrows := 0
+				for _, line := range uv.NewStyledString(boardCell(g.Position().Board, destination, state, width, height)).Lines(ansi.GraphemeWidth) {
+					for _, cell := range line {
+						if !sameColor(cell.Style.Bg, LegalSquare) {
+							t.Fatal("legal destination lost its red background")
+						}
+						if cell.Content == MenuCursor {
+							arrows++
+						}
+					}
+				}
+				wantArrows := 0
+				if destination == cursor {
+					wantArrows = 1
+				}
+				if arrows != wantArrows {
+					t.Fatal("cursor arrow disappeared or spread to another destination")
+				}
+			}
+			state.LegalMoves = nil
+			for _, line := range uv.NewStyledString(boardCell(g.Position().Board, chess.D5, state, width, height)).Lines(ansi.GraphemeWidth) {
+				for _, cell := range line {
+					if sameColor(cell.Style.Bg, LegalSquare) {
+						t.Fatal("clearing selection left a red square behind")
 					}
 				}
 			}

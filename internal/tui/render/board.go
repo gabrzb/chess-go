@@ -88,6 +88,10 @@ func boardCell(board chess.Board, square chess.Square, state BoardState, width, 
 	if (square.Column()+square.Row())%2 == 0 {
 		background = DarkSquare
 	}
+	legalDestination := slices.ContainsFunc(state.LegalMoves, func(move chess.Move) bool { return move.To == square })
+	if legalDestination {
+		background = LegalSquare
+	}
 	foreground := WhitePiece
 	if piece.Color == chess.Black {
 		foreground = BlackPiece
@@ -102,7 +106,7 @@ func boardCell(board chess.Board, square chess.Square, state BoardState, width, 
 		marker = MenuCursor
 	case square == state.Selected:
 		marker = "●"
-	case slices.ContainsFunc(state.LegalMoves, func(move chess.Move) bool { return move.To == square }):
+	case legalDestination:
 		marker = "·"
 	}
 	style := lipgloss.NewStyle().Foreground(lipgloss.Color(foreground)).Background(lipgloss.Color(background))
