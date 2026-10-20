@@ -1,13 +1,17 @@
 package match
 
-import tea "charm.land/bubbletea/v2"
+import (
+	tea "charm.land/bubbletea/v2"
+
+	"github.com/gabrzb/chess-go/internal/application"
+)
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case startAIMessage:
 		cmd := m.StartAI()
 		return m, cmd
-	case aiResultMessage:
+	case application.SearchResult:
 		return m.receiveAIResult(msg)
 	}
 

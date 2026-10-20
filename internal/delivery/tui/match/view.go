@@ -18,9 +18,9 @@ func (m Model) View() tea.View {
 	} else {
 		content += render.Board(snapshot.Board, render.BoardState{Cursor: m.cursor, Selected: m.selected, LegalMoves: m.legalMoves, Flipped: m.flipped})
 		content += "\n\n" + render.StatusText(snapshot)
-		if m.opponent != nil {
-			content += "\nAI: " + render.ColorName(m.aiColor)
-			if m.thinking {
+		if m.opponent.Enabled() {
+			content += "\nAI: " + render.ColorName(m.opponent.Color())
+			if m.opponent.Thinking() {
 				content += " (thinking...)"
 			}
 		}
@@ -43,7 +43,7 @@ func (m Model) View() tea.View {
 	} else if m.reviewing {
 		content += "\n\nLeft/A: previous | Right/D: next | H/Esc: return to game | q/Ctrl+C: quit\n"
 	} else if m.isAITurn() && err == nil && snapshot.Status == chess.StatusOngoing {
-		if m.thinking {
+		if m.opponent.Thinking() {
 			content += "\n\nAI is thinking | H: history | q/Ctrl+C: quit\n"
 		} else {
 			content += "\n\nEnter: retry AI | H: history | q/Ctrl+C: quit\n"

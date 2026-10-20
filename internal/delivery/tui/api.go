@@ -19,7 +19,7 @@ func NewApplication(ctx context.Context, options Options) (tea.Model, error) {
 	return application.New(ctx, options)
 }
 
-func NewModel(g *game.Game) tea.Model { return match.New(g, 0) }
+func NewModel(g *game.Game) tea.Model { return match.New(g) }
 
 func NewModelWithAI(ctx context.Context, g *game.Game, chooser chess.MoveChooser, color chess.Color) (tea.Model, error) {
 	m, err := match.NewWithAI(ctx, g, chooser, color, 0)

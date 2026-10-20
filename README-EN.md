@@ -115,6 +115,10 @@ go test ./internal/engine/tests -run '^$' -bench BenchmarkChooseMove -benchmem
 cmd/
 └── chess-tui/          # CLI entry point
 internal/
+├── application/        # UI-independent AI coordination
+│   └── tests/          # search lifecycle tests
+├── architecture/
+│   └── tests/          # package dependency checks
 ├── domain/             # pure chess types and rules; standard library only
 │   ├── movegen/        # pseudolegal moves
 │   ├── attacks/        # attacked squares
@@ -126,7 +130,7 @@ internal/
 └── delivery/
     └── tui/            # terminal interface and entry API
         ├── application/ # screens and sessions
-        ├── match/       # interaction and asynchronous search
+        ├── match/       # interaction and search event adapter
         ├── render/      # presentation
         └── tests/       # interface tests
 ```
@@ -134,13 +138,14 @@ internal/
 ### Interface and game control
 
 `cmd/chess-tui` parses flags and calls the entry API in `tui`.
-`application` coordinates screens and sessions; `match` controls game interaction
-and the AI search lifecycle. `render` turns data into terminal content without
+`delivery/tui/application` coordinates screens and sessions; `match` controls game
+interaction and adapts search events. `internal/application.Opponent` coordinates
+the AI lifecycle independently of Bubble Tea. `render` turns data into terminal content without
 making moves or starting searches.
 
 The arrows below represent internal imports. This view omits only imports of
-the base `domain` package, which all five entry and interface packages use directly
-(`cmd/chess-tui`, `tui`, `application`, `match`, and `render`).
+the base `domain` package, used directly by the entry, interface, and AI
+coordination packages.
 
 ```mermaid
 flowchart LR
@@ -149,9 +154,11 @@ flowchart LR
     subgraph ui["internal/delivery/tui"]
         entry["tui<br/>Entry API"]
         application["application<br/>Screens and sessions"]
-        match["match<br/>Interaction and asynchronous search"]
+        match["match<br/>Interaction and search events"]
         render["render<br/>Presentation"]
     end
+
+    coordinator["internal/application<br/>AI coordination"]
 
     subgraph engine["Engine packages used by the TUI"]
         game["domain/game<br/>Game and snapshots"]
@@ -170,6 +177,8 @@ flowchart LR
     application --> ai
     match --> render
     match --> game
+    match --> coordinator
+    coordinator --> game
     render --> game
 ```
 
@@ -181,8 +190,17 @@ but does not depend on rules or search.
 
 `domain.MoveChooser` defines `ChooseMove(context.Context, Position)`.
 `engine.Player` implements this contract; `tui.NewModelWithAI` accepts any
-implementation, including custom strategies. The TUI validates returned moves
-before changing the game. The `match` package does not import `engine`.
+implementation, including custom strategies. `internal/application.Opponent`
+applies results through `Game.Play`, which validates moves before changing the game.
+The `match` package does not import `engine`.
+
+`Opponent.Start` returns a search function for background execution;
+`Start`, `Stop`, and `Accept` must run on the interface's event loop.
+The coordinator cancels searches and discards duplicate results, older searches,
+and results from other sessions. The TUI decides when to pause for history, menus,
+or promotion and adapts the search function to `tea.Cmd`. The application layer
+depends only on the domain and standard library; it starts no goroutines and
+contains no display messages.
 
 `Board` owns a fixed array and `Position` contains only values: copying a position
 copies all 64 squares without allocating slices or sharing pointers.
@@ -230,7 +248,7 @@ typed difficulty values, and promotion choices come from the game's moves.
 `match.State` provides copies of interaction data, while dimensions, colors,
 components, and animation frames belong to `render`. SAN notation belongs to
 `domain/game`, alongside the snapshots it describes; the renderer does not query rules.
-The `application` package coordinates events, screens, and animation scheduling.
+The `delivery/tui/application` package coordinates events, screens, and animation scheduling.
 
 The engine does not import the TUI. `application`, `match`, and `render` do not
 import the root `tui` package, and no production package imports tests. Tests live

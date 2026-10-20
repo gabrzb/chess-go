@@ -7,31 +7,23 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/gabrzb/chess-go/internal/application"
 	chess "github.com/gabrzb/chess-go/internal/domain"
 	"github.com/gabrzb/chess-go/internal/domain/game"
 )
 
-var ErrInvalidAIConfig = errors.New("AI requires a context, game, move chooser and valid color")
+var ErrInvalidAIConfig = application.ErrInvalidAIConfig
 
 type startAIMessage struct{}
 
-type aiResultMessage struct {
-	requestID uint64
-	sessionID uint64
-	position  chess.Position
-	move      chess.Move
-	err       error
-}
-
 func NewWithAI(ctx context.Context, g *game.Game, chooser chess.MoveChooser, color chess.Color, session uint64) (Model, error) {
-	if ctx == nil || g == nil || chooser == nil || (color != chess.White && color != chess.Black) {
-		return Model{}, ErrInvalidAIConfig
+	opponent, err := application.NewOpponent(ctx, g, chooser, color, session)
+	if err != nil {
+		return Model{}, err
 	}
 
-	m := New(g, session)
-	m.aiContext = ctx
-	m.opponent = chooser
-	m.aiColor = color
+	m := New(g)
+	m.opponent = opponent
 
 	if color == chess.White {
 		m.cursor = chess.A7
@@ -41,79 +33,57 @@ func NewWithAI(ctx context.Context, g *game.Game, chooser chess.MoveChooser, col
 }
 
 func (m Model) isAITurn() bool {
-	return m.opponent != nil && m.game.Position().SideToMove == m.aiColor
+	return m.opponent.IsTurn()
 }
 
 func (m *Model) StartAI() tea.Cmd {
-	if !m.isAITurn() || m.thinking || m.reviewing || len(m.promotionMoves) > 0 {
+	if m.reviewing || len(m.promotionMoves) > 0 {
 		return nil
 	}
 
-	snapshot, err := m.game.Snapshot()
+	search, err := m.opponent.Start()
 	if err != nil {
 		m.message = err.Error()
 		return nil
 	}
 
-	if snapshot.Status != chess.StatusOngoing {
+	if search == nil {
 		return nil
 	}
 
-	ctx, cancel := context.WithCancel(m.aiContext)
-	m.cancelAI = cancel
-	m.thinking = true
 	m.message = ""
 	m.aiError = nil
-	m.requestID++
-	id, session, position, chooser := m.requestID, m.sessionID, m.game.Position(), m.opponent
-
-	return func() tea.Msg {
-		move, err := chooser.ChooseMove(ctx, position)
-
-		return aiResultMessage{requestID: id, sessionID: session, position: position, move: move, err: err}
-	}
+	return func() tea.Msg { return search() }
 }
 
 func (m *Model) StopAI() {
-	if m.cancelAI != nil {
-		m.cancelAI()
-		m.cancelAI = nil
-	}
-
-	m.thinking = false
+	m.opponent.Stop()
 }
 
-func (m Model) receiveAIResult(result aiResultMessage) (tea.Model, tea.Cmd) {
-	// A canceled search may finish after review closes and another search starts.
-	if !m.thinking || result.requestID != m.requestID || result.sessionID != m.sessionID {
+func (m Model) receiveAIResult(result application.SearchResult) (tea.Model, tea.Cmd) {
+	accepted, err := m.opponent.Accept(result)
+	if !accepted {
 		return m, nil
 	}
 
-	m.StopAI()
-
-	if result.position != m.game.Position() {
-		m.aiError = errors.New("AI result discarded: the position changed")
+	if errors.Is(err, application.ErrPositionChanged) {
+		m.aiError = err
 		m.message = "AI result discarded: the position changed. Press Enter to retry."
 		return m, nil
 	}
 
-	if result.err != nil {
-		m.aiError = fmt.Errorf("AI failed: %w", result.err)
-		m.message = "AI failed: " + result.err.Error() + ". Press Enter to retry."
-		return m, nil
-	}
-
-	if err := m.playMove(result.move); err != nil {
+	if err != nil {
 		m.aiError = fmt.Errorf("AI failed: %w", err)
 		m.message = "AI failed: " + err.Error() + ". Press Enter to retry."
 		return m, nil
 	}
 
-	m.cursor = result.move.To
+	m.ClearSelection()
+	m.cursor = result.Move.To
 	return m, nil
 }
 
 func IsAIResult(msg tea.Msg, session uint64) bool {
-	result, ok := msg.(aiResultMessage)
-	return ok && result.sessionID == session
+	result, ok := msg.(application.SearchResult)
+	return ok && result.Session == session
 }

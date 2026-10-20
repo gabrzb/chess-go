@@ -28,8 +28,8 @@ func (m Model) State() State {
 
 	return State{
 		Cursor: m.cursor, Selected: m.selected, Message: m.message, AIError: m.aiError,
-		PromotionPending: len(m.promotionMoves) > 0, Reviewing: m.reviewing, Thinking: m.thinking,
-		HistoryIndex: m.historyIndex, AIColor: m.aiColor, Flipped: m.flipped,
+		PromotionPending: len(m.promotionMoves) > 0, Reviewing: m.reviewing, Thinking: m.opponent.Thinking(),
+		HistoryIndex: m.historyIndex, AIColor: m.opponent.Color(), Flipped: m.flipped,
 		LegalMoves: slices.Clone(m.legalMoves), PromotionChoices: promotions,
 	}
 }

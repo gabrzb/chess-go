@@ -131,7 +131,7 @@ func (m *application) resume() tea.Cmd {
 func (m *application) beginMatch() tea.Cmd {
 	m.match.StopAI()
 	m.session++
-	m.match = match.New(game.NewGame(), m.session)
+	m.match = match.New(game.NewGame())
 	m.labels = nil
 
 	if m.config.computer {

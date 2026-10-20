@@ -22,9 +22,10 @@ var dependencies = map[string][]string{
 	"internal/domain/rules":             {"internal/domain", "internal/domain/attacks", "internal/domain/movegen"},
 	"internal/domain/game":              {"internal/domain", "internal/domain/rules"},
 	"internal/engine":                   {"internal/domain", "internal/domain/rules"},
+	"internal/application":              {"internal/domain", "internal/domain/game"},
 	"internal/delivery/tui":             {"internal/domain", "internal/domain/game", "internal/engine", "internal/delivery/tui/application", "internal/delivery/tui/match"},
 	"internal/delivery/tui/application": {"internal/domain", "internal/domain/game", "internal/engine", "internal/delivery/tui/match", "internal/delivery/tui/render"},
-	"internal/delivery/tui/match":       {"internal/domain", "internal/domain/game", "internal/delivery/tui/render"},
+	"internal/delivery/tui/match":       {"internal/application", "internal/domain", "internal/domain/game", "internal/delivery/tui/render"},
 	"internal/delivery/tui/render":      {"internal/domain", "internal/domain/game"},
 }
 
@@ -36,7 +37,7 @@ func allowedImport(pkg, imported string) bool {
 	if strings.HasPrefix(imported, module) {
 		return slices.Contains(allowed, strings.TrimPrefix(imported, module))
 	}
-	if pkg == "internal/domain" || strings.HasPrefix(pkg, "internal/domain/") {
+	if pkg == "internal/application" || pkg == "internal/domain" || strings.HasPrefix(pkg, "internal/domain/") {
 		return !strings.Contains(strings.Split(imported, "/")[0], ".")
 	}
 	return true
@@ -89,6 +90,8 @@ func TestProductionDependencies(t *testing.T) {
 func TestDependencyPolicyRejectsBrokenBoundaries(t *testing.T) {
 	for _, tc := range []struct{ pkg, imported string }{
 		{"internal/domain", "charm.land/bubbletea/v2"},
+		{"internal/application", "charm.land/bubbletea/v2"},
+		{"internal/application", module + "internal/engine"},
 		{"internal/domain", module + "internal/domain/rules"},
 		{"internal/engine", module + "internal/delivery/tui"},
 		{"internal/delivery/tui/match", module + "internal/engine"},

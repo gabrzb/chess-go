@@ -11,7 +11,7 @@ import (
 )
 
 func TestStateDoesNotExposeMutableMoves(t *testing.T) {
-	m := match.New(game.NewGame(), 1)
+	m := match.New(game.NewGame())
 	next, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = next.(match.Model)
 	state := m.State()

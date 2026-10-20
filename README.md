@@ -115,6 +115,10 @@ go test ./internal/engine/tests -run '^$' -bench BenchmarkChooseMove -benchmem
 cmd/
 └── chess-tui/          # CLI entry point
 internal/
+├── application/        # UI-independent AI coordination
+│   └── tests/          # search lifecycle tests
+├── architecture/
+│   └── tests/          # package dependency checks
 ├── domain/             # pure chess types and rules; standard library only
 │   ├── movegen/        # pseudolegal moves
 │   ├── attacks/        # attacked squares
@@ -126,7 +130,7 @@ internal/
 └── delivery/
     └── tui/            # terminal interface and entry API
         ├── application/ # screens and sessions
-        ├── match/       # interaction and asynchronous search
+        ├── match/       # interaction and search event adapter
         ├── render/      # presentation
         └── tests/       # interface tests
 ```
@@ -134,13 +138,14 @@ internal/
 ### Interface e controle da partida
 
 `cmd/chess-tui` interpreta as flags e chama a API de entrada em `tui`.
-`application` coordena as telas e as sessões; `match` controla a interação com
-a partida e o ciclo de busca da IA. `render` transforma dados em conteúdo de
+`delivery/tui/application` coordena as telas e as sessões; `match` controla a interação com
+a partida e adapta os eventos de busca. `internal/application.Opponent` coordena
+o ciclo da IA sem depender do Bubble Tea. `render` transforma dados em conteúdo de
 terminal, sem executar jogadas ou iniciar buscas.
 
 As setas abaixo representam imports internos. A vista omite somente os imports
-do pacote base `domain`, usado diretamente por todos os cinco pacotes de entrada
-e interface (`cmd/chess-tui`, `tui`, `application`, `match` e `render`).
+do pacote base `domain`, usado diretamente pelos pacotes de entrada,
+interface e coordenação da IA.
 
 ```mermaid
 flowchart LR
@@ -149,9 +154,11 @@ flowchart LR
     subgraph ui["internal/delivery/tui"]
         entry["tui<br/>API de entrada"]
         application["application<br/>Telas e sessões"]
-        match["match<br/>Interação e busca assíncrona"]
+        match["match<br/>Interação e eventos de busca"]
         render["render<br/>Apresentação"]
     end
+
+    coordinator["internal/application<br/>Coordenação da IA"]
 
     subgraph engine["Pacotes do motor usados pela TUI"]
         game["domain/game<br/>Partida e snapshots"]
@@ -170,6 +177,8 @@ flowchart LR
     application --> ai
     match --> render
     match --> game
+    match --> coordinator
+    coordinator --> game
     render --> game
 ```
 
@@ -181,8 +190,16 @@ e resultados, mas não depende das regras nem da busca.
 
 A interface `domain.MoveChooser` define `ChooseMove(context.Context, Position)`.
 `engine.Player` implementa esse contrato; `tui.NewModelWithAI` recebe qualquer
-implementação, inclusive estratégias próprias. A TUI valida a jogada retornada
-antes de alterar a partida. O pacote `match` não importa `engine`.
+implementação, inclusive estratégias próprias. `internal/application.Opponent`
+aplica a resposta por `Game.Play`, que valida a jogada antes de alterar a partida.
+O pacote `match` não importa `engine`.
+
+`Opponent.Start` devolve uma função de busca para execução em segundo plano;
+`Start`, `Stop` e `Accept` devem ser chamados no loop de eventos da interface.
+A coordenação cancela buscas e descarta respostas duplicadas, de buscas anteriores
+ou de outras sessões. A TUI decide quando pausar para histórico, menus ou promoção
+e converte a função de busca em `tea.Cmd`. A camada de aplicação depende somente
+do domínio e da biblioteca padrão; não cria goroutines nem contém mensagens visuais.
 
 `Board` contém um array fixo, e `Position` contém somente valores: copiar a
 posição também copia suas 64 casas, sem alocar slices ou compartilhar ponteiros.
@@ -230,7 +247,7 @@ dificuldades tipadas, e as escolhas de promoção vêm dos movimentos da partida
 `match.State` fornece cópias dos dados de interação, enquanto medidas, cores,
 componentes e quadros de animação pertencem a `render`. A notação SAN pertence a
 `domain/game`, junto dos snapshots que descreve; o renderer não consulta regras.
-O pacote `application` coordena eventos, telas e o agendamento das animações.
+O pacote `delivery/tui/application` coordena eventos, telas e o agendamento das animações.
 
 O motor não importa a TUI. `application`, `match` e `render` não importam a raiz
 `tui`, e nenhum pacote de produção importa os testes. Os testes ficam nas pastas
