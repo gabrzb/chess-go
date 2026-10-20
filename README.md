@@ -1,4 +1,4 @@
-# chess-go
+# Xadrez em Go
 
 Aplicação de xadrez em Go com interface de terminal (TUI) para dois jogadores
 locais ou para jogar contra a IA. Implementa movimentos legais, xeque,
@@ -19,7 +19,7 @@ o histórico sem alterar a partida. O motor possui testes de regras e perft.
 - [Testes](#testes)
 - [Licença](#licença)
 
-## Executar
+## Execução
 
 Com o [Task instalado](https://taskfile.dev/docs/installation/), os comandos
 principais ficam disponíveis na raiz do projeto:
@@ -71,18 +71,20 @@ go run ./cmd/chess-tui -ai hard -color black
 | `-seed` | Inteiro usado no desempate da IA | `1` |
 | `-no-animation` | Desativar animações | Animações ligadas |
 
-O tabuleiro fica centralizado, com turno, último lance e histórico distribuídos
-acima dele. Os lances são agrupados por cor em notação algébrica (SAN). O cursor
-usa apenas uma seta (`▸`), sem pintar linhas nem alterar o fundo das casas.
-A seleção usa `●` e os destinos legais usam `·`. Nos menus, somente a seta recebe
-a cor de foco. As casas alternam cores e as peças têm cores próprias para brancas
-e pretas. Casas de 2×1 ou 4×2 caracteres preservam a proporção aproximada de
-quadrados em fontes de terminal usuais. Um quadrante ao lado do tabuleiro mostra
-a cor da vez; ao revisar o histórico, acompanha a posição exibida. Ao encerrar a
-partida, fica neutro e informa o encerramento. Janelas menores usam o layout
-compacto; se o tabuleiro não couber, a interface pede para ampliar a janela e
-preserva a posição. As peças requerem
-uma fonte com suporte aos símbolos Unicode de xadrez.
+## Testes
+
+O CI executa testes, `go vet` e compilação no Windows e no Linux.
+
+Todos os arquivos `*_test.go`, incluindo benchmarks, ficam em
+`internal/chess/tests` ou `internal/tui/tests`, separados por assunto.
+Os testes usam as APIs públicas dos pacotes; os fluxos da TUI são exercitados
+por eventos de teclado e pela saída renderizada.
+
+```sh
+go test ./...
+go vet ./...
+go test ./internal/chess/tests/ai -run '^$' -bench BenchmarkChooseMove -benchmem
+```
 
 ### Controles
 
@@ -223,21 +225,6 @@ Para conferir os imports reais, sem incluir dependências exclusivas dos testes:
 go list -f '{{.ImportPath}} {{.Imports}}' ./cmd/... ./internal/...
 ```
 
-## Funções principais
-
-| Pacote | Responsabilidade | Exemplos |
-| --- | --- | --- |
-| `chess` | Tipos base e coordenadas | `Board`, `Piece`, `Move`, `Position`, `ParseSquare` |
-| `movegen` | Movimentos antes da filtragem de xeque | `PseudoLegalMoves`, `RookMoves`, `PawnMoves` |
-| `attacks` | Casas atacadas, incluindo peças protegidas | `IsSquareAttacked` |
-| `rules` | Validação de jogadas e situação da posição | `LegalMovesFrom`, `PositionAfterMove`, `EvaluateStatus` |
-| `game` | Partida, resultado, histórico e SAN | `NewGame`, `Play`, `Snapshot`, `HistorySnapshot`, `ClaimDraw`, `SAN` |
-| `ai` | Avaliação e escolha de jogadas | `Evaluate`, `NewPlayer`, `ChooseMove` |
-| `tui` | Inicialização e API de entrada | `Run`, `RunWithOptions`, `NewApplication` |
-| `tui/application` | Telas, navegação e sessões | `New`, `Options` |
-| `tui/match` | Interação com a partida e ciclo da IA | `New`, `State`, `StartAI`, `StopAI` |
-| `tui/render` | Composição visual e layout | `Window`, `Match`, `Board`, `Turn`, `Menu` |
-
 ## Regras implementadas
 
 - Movimentos legais das seis peças e alternância de turnos.
@@ -377,21 +364,6 @@ promoção durante a busca, sem solicitar uma escolha ao jogador humano.
   após confirmação; encerrar o programa também não a salva.
 - Oferta de empate contra a IA não está disponível: o motor ainda não possui
   uma política para aceitar ou recusar.
-
-## Testes
-
-O CI executa testes, `go vet` e compilação no Windows e no Linux.
-
-Todos os arquivos `*_test.go`, incluindo benchmarks, ficam em
-`internal/chess/tests` ou `internal/tui/tests`, separados por assunto.
-Os testes usam as APIs públicas dos pacotes; os fluxos da TUI são exercitados
-por eventos de teclado e pela saída renderizada.
-
-```sh
-go test ./...
-go vet ./...
-go test ./internal/chess/tests/ai -run '^$' -bench BenchmarkChooseMove -benchmem
-```
 
 ## Licença
 
