@@ -8,6 +8,17 @@ Também permite desistência e empate por acordo entre jogadores locais.
 A interface permite selecionar peças, visualizar destinos legais e revisar
 o histórico sem alterar a partida. O motor possui testes de regras e perft.
 
+## Sumário
+
+- [Executar](#executar)
+- [Organização](#organização)
+- [Funções principais](#funções-principais)
+- [Regras implementadas](#regras-implementadas)
+- [Como a IA funciona](#como-a-ia-funciona)
+- [Limitações](#limitações)
+- [Testes](#testes)
+- [Licença](#licença)
+
 ## Executar
 
 Com o [Task instalado](https://taskfile.dev/docs/installation/), os comandos
@@ -381,3 +392,7 @@ go test ./...
 go vet ./...
 go test ./internal/chess/tests/ai -run '^$' -bench BenchmarkChooseMove -benchmem
 ```
+
+## Licença
+
+Este projeto é distribuído sob a [licença MIT](LICENSE).
