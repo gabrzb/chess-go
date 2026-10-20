@@ -318,8 +318,13 @@ promoção durante a busca, sem solicitar uma escolha ao jogador humano.
 
 O CI executa testes, `go vet` e compilação no Windows e no Linux.
 
+Todos os arquivos `*_test.go`, incluindo benchmarks, ficam em
+`internal/chess/tests` ou `internal/tui/tests`, separados por assunto.
+Os testes usam as APIs públicas dos pacotes; os fluxos da TUI são exercitados
+por eventos de teclado e pela saída renderizada.
+
 ```sh
 go test ./...
 go vet ./...
-go test ./internal/chess/ai -run '^$' -bench BenchmarkChooseMove -benchmem
+go test ./internal/chess/tests/ai -run '^$' -bench BenchmarkChooseMove -benchmem
 ```

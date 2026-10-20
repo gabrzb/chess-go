@@ -1,11 +1,17 @@
-package ai
+package ai_test
 
 import (
 	"context"
+	"github.com/gabrzb/chess-go/internal/chess/ai"
 	"testing"
 
 	"github.com/gabrzb/chess-go/internal/chess"
 	"github.com/gabrzb/chess-go/internal/chess/rules"
+)
+
+const (
+	oracleMateScore = 1_000_000
+	oracleInfinity  = oracleMateScore + 1
 )
 
 func tacticalPosition(t *testing.T, pieces map[chess.Square]chess.Piece) chess.Position {
@@ -29,7 +35,7 @@ func TestQuiescenceSeesRecapture(t *testing.T) {
 		chess.D1: {Type: chess.Queen, Color: chess.White}, chess.D5: {Type: chess.Pawn, Color: chess.Black},
 		chess.D8: {Type: chess.Rook, Color: chess.Black},
 	})
-	player, _ := NewPlayer(Easy, 1)
+	player, _ := ai.NewPlayer(ai.Easy, 1)
 	move, err := player.ChooseMove(context.Background(), p)
 	if err != nil {
 		t.Fatal(err)
@@ -48,14 +54,14 @@ func referenceQuiet(t *testing.T, p chess.Position, remaining, ply int) int {
 	}
 	if status == chess.StatusCheckmate {
 		if p.SideToMove == chess.White {
-			return -mateScore + ply
+			return -oracleMateScore + ply
 		}
-		return mateScore - ply
+		return oracleMateScore - ply
 	}
 	if status != chess.StatusOngoing {
 		return 0
 	}
-	best := Evaluate(p.Board)
+	best := ai.Evaluate(p.Board)
 	if remaining == 0 {
 		return best
 	}
@@ -64,15 +70,12 @@ func referenceQuiet(t *testing.T, p chess.Position, remaining, ply int) int {
 		t.Fatal(err)
 	}
 	if check {
-		best = searchInfinity
+		best = oracleInfinity
 		if p.SideToMove == chess.White {
-			best = -searchInfinity
+			best = -oracleInfinity
 		}
 	}
-	moves, err := legalMoves(context.Background(), p)
-	if err != nil {
-		t.Fatal(err)
-	}
+	moves := allMoves(t, p)
 	for _, move := range moves {
 		victim, _ := p.Board.PieceAt(move.To)
 		piece, _ := p.Board.PieceAt(move.From)
@@ -94,7 +97,7 @@ func referenceQuiet(t *testing.T, p chess.Position, remaining, ply int) int {
 	return best
 }
 
-func TestQuiescenceMatchesExhaustiveTacticalSearch(t *testing.T) {
+func TestEasySearchMatchesExhaustiveTacticalSearch(t *testing.T) {
 	for _, name := range []string{"en passant", "promotion", "check evasions"} {
 		t.Run(name, func(t *testing.T) {
 			pieces := map[chess.Square]chess.Piece{chess.E1: {Type: chess.King, Color: chess.White}, chess.H8: {Type: chess.King, Color: chess.Black}}
@@ -134,21 +137,39 @@ func TestQuiescenceMatchesExhaustiveTacticalSearch(t *testing.T) {
 						position.EnPassant, _ = chess.A8.Offset(p.EnPassant.Column(), -p.EnPassant.Row())
 					}
 				}
-				moves, err := legalMoves(context.Background(), position)
+				moves := allMoves(t, position)
+				want := oracleInfinity
+				if side == chess.White {
+					want = -oracleInfinity
+				}
+				for _, move := range moves {
+					next, err := rules.PositionAfterMove(position, move)
+					if err != nil {
+						t.Fatal(err)
+					}
+					score := referenceQuiet(t, next, 8, 1)
+					if side == chess.White {
+						want = max(want, score)
+					} else {
+						want = min(want, score)
+					}
+				}
+				chooser, err := ai.NewPlayer(ai.Easy, 1)
 				if err != nil {
 					t.Fatal(err)
 				}
-				got, err := quiescence(context.Background(), position, moves, 0, 3, -searchInfinity, searchInfinity)
+				chosen, err := chooser.ChooseMove(t.Context(), position)
 				if err != nil {
 					t.Fatal(err)
 				}
-				want := referenceQuiet(t, position, 3, 0)
-				if side == chess.Black {
-					want = -want
+				next, err := rules.PositionAfterMove(position, chosen)
+				if err != nil {
+					t.Fatal(err)
 				}
-				if got != want {
+				if got := referenceQuiet(t, next, 8, 1); got != want {
 					t.Fatalf("side %v: got %d, want %d", side, got, want)
 				}
+
 			}
 		})
 	}

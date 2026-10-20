@@ -1,6 +1,7 @@
-package rules
+package rules_test
 
 import (
+	"github.com/gabrzb/chess-go/internal/chess/rules"
 	"testing"
 
 	"github.com/gabrzb/chess-go/internal/chess"
@@ -26,7 +27,7 @@ func TestInsufficientMaterial(t *testing.T) {
 			for square, piece := range tc.pieces {
 				_ = board.SetPiece(square, piece)
 			}
-			if got := InsufficientMaterial(board); got != tc.want {
+			if got := rules.InsufficientMaterial(board); got != tc.want {
 				t.Fatalf("got %v, want %v", got, tc.want)
 			}
 		})
@@ -36,17 +37,17 @@ func TestInsufficientMaterial(t *testing.T) {
 func TestRepetitionKey(t *testing.T) {
 	p := chess.NewInitialPosition()
 	p.EnPassant = chess.E3
-	if RepetitionKey(p).EnPassant != chess.NoSquare {
+	if rules.RepetitionKey(p).EnPassant != chess.NoSquare {
 		t.Fatal("irrelevant en passant changes repetition")
 	}
 	p.EnPassant = chess.NoSquare
 	q := p
 	q.HalfmoveClock, q.FullmoveNumber = 20, 30
-	if RepetitionKey(p) != RepetitionKey(q) {
+	if rules.RepetitionKey(p) != rules.RepetitionKey(q) {
 		t.Fatal("clocks change repetition")
 	}
 	q.CastlingRights = 0
-	if RepetitionKey(p) == RepetitionKey(q) {
+	if rules.RepetitionKey(p) == rules.RepetitionKey(q) {
 		t.Fatal("castling rights ignored")
 	}
 
@@ -59,11 +60,11 @@ func TestRepetitionKey(t *testing.T) {
 	}
 	p, _ = chess.NewPosition(board, chess.White)
 	p.EnPassant = chess.D6
-	if RepetitionKey(p).EnPassant != chess.D6 {
+	if rules.RepetitionKey(p).EnPassant != chess.D6 {
 		t.Fatal("legal en passant ignored")
 	}
 	_ = p.Board.SetPiece(chess.E8, chess.Piece{Type: chess.Rook, Color: chess.Black})
-	if RepetitionKey(p).EnPassant != chess.NoSquare {
+	if rules.RepetitionKey(p).EnPassant != chess.NoSquare {
 		t.Fatal("pinned en passant changes repetition")
 	}
 }
