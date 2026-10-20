@@ -66,9 +66,11 @@ usa apenas uma seta (`▸`), sem pintar linhas nem alterar o fundo das casas.
 A seleção usa `●` e os destinos legais usam `·`. Nos menus, somente a seta recebe
 a cor de foco. As casas alternam cores e as peças têm cores próprias para brancas
 e pretas. Casas de 2×1 ou 4×2 caracteres preservam a proporção aproximada de
-quadrados em fontes de terminal usuais. Janelas menores usam o layout compacto;
-se o tabuleiro
-não couber, a interface pede para ampliar a janela e preserva a posição. As peças requerem
+quadrados em fontes de terminal usuais. Um quadrante ao lado do tabuleiro mostra
+a cor da vez; ao revisar o histórico, acompanha a posição exibida. Ao encerrar a
+partida, fica neutro e informa o encerramento. Janelas menores usam o layout
+compacto; se o tabuleiro não couber, a interface pede para ampliar a janela e
+preserva a posição. As peças requerem
 uma fonte com suporte aos símbolos Unicode de xadrez.
 
 ### Controles
@@ -104,13 +106,13 @@ internal/
 │   ├── movegen/        # geração de movimentos pseudolegais
 │   ├── attacks/        # consultas de casas atacadas
 │   ├── rules/          # movimentos legais e regras especiais
-│   ├── game/           # partida, snapshots e histórico
+│   ├── game/           # partida, snapshots, histórico e notação SAN
 │   ├── ai/             # avaliação e busca de jogadas
 │   └── tests/          # testes do motor separados por assunto
 └── tui/                # inicialização e API de entrada
     ├── application/    # telas, navegação e ciclo das sessões
     ├── match/          # interação com a partida, histórico e IA
-    ├── render/         # tema, componentes, tabuleiro e notação SAN
+    ├── render/         # tema, componentes e tabuleiro
     └── tests/          # testes da interface
 ```
 

@@ -16,6 +16,7 @@ type MatchPanel struct {
 	LastMove, Footer, Notice string
 	Board                    chess.Board
 	BoardState               BoardState
+	Turn                     TurnState
 	Moves                    []string
 }
 
@@ -34,14 +35,16 @@ func matchContent(panel MatchPanel, scale BoardScale) string {
 	center := func(text string) string { return Center(ansi.Wrap(text, width, " "), width) }
 	bar := Band(width, width, false)
 	panel.BoardState.Scale = scale
-	board := Center("TABULEIRO\n"+Board(panel.Board, panel.BoardState), width)
+	board := Board(panel.Board, panel.BoardState)
+	board = Center("TABULEIRO\n"+board, lipgloss.Width(board))
+	body := Center(lipgloss.JoinHorizontal(lipgloss.Center, board, strings.Repeat(" ", ColumnGap), Turn(panel.Turn, scale)), width)
 	footer := center(Paint(panel.Footer, Muted))
 	compose := func(mode, info string) string {
 		header := bar + "\n" + center("CHESS · "+mode) + "\n" + bar
 		if panel.Notice != "" {
 			info += "\n" + center(panel.Notice)
 		}
-		return strings.Join([]string{header, info, board, footer}, "\n\n")
+		return strings.Join([]string{header, info, body, footer}, "\n\n")
 	}
 	if panel.Width >= WideMatchMinWidth {
 		for rows := MaxHistoryRows; rows >= 0; rows-- {

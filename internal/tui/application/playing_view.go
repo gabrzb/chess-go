@@ -100,6 +100,7 @@ func (m application) boardContent() string {
 		Status: m.playerInfo(s, false), CompactStatus: m.playerInfo(s, true),
 		LastMove: lastMove, Board: s.Board, BoardState: render.BoardState{Cursor: state.Cursor, Selected: state.Selected, LegalMoves: state.LegalMoves, Flipped: state.Flipped}, Footer: m.gameFooter(),
 		Notice: render.Paint(strings.Join(notices, "\n"), render.Alert), Moves: m.labels[:end],
+		Turn: render.TurnState{Color: s.SideToMove, Reviewing: state.Reviewing, Finished: s.Status != chess.StatusOngoing},
 	})
 }
 
