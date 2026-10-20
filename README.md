@@ -1,5 +1,7 @@
 # Xadrez em Go
 
+[Português](README.md) | [English](README-EN.md)
+
 Aplicação de xadrez em Go com interface de terminal (TUI) para dois jogadores
 locais ou para jogar contra a IA. Implementa movimentos legais, xeque,
 xeque-mate, afogamento, roque, en passant e promoção com escolha da peça.
