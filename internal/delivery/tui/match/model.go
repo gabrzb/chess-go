@@ -7,7 +7,6 @@ import (
 
 	chess "github.com/gabrzb/chess-go/internal/domain"
 	"github.com/gabrzb/chess-go/internal/domain/game"
-	"github.com/gabrzb/chess-go/internal/engine"
 )
 
 type Model struct {
@@ -20,7 +19,7 @@ type Model struct {
 	promotionMoves []chess.Move
 	reviewing      bool
 	historyIndex   int
-	opponent       engine.MoveChooser
+	opponent       chess.MoveChooser
 	aiColor        chess.Color
 	aiContext      context.Context
 	cancelAI       context.CancelFunc

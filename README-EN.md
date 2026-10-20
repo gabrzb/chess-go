@@ -170,15 +170,24 @@ flowchart LR
     application --> ai
     match --> render
     match --> game
-    match --> ai
     render --> game
 ```
 
 The `tui` package also provides `NewModel` and `NewModelWithAI`, which expose
 the `match` model without `application` screen navigation; this is why it imports
-`match`, `game`, and `engine` directly. The executable imports `engine` to configure
-difficulty. `render` imports `game` to display snapshots and results,
+`match` and `game` directly. Both `tui` and the executable import `engine` to
+configure difficulty. `render` imports `game` to display snapshots and results,
 but does not depend on rules or search.
+
+`domain.MoveChooser` defines `ChooseMove(context.Context, Position)`.
+`engine.Player` implements this contract; `tui.NewModelWithAI` accepts any
+implementation, including custom strategies. The TUI validates returned moves
+before changing the game. The `match` package does not import `engine`.
+
+`Board` owns a fixed array and `Position` contains only values: copying a position
+copies all 64 squares without allocating slices or sharing pointers.
+`rules.PositionAfterMove` validates and returns a new position. Search uses
+`PositionAfterLegalMove` only with legal moves generated for that exact position.
 
 ### Engine and rules
 
@@ -188,7 +197,7 @@ of these packages, including dependencies on the base types.
 ```mermaid
 flowchart TB
     game["game<br/>Game, history, and SAN"]
-    ai["ai<br/>Evaluation and search"]
+    ai["engine<br/>Evaluation and search"]
     rules["rules<br/>Legality and position status"]
     movegen["movegen<br/>Pseudolegal moves"]
     attacks["attacks<br/>Attacked squares"]

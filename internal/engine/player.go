@@ -23,9 +23,7 @@ var (
 	ErrNoLegalMoves      = errors.New("AI has no legal moves")
 )
 
-type MoveChooser interface {
-	ChooseMove(context.Context, chess.Position) (chess.Move, error)
-}
+var _ chess.MoveChooser = (*Player)(nil)
 
 type Player struct {
 	difficulty Difficulty

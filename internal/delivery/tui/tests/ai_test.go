@@ -13,7 +13,6 @@ import (
 	"github.com/gabrzb/chess-go/internal/delivery/tui"
 	chess "github.com/gabrzb/chess-go/internal/domain"
 	"github.com/gabrzb/chess-go/internal/domain/game"
-	"github.com/gabrzb/chess-go/internal/engine"
 )
 
 type chooserFunc func(context.Context, chess.Position) (chess.Move, error)
@@ -22,7 +21,7 @@ func (f chooserFunc) ChooseMove(ctx context.Context, p chess.Position) (chess.Mo
 	return f(ctx, p)
 }
 
-func aiModel(t *testing.T, g *game.Game, chooser engine.MoveChooser, color chess.Color) (tea.Model, tea.Cmd) {
+func aiModel(t *testing.T, g *game.Game, chooser chess.MoveChooser, color chess.Color) (tea.Model, tea.Cmd) {
 	t.Helper()
 	m, err := tui.NewModelWithAI(context.Background(), g, chooser, color)
 	if err != nil {
@@ -47,6 +46,9 @@ func TestAITurnsAndResults(t *testing.T) {
 			calls++
 			if p != g.Position() || p.SideToMove != color {
 				t.Error("AI received an incorrect position")
+			}
+			if _, err := p.Board.RemovePiece(chess.E1); err != nil {
+				t.Fatal(err)
 			}
 			return move, ctx.Err()
 		})

@@ -9,7 +9,6 @@ import (
 
 	chess "github.com/gabrzb/chess-go/internal/domain"
 	"github.com/gabrzb/chess-go/internal/domain/game"
-	"github.com/gabrzb/chess-go/internal/engine"
 )
 
 var ErrInvalidAIConfig = errors.New("AI requires a context, game, move chooser and valid color")
@@ -24,7 +23,7 @@ type aiResultMessage struct {
 	err       error
 }
 
-func NewWithAI(ctx context.Context, g *game.Game, chooser engine.MoveChooser, color chess.Color, session uint64) (Model, error) {
+func NewWithAI(ctx context.Context, g *game.Game, chooser chess.MoveChooser, color chess.Color, session uint64) (Model, error) {
 	if ctx == nil || g == nil || chooser == nil || (color != chess.White && color != chess.Black) {
 		return Model{}, ErrInvalidAIConfig
 	}
