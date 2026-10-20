@@ -19,7 +19,12 @@ func PositionAfterMove(position chess.Position, move chess.Move) (chess.Position
 	if !slices.Contains(moves, move) {
 		return chess.Position{}, chess.ErrIllegalMove
 	}
+	return PositionAfterLegalMove(position, move)
+}
 
+// PositionAfterLegalMove applies a move returned by LegalMovesFrom for this exact
+// position. Call PositionAfterMove instead for user input or any untrusted move.
+func PositionAfterLegalMove(position chess.Position, move chess.Move) (chess.Position, error) {
 	piece, _ := position.Board.PieceAt(move.From)
 
 	if piece.Type == chess.King {
@@ -34,6 +39,7 @@ func PositionAfterMove(position chess.Position, move chess.Move) (chess.Position
 
 	capturedPiece, _ := position.Board.PieceAt(move.To)
 	var board chess.Board
+	var err error
 
 	plan, ok := makeEnPassantPlan(position, move.From)
 	if ok && plan.move == move {

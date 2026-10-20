@@ -83,7 +83,7 @@ func (p *Player) ChooseMove(ctx context.Context, position chess.Position) (chess
 		if err := ctx.Err(); err != nil {
 			return chess.Move{}, err
 		}
-		next, err := rules.PositionAfterMove(position, move)
+		next, err := rules.PositionAfterLegalMove(position, move)
 		if err != nil {
 			return chess.Move{}, err
 		}

@@ -64,7 +64,7 @@ func negamax(ctx context.Context, position chess.Position, depth, ply, alpha, be
 		if err := ctx.Err(); err != nil {
 			return 0, err
 		}
-		next, err := rules.PositionAfterMove(position, move)
+		next, err := rules.PositionAfterLegalMove(position, move)
 		if err != nil {
 			return 0, err
 		}
