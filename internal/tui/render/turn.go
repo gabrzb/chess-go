@@ -23,11 +23,11 @@ func Turn(state TurnState, scale BoardScale) string {
 	}
 
 	width := height * terminalCellAspect
-	title, label := "VEZ DAS", "W"
+	title, label := "VEZ DE", "Jogador 1(W)"
 	background, foreground := WhitePiece, BlackPiece
 
 	if state.Color == chess.Black {
-		label, background, foreground = "B", BlackPiece, WhitePiece
+		label, background, foreground = "Jogador 2(B)", BlackPiece, WhitePiece
 	}
 
 	if state.Reviewing {
