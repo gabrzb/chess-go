@@ -16,7 +16,6 @@ const (
 	Alert       = "#E46876"
 	LightSquare = "#87927C"
 	DarkSquare  = "#63715D"
-	LegalSquare = "#B76C68"
 	WhitePiece  = "#FFF9E8"
 	BlackPiece  = "#0C100B"
 	BoardMarker = "#0C100B"
