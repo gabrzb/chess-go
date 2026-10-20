@@ -5,6 +5,7 @@ import (
 	"errors"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/gabrzb/chess-go/internal/chess"
 	"github.com/gabrzb/chess-go/internal/chess/ai"
@@ -174,20 +175,6 @@ func TestSearchLegalityAndReproducibleTies(t *testing.T) {
 	}
 }
 
-type cancelAfterChecks struct {
-	context.Context
-	cancel    context.CancelFunc
-	remaining int
-}
-
-func (c *cancelAfterChecks) Err() error {
-	c.remaining--
-	if c.remaining <= 0 {
-		c.cancel()
-	}
-	return c.Context.Err()
-}
-
 func TestSearchCancellation(t *testing.T) {
 	canceled, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -199,9 +186,13 @@ func TestSearchCancellation(t *testing.T) {
 		err  error
 	}{
 		{"before search", canceled, context.Canceled},
-		{"during search", &cancelAfterChecks{during, cancelDuring, 200}, context.Canceled},
+		{"during search", during, context.Canceled},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.name == "during search" {
+				timer := time.AfterFunc(time.Millisecond, cancelDuring)
+				defer timer.Stop()
+			}
 			move, err := player(t, ai.Hard, 1).ChooseMove(tc.ctx, chess.NewInitialPosition())
 			if !errors.Is(err, tc.err) || move != (chess.Move{}) {
 				t.Errorf("Expected cancellation without a move, got %v: %v", move, err)

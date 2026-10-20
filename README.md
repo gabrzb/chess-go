@@ -214,8 +214,10 @@ Essa é a ideia do [Minimax, descrita no material de IA da UC Berkeley](https://
 
 Neste projeto, o algoritmo é escrito na forma **Negamax**: a nota é vista por quem
 tem a vez, e seu sinal é invertido ao passar para o adversário. Isso permite usar
-a mesma lógica para as duas cores. Ao atingir a profundidade escolhida, uma
-posição ainda em andamento recebe a avaliação de material e posicionamento.
+a mesma lógica para as duas cores. A busca aprofunda de 1 até a profundidade escolhida, com orçamento de dois
+segundos por jogada. Ao esgotar o orçamento, usa a última profundidade concluída;
+se nenhuma terminar, usa uma jogada legal já gerada. Cancelamentos da interface
+descartam o resultado, inclusive após uma iteração concluída.
 
 ### 3. Poda Alpha-Beta e ordenação
 
@@ -244,7 +246,8 @@ As três dificuldades usam o mesmo avaliador. Aumentar a profundidade exige mais
 cálculo; esses nomes não correspondem a uma classificação Elo.
 
 Quando várias jogadas têm exatamente a melhor nota encontrada, a IA desempata
-usando `-seed`. A mesma posição, dificuldade e seed produzem a mesma escolha.
+usando `-seed`. A mesma posição, dificuldade e seed produzem a mesma escolha quando a mesma
+profundidade é concluída dentro do orçamento.
 Mudar a seed pode variar os empates; ela não escolhe aleatoriamente uma jogada
 com nota inferior. Por exemplo:
 
@@ -273,7 +276,7 @@ promoção durante a busca, sem solicitar uma escolha ao jogador humano.
   do limite pesquisado e tornar uma avaliação otimista demais.
 - Não há busca adicional de capturas no limite de profundidade (*quiescence*),
   livro de aberturas ou cache de posições. A dificuldade `hard` pode demorar mais
-  em posições com muitas alternativas; não há limite fixo de tempo por jogada.
+  em posições com muitas alternativas; a busca tem orçamento de dois segundos por jogada.
 - Repetição tripla e regra dos 50 movimentos permitem reivindicar empate na
   posição atual pelo menu da partida. A IA reivindica assim que pode. Não há
   reivindicação antecipada indicando um lance ainda não executado.

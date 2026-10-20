@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"time"
 
 	"github.com/gabrzb/chess-go/internal/chess"
 	"github.com/gabrzb/chess-go/internal/chess/rules"
@@ -29,13 +30,14 @@ type MoveChooser interface {
 type Player struct {
 	difficulty Difficulty
 	seed       int64
+	moveTime   time.Duration
 }
 
 func NewPlayer(difficulty Difficulty, seed int64) (*Player, error) {
 	if difficulty.Depth() == 0 {
 		return nil, ErrInvalidDifficulty
 	}
-	return &Player{difficulty: difficulty, seed: seed}, nil
+	return &Player{difficulty: difficulty, seed: seed, moveTime: 2 * time.Second}, nil
 }
 
 // Depth counts individual turns (plies), including the move being chosen.
@@ -76,6 +78,26 @@ func (p *Player) ChooseMove(ctx context.Context, position chess.Position) (chess
 		return chess.Move{}, ErrNoLegalMoves
 	}
 	orderMoves(position, moves)
+	searchCtx, cancel := context.WithTimeout(ctx, p.moveTime)
+	defer cancel()
+	best := moves[0]
+	for currentDepth := 1; currentDepth <= depth; currentDepth++ {
+		candidate, err := p.chooseAtDepth(searchCtx, position, moves, currentDepth)
+		if parentErr := ctx.Err(); parentErr != nil {
+			return chess.Move{}, parentErr
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return best, nil
+		}
+		if err != nil {
+			return chess.Move{}, err
+		}
+		best = candidate
+	}
+	return best, nil
+}
+
+func (p *Player) chooseAtDepth(ctx context.Context, position chess.Position, moves []chess.Move, depth int) (chess.Move, error) {
 	random := rand.New(rand.NewSource(p.seed))
 	bestScore, ties := -searchInfinity, 0
 	var best chess.Move
