@@ -1,5 +1,6 @@
 package domain
 
+// Position is a self-contained value: copying it also copies the board.
 type Position struct {
 	Board          Board
 	SideToMove     Color

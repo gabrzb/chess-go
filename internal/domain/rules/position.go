@@ -6,6 +6,7 @@ import (
 	chess "github.com/gabrzb/chess-go/internal/domain"
 )
 
+// PositionAfterMove validates a move and returns a new position, preserving its input.
 func PositionAfterMove(position chess.Position, move chess.Move) (chess.Position, error) {
 	if !move.From.Valid() || !move.To.Valid() {
 		return chess.Position{}, chess.ErrInvalidSquare

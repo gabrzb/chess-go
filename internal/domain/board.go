@@ -1,5 +1,6 @@
 package domain
 
+// Board owns its fixed-size storage; copying it never shares squares.
 type Board struct {
 	squares [SquareCount]Piece
 }
