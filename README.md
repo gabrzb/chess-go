@@ -236,6 +236,11 @@ O motor não importa a TUI. `application`, `match` e `render` não importam a ra
 `tui`, e nenhum pacote de produção importa os testes. Os testes ficam nas pastas
 `tests` e dependem das APIs públicas dos pacotes que verificam.
 
+`internal/architecture/tests` verifica os imports de todos os arquivos Go de
+produção, incluindo arquivos específicos de outras plataformas. O teste protege
+as fronteiras acima e exige declarar as dependências de novos pacotes. Ele roda
+com `go test ./...`, inclusive no CI, sem ferramentas adicionais.
+
 Para conferir os imports reais, sem incluir dependências exclusivas dos testes:
 
 ```sh

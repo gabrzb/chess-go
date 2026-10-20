@@ -236,6 +236,11 @@ The engine does not import the TUI. `application`, `match`, and `render` do not
 import the root `tui` package, and no production package imports tests. Tests live
 in `tests` directories and depend on the public APIs of the packages they verify.
 
+`internal/architecture/tests` checks imports in every production Go file,
+including files targeting other platforms. It protects the boundaries above
+and requires declaring dependencies for new packages. It runs with
+`go test ./...`, including CI, without additional tools.
+
 To inspect the actual imports, excluding dependencies used only by tests:
 
 ```sh
