@@ -25,7 +25,7 @@ func TestTurnIndicatorFollowsDisplayedHistory(t *testing.T) {
 		t.Fatal("white turn indicator missing from reviewed quadrant")
 	}
 	m = keys(t, m, tea.KeyEscape, tea.KeyEscape, tea.KeyDown, tea.KeyDown, tea.KeyEnter, tea.KeyDown, tea.KeyEnter)
-	contains(t, m, "VENCERAM")
+	contains(t, m, "Jogador 1(W) VENCEU")
 	m = keys(t, m, tea.KeyDown, tea.KeyEnter)
 	view := ansi.Strip(m.View().Content)
 	if strings.Contains(view, "VEZ DE") || !strings.Contains(view, "ENCERRADA") {

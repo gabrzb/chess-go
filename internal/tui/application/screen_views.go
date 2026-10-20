@@ -1,8 +1,6 @@
 package application
 
 import (
-	"strings"
-
 	"github.com/gabrzb/chess-go/internal/tui/render"
 
 	tea "charm.land/bubbletea/v2"
@@ -86,7 +84,8 @@ func (m application) resultText() (string, string, string) {
 	}
 
 	if !m.config.computer {
-		return strings.ToUpper(sideText(s.Outcome.Winner)) + " VENCERAM", "Jogador " + map[chess.Color]string{chess.White: "1", chess.Black: "2"}[s.Outcome.Winner] + "\n\n" + reason, render.Accent
+		winner := map[chess.Color]string{chess.White: "Jogador 1(W)", chess.Black: "Jogador 2(B)"}[s.Outcome.Winner]
+		return winner + " VENCEU", reason, render.Accent
 	}
 
 	if s.Outcome.Winner == m.match.State().AIColor {

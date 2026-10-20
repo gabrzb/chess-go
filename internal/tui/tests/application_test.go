@@ -159,7 +159,7 @@ func TestApplicationSpecialNotation(t *testing.T) {
 				m = appMove(t, m, &cursor, chess.Move{From: from, To: to})
 			}
 			if tc.ended {
-				contains(t, m, "PRETAS VENCERAM")
+				contains(t, m, "Jogador 2(B) VENCEU")
 				m = keys(t, m, tea.KeyDown, tea.KeyEnter)
 			}
 			contains(t, m, tc.want)
