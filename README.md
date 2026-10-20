@@ -10,13 +10,12 @@ o histórico sem alterar a partida. O motor possui testes de regras e perft.
 
 ## Sumário
 
-- [Executar](#executar)
+- [Execução](#execução)
+- [Testes](#testes)
 - [Organização](#organização)
-- [Funções principais](#funções-principais)
 - [Regras implementadas](#regras-implementadas)
 - [Como a IA funciona](#como-a-ia-funciona)
 - [Limitações](#limitações)
-- [Testes](#testes)
 - [Licença](#licença)
 
 ## Execução
