@@ -8,7 +8,7 @@ import (
 
 func Window(content string, width, height int) tea.View {
 	if lipgloss.Width(content) > width || lipgloss.Height(content) > height {
-		content = ansi.Wrap("CHESS\n\nTerminal pequeno demais.\nAmplie a janela para continuar.\n\nEsc: menu · Ctrl+C: sair", max(1, width), " ")
+		content = ansi.Wrap("CHESS\n\nTerminal too small.\nEnlarge the window to continue.\n\nEsc: menu · Ctrl+C: quit", max(1, width), " ")
 		content = lipgloss.NewStyle().MaxWidth(width).MaxHeight(height).Render(content)
 		content = Center(content, width)
 	}

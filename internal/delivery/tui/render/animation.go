@@ -45,7 +45,7 @@ func LogoHighlight(progress, frames int) string {
 }
 
 func Thinking(frame int, animated bool) string {
-	const text = "Calculando jogada…"
+	const text = "Thinking…"
 	if !animated {
 		return text
 	}

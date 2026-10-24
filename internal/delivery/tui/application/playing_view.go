@@ -16,22 +16,22 @@ func (m application) playerInfo(s game.Snapshot, compact bool) string {
 	if m.screen == finalBoardScreen {
 		title, body, _ := m.resultText()
 		paragraphs := strings.Split(body, "\n\n")
-		status = "PARTIDA ENCERRADA\n" + title + "\n" + paragraphs[len(paragraphs)-1]
+		status = "GAME OVER\n" + title + "\n" + paragraphs[len(paragraphs)-1]
 	} else {
-		status = "Vez das " + sideText(s.SideToMove)
+		status = "Turn: " + sideText(s.SideToMove)
 
 		if m.config.computer {
 			if compact {
-				status += " · Você: " + sideText(opposite(state.AIColor))
+				status += " · You: " + sideText(opposite(state.AIColor))
 			} else {
-				status += "\nVocê joga de " + sideText(opposite(state.AIColor)) + "."
+				status += "\nYou play as " + sideText(opposite(state.AIColor)) + "."
 
 				if s.SideToMove == state.AIColor {
-					status += "\nComputador · " + difficultyLabel(m.config.level)
+					status += "\nComputer · " + difficultyLabel(m.config.level)
 				}
 			}
 		} else if !compact {
-			status += "\nJogador " + map[chess.Color]string{chess.White: "1", chess.Black: "2"}[s.SideToMove]
+			status += "\nPlayer " + map[chess.Color]string{chess.White: "1", chess.Black: "2"}[s.SideToMove]
 		}
 
 		if state.Thinking {
@@ -40,7 +40,7 @@ func (m application) playerInfo(s game.Snapshot, compact bool) string {
 	}
 
 	if state.Reviewing {
-		status += fmt.Sprintf("\nREVISÃO · posição %d/%d", state.HistoryIndex+1, m.match.Game().HistoryLen())
+		status += fmt.Sprintf("\nREVIEW · position %d/%d", state.HistoryIndex+1, m.match.Game().HistoryLen())
 	}
 
 	return status
@@ -50,38 +50,38 @@ func (m application) gameFooter() string {
 	state := m.match.State()
 
 	if state.Reviewing {
-		return "←/A anterior · →/D próximo · H/Esc retornar · F inverter · ? ajuda"
+		return "←/A previous · →/D next · H/Esc return · F flip · ? help"
 	}
 
 	if m.screen == finalBoardScreen {
-		return "F inverter · H histórico · Esc voltar ao resultado"
+		return "F flip · H history · Esc return to result"
 	}
 
 	if state.Selected.Valid() {
 		piece, _ := m.match.Game().Position().Board.PieceAt(state.Selected)
 		name := strings.ToUpper(render.PieceName(piece.Type))
 
-		return name + " · " + state.Selected.String() + " — escolha o destino.\nEnter confirmar · Esc cancelar seleção · ? ajuda"
+		return name + " · " + state.Selected.String() + " — choose a destination.\nEnter confirm · Esc cancel selection · ? help"
 	}
 
 	if state.Thinking {
-		return "IA calculando · Esc menu · H histórico · ? ajuda · Ctrl+C sair"
+		return "AI thinking · Esc menu · H history · ? help · Ctrl+C quit"
 	}
 
-	return "Setas/WASD mover · Enter selecionar\nEsc menu · F inverter · H histórico · ? ajuda"
+	return "Arrows/WASD move · Enter select\nEsc menu · F flip · H history · ? help"
 }
 
 func (m application) boardContent() string {
 	s, err := m.match.DisplayedSnapshot()
 	if err != nil {
-		return "Não foi possível carregar a posição."
+		return "Could not load the position."
 	}
 
 	state := m.match.State()
-	mode, compactMode := "LOCAL · JOGADOR VS JOGADOR", "LOCAL"
+	mode, compactMode := "LOCAL · PLAYER VS PLAYER", "LOCAL"
 
 	if m.config.computer {
-		mode, compactMode = "JOGADOR VS IA · "+difficultyLabel(m.config.level), "VS IA · "+difficultyLabel(m.config.level)
+		mode, compactMode = "PLAYER VS AI · "+difficultyLabel(m.config.level), "VS AI · "+difficultyLabel(m.config.level)
 	}
 
 	lastMove := "—"
@@ -96,23 +96,23 @@ func (m application) boardContent() string {
 
 	var notices []string
 	if !state.Reviewing && m.match.Game().ClaimableDraw() != game.NoReason {
-		notices = append(notices, "EMPATE DISPONÍVEL · Esc abre o menu para reivindicar.")
+		notices = append(notices, "DRAW AVAILABLE · Esc opens the menu to claim.")
 	}
 
 	if s.Check && m.screen != finalBoardScreen {
-		warning := "O rei " + map[chess.Color]string{chess.White: "branco", chess.Black: "preto"}[s.SideToMove] + " está ameaçado."
+		warning := "The " + map[chess.Color]string{chess.White: "white", chess.Black: "black"}[s.SideToMove] + " king is in check."
 
 		if m.config.computer && s.SideToMove != state.AIColor {
-			warning = "Seu rei está ameaçado. Elimine o xeque."
+			warning = "Your king is in check. Get out of check."
 		}
 
-		notices = append(notices, "XEQUE · "+strings.ToUpper(sideText(s.SideToMove))+" · "+warning)
+		notices = append(notices, "CHECK · "+strings.ToUpper(sideText(s.SideToMove))+" · "+warning)
 	}
 	if state.Message != "" {
-		message := "Movimento inválido. Escolha uma casa destacada."
+		message := "Invalid move. Choose a highlighted square."
 
 		if state.Message == chess.ErrEmptySource.Error() {
-			message = "Selecione uma peça do jogador da vez."
+			message = "Select a piece belonging to the player whose turn it is."
 		}
 
 		notices = append(notices, message)

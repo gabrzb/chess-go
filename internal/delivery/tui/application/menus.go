@@ -38,38 +38,38 @@ type menuItem struct {
 func (m application) menuItems() []menuItem {
 	switch m.screen {
 	case mainScreen:
-		return []menuItem{{"Jogador vs Jogador", startLocal}, {"Jogador vs IA", configureAI}, {"Sair", quitApplication}}
+		return []menuItem{{"Player vs Player", startLocal}, {"Player vs AI", configureAI}, {"Quit", quitApplication}}
 	case configScreen:
 		return []menuItem{
-			{"Suas peças    ‹ " + sideNames[m.config.side] + " ›", changeSide},
-			{"Dificuldade   ‹ " + difficultyLabel(m.config.level) + " ›", changeDifficulty},
-			{"Iniciar partida", startMatch},
-			{"Voltar", returnToMenu},
+			{"Your pieces  ‹ " + sideNames[m.config.side] + " ›", changeSide},
+			{"Difficulty   ‹ " + difficultyLabel(m.config.level) + " ›", changeDifficulty},
+			{"Start game", startMatch},
+			{"Back", returnToMenu},
 		}
 	case pauseScreen:
-		items := []menuItem{{"Continuar", continueMatch}}
+		items := []menuItem{{"Resume", continueMatch}}
 
 		if !m.config.computer {
-			items = append(items, menuItem{"Oferecer empate", offerDraw})
+			items = append(items, menuItem{"Offer draw", offerDraw})
 		}
 
-		items = append(items, menuItem{"Desistir", showResignation}, menuItem{"Voltar ao menu principal", showAbandonment})
+		items = append(items, menuItem{"Resign", showResignation}, menuItem{"Return to main menu", showAbandonment})
 
 		if m.match.Game().ClaimableDraw() != game.NoReason {
-			items = append(items, menuItem{"Reivindicar empate", claimDraw})
+			items = append(items, menuItem{"Claim draw", claimDraw})
 		}
 
 		return items
 	case resignScreen:
-		return []menuItem{{"Continuar jogando", continueMatch}, {"Confirmar desistência", confirmResignation}}
+		return []menuItem{{"Keep playing", continueMatch}, {"Confirm resignation", confirmResignation}}
 	case abandonScreen:
-		return []menuItem{{"Continuar jogando", continueMatch}, {"Encerrar e voltar ao menu", returnToMenu}}
+		return []menuItem{{"Keep playing", continueMatch}, {"End game and return to menu", returnToMenu}}
 	case drawScreen:
-		return []menuItem{{"Recusar e continuar", rejectDraw}, {"Aceitar empate", acceptDraw}}
+		return []menuItem{{"Decline and continue", rejectDraw}, {"Accept draw", acceptDraw}}
 	case resultScreen:
-		return []menuItem{{"Jogar novamente", startMatch}, {"Ver tabuleiro", showFinalBoard}, {"Menu principal", returnToMenu}}
+		return []menuItem{{"Play again", startMatch}, {"View board", showFinalBoard}, {"Main menu", returnToMenu}}
 	case errorScreen:
-		return []menuItem{{"Tentar novamente", retryAI}, {"Voltar ao menu principal", showAbandonment}}
+		return []menuItem{{"Try again", retryAI}, {"Return to main menu", showAbandonment}}
 	default:
 		return nil
 	}

@@ -7,17 +7,17 @@ import (
 func PieceName(kind chess.PieceType) string {
 	switch kind {
 	case chess.Pawn:
-		return "Peão"
+		return "Pawn"
 	case chess.Knight:
-		return "Cavalo"
+		return "Knight"
 	case chess.Bishop:
-		return "Bispo"
+		return "Bishop"
 	case chess.Rook:
-		return "Torre"
+		return "Rook"
 	case chess.Queen:
-		return "Dama"
+		return "Queen"
 	case chess.King:
-		return "Rei"
+		return "King"
 	default:
 		return ""
 	}

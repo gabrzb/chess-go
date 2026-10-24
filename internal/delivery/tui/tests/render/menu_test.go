@@ -7,7 +7,7 @@ import (
 )
 
 func TestMenuStylesOnlyItsArrow(t *testing.T) {
-	options := []string{"Continuar", "Desistir", "Voltar ao menu"}
+	options := []string{"Resume", "Resign", "Return to menu"}
 	for choice := range options {
 		menu := render.Menu(options, choice, 40)
 		if strings.Count(menu, render.Paint(render.MenuCursor, render.Accent)) != 1 {

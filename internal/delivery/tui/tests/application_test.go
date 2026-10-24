@@ -40,9 +40,9 @@ func contains(t *testing.T, m tea.Model, text string) {
 
 func TestApplicationLocalGameAndResult(t *testing.T) {
 	m := app(t, tui.Options{})
-	contains(t, m, "Jogador vs Jogador")
+	contains(t, m, "Player vs Player")
 	for _, line := range strings.Split(ansi.Strip(m.View().Content), "\n") {
-		for _, label := range []string{"Jogador vs Jogador", "Jogador vs IA", "Sair"} {
+		for _, label := range []string{"Player vs Player", "Player vs AI", "Quit"} {
 			if index := strings.Index(line, label); index >= 0 {
 				midpoint := ansi.StringWidth(line[:index]) + ansi.StringWidth(label)/2
 				if midpoint < 39 || midpoint > 41 {
@@ -52,28 +52,28 @@ func TestApplicationLocalGameAndResult(t *testing.T) {
 		}
 	}
 	m = keys(t, m, tea.KeyEnter)
-	contains(t, m, "Vez das brancas")
+	contains(t, m, "Turn: white")
 	if strings.Count(ansi.Strip(m.View().Content), "▸") != 1 {
 		t.Fatal("Expected exactly one board cursor")
 	}
 	view := ansi.Strip(m.View().Content)
-	boardStart := strings.Index(view, "TABULEIRO")
-	if boardStart < 0 || strings.Index(view, "PARTIDA") > boardStart || strings.Index(view, "HISTÓRICO") > boardStart {
+	boardStart := strings.Index(view, "BOARD")
+	if boardStart < 0 || strings.Index(view, "GAME") > boardStart || strings.Index(view, "HISTORY") > boardStart {
 		t.Fatal("Match details must be above the board")
 	}
 	if ranks := regexp.MustCompile(`(?m)^\s*[1-8] `).FindAllString(view, -1); len(ranks) != chess.BoardSize {
 		t.Fatal("Missing complete board")
 	}
 	m = keys(t, m, 'd', 'd', 'd', 'd', tea.KeyEnter, 'w', 'w', tea.KeyEnter)
-	contains(t, m, "Vez das pretas")
+	contains(t, m, "Turn: black")
 	contains(t, m, "1. e4")
 	m = keys(t, m, '?', tea.KeyEscape, tea.KeyEscape, tea.KeyDown, tea.KeyEnter)
-	contains(t, m, "OFERTA DE EMPATE")
+	contains(t, m, "DRAW OFFER")
 	m = keys(t, m, tea.KeyEnter)
-	contains(t, m, "Vez das pretas")
+	contains(t, m, "Turn: black")
 	m = keys(t, m, tea.KeyEscape, tea.KeyDown, tea.KeyEnter, tea.KeyDown, tea.KeyEnter)
-	contains(t, m, "EMPATE")
-	contains(t, m, "Empate por acordo.")
+	contains(t, m, "DRAW")
+	contains(t, m, "Draw by agreement.")
 	m = keys(t, m, tea.KeyDown, tea.KeyEnter)
 	before := m.View().Content
 	m = keys(t, m, tea.KeyEnter)
@@ -82,16 +82,16 @@ func TestApplicationLocalGameAndResult(t *testing.T) {
 	}
 	m = keys(t, m, 'f', 'h', tea.KeyLeft)
 	contains(t, m, "h g f e d c b a")
-	contains(t, m, "REVISÃO · posição 1/2")
+	contains(t, m, "REVIEW · position 1/2")
 	m = keys(t, m, tea.KeyEscape)
 	m = updateModel(t, m, tea.WindowSizeMsg{Width: 48, Height: 24})
-	contains(t, m, "PARTIDA ENCERRADA")
+	contains(t, m, "GAME OVER")
 	m = updateModel(t, m, tea.WindowSizeMsg{Width: 28, Height: 12})
-	contains(t, m, "Terminal pequeno demais.")
+	contains(t, m, "Terminal too small.")
 	m = updateModel(t, m, tea.WindowSizeMsg{Width: 80, Height: 24})
 	contains(t, m, "e2 → e4")
 	m = keys(t, m, tea.KeyEscape, tea.KeyEnter)
-	contains(t, m, "Vez das brancas")
+	contains(t, m, "Turn: white")
 }
 
 func appMove(t *testing.T, m tea.Model, cursor *chess.Square, move chess.Move) tea.Model {
@@ -125,12 +125,12 @@ func TestApplicationPromotionAndNotation(t *testing.T) {
 		m = appMove(t, m, &cursor, move)
 	}
 	m = appMove(t, m, &cursor, chess.Move{From: chess.B7, To: chess.A8})
-	contains(t, m, "PROMOÇÃO DE PEÃO")
+	contains(t, m, "PAWN PROMOTION")
 	m = keys(t, m, '?', tea.KeyEscape, tea.KeyEscape)
-	contains(t, m, "Vez das brancas")
+	contains(t, m, "Turn: white")
 	m = appMove(t, m, &cursor, chess.Move{From: chess.B7, To: chess.A8})
 	m = keys(t, m, tea.KeyDown, tea.KeyDown, tea.KeyEnter)
-	contains(t, m, "Vez das pretas")
+	contains(t, m, "Turn: black")
 	contains(t, m, "bxa8=B")
 	contains(t, m, "b7 → a8")
 }
@@ -159,7 +159,7 @@ func TestApplicationSpecialNotation(t *testing.T) {
 				m = appMove(t, m, &cursor, chess.Move{From: from, To: to})
 			}
 			if tc.ended {
-				contains(t, m, "Jogador 2(B) VENCEU")
+				contains(t, m, "Player 2(B) WINS")
 				m = keys(t, m, tea.KeyDown, tea.KeyEnter)
 			}
 			contains(t, m, tc.want)
@@ -180,7 +180,7 @@ func TestApplicationOpeningAndConfiguration(t *testing.T) {
 		t.Fatal("Opening animation did not finish")
 	}
 	finished = keys(t, finished, tea.KeyEnter)
-	contains(t, finished, "Vez das brancas")
+	contains(t, finished, "Turn: white")
 
 	m, err := tui.NewApplication(t.Context(), tui.Options{})
 	if err != nil {
@@ -194,24 +194,24 @@ func TestApplicationOpeningAndConfiguration(t *testing.T) {
 	if cmd != nil {
 		t.Fatal("Skipping opening scheduled a command")
 	}
-	contains(t, m, "Jogador vs Jogador")
+	contains(t, m, "Player vs Player")
 	m = updateModel(t, m, tick())
 	m = keys(t, m, 'a', tea.KeyDown, tea.KeyEnter, tea.KeyRight, tea.KeyDown, tea.KeyRight)
-	contains(t, m, "Pretas")
-	contains(t, m, "Difícil")
+	contains(t, m, "Black")
+	contains(t, m, "Hard")
 	m = keys(t, m, tea.KeyDown)
 	m, search := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	if search == nil {
 		t.Fatal("Configured black game did not start AI")
 	}
 	m = updateModel(t, m, search())
-	contains(t, m, "Você joga de pretas.")
+	contains(t, m, "You play as black.")
 	m = keys(t, m, tea.KeyEscape, tea.KeyDown, tea.KeyDown, tea.KeyEnter)
-	contains(t, m, "ENCERRAR PARTIDA?")
+	contains(t, m, "END GAME?")
 	m = keys(t, m, tea.KeyDown, tea.KeyEnter)
-	contains(t, m, "Jogador vs Jogador")
+	contains(t, m, "Player vs Player")
 	m = keys(t, m, tea.KeyEnter)
-	contains(t, m, "Vez das brancas")
+	contains(t, m, "Turn: white")
 }
 
 func TestApplicationRejectsPreviousSessionAI(t *testing.T) {
@@ -221,9 +221,9 @@ func TestApplicationRejectsPreviousSessionAI(t *testing.T) {
 		t.Fatal("Missing initial AI search")
 	}
 	m = keys(t, m, tea.KeyEscape, tea.KeyDown, tea.KeyEnter)
-	contains(t, m, "As brancas serão as vencedoras.")
+	contains(t, m, "white will win.")
 	m = keys(t, m, tea.KeyDown, tea.KeyEnter)
-	contains(t, m, "DERROTA")
+	contains(t, m, "DEFEAT")
 	next, current := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	if current == nil {
 		t.Fatal("Rematch did not restart AI")
@@ -234,6 +234,6 @@ func TestApplicationRejectsPreviousSessionAI(t *testing.T) {
 		t.Fatal("Old session changed the new session")
 	}
 	next = updateModel(t, next, current())
-	contains(t, next, "Vez das pretas")
-	contains(t, next, "Você joga de pretas.")
+	contains(t, next, "Turn: black")
+	contains(t, next, "You play as black.")
 }

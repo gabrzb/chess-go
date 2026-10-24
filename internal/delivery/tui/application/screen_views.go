@@ -17,7 +17,7 @@ func (m application) card(title, body, footer string, double bool) string {
 
 func (m application) View() tea.View {
 	var content string
-	footer := "↑↓ navegar · Enter selecionar"
+	footer := "↑↓ navigate · Enter select"
 
 	switch m.screen {
 	case mainScreen:
@@ -26,15 +26,15 @@ func (m application) View() tea.View {
 			title = render.Paint("CHESS", render.Accent)
 		}
 
-		setting := "ligadas"
+		setting := "on"
 
 		if m.noAnimations {
-			setting = "desligadas"
+			setting = "off"
 		}
 
-		content = m.card(title, "", footer+"\n? ajuda · A animações: "+setting, true)
+		content = m.card(title, "", footer+"\n? help · A animations: "+setting, true)
 	case configScreen:
-		content = m.card("NOVA PARTIDA\nJOGADOR VS IA", "", "↑↓ navegar · ←→ alterar\nEnter confirmar · Esc voltar", true)
+		content = m.card("NEW GAME\nPLAYER VS AI", "", "↑↓ navigate · ←→ change\nEnter confirm · Esc back", true)
 	case playingScreen, finalBoardScreen:
 		if m.match.State().PromotionPending && m.screen == playingScreen {
 			content = render.Promotion(m.match.State().Cursor, m.match.Game().Position().SideToMove, m.choice, m.match.State().PromotionChoices, render.ContentWidth(m.width, render.PromotionWidth))
@@ -42,55 +42,55 @@ func (m application) View() tea.View {
 			content = m.boardContent()
 		}
 	case pauseScreen:
-		content = m.card("MENU DA PARTIDA", "", footer+"\nEsc continuar", false)
+		content = m.card("GAME MENU", "", footer+"\nEsc resume", false)
 	case resignScreen:
-		content = m.card("CONFIRMAR DESISTÊNCIA?", "As "+sideText(opposite(m.resigningSide()))+" serão as vencedoras.", footer+"\nEsc voltar", false)
+		content = m.card("CONFIRM RESIGNATION?", sideText(opposite(m.resigningSide()))+" will win.", footer+"\nEsc back", false)
 	case abandonScreen:
-		content = m.card("ENCERRAR PARTIDA?", "A partida atual será descartada.", footer+"\nEsc voltar", false)
+		content = m.card("END GAME?", "The current game will be discarded.", footer+"\nEsc back", false)
 	case drawScreen:
 		s, _ := m.match.Game().Snapshot()
-		content = m.card("OFERTA DE EMPATE", "As "+sideText(s.DrawOffer)+" propuseram empate.\nAs "+sideText(opposite(s.DrawOffer))+" desejam aceitar?", footer, false)
+		content = m.card("DRAW OFFER", sideText(s.DrawOffer)+" offered a draw.\nDoes "+sideText(opposite(s.DrawOffer))+" accept?", footer, false)
 	case resultScreen:
 		title, body, color := m.resultText()
 		content = m.card(render.Paint(title, color), body, footer, true)
 	case helpScreen:
-		body := "Setas / WASD   Mover cursor\nEnter          Selecionar / confirmar\nEsc            Cancelar / abrir menu\nF              Inverter tabuleiro\nH              Revisar histórico\n?              Abrir ajuda\nCtrl+C         Encerrar\n\nSelecione uma peça e depois o destino."
-		content = m.card("AJUDA", body, "Esc voltar", false)
+		body := "Arrows / WASD  Move cursor\nEnter          Select / confirm\nEsc            Cancel / open menu\nF              Flip board\nH              Review history\n?              Open help\nCtrl+C         Quit\n\nSelect a piece, then its destination."
+		content = m.card("HELP", body, "Esc back", false)
 	case errorScreen:
-		content = m.card("NÃO FOI POSSÍVEL CONTINUAR", "A IA não conseguiu gerar a jogada.\nSua posição atual foi preservada.", footer, false)
+		content = m.card("UNABLE TO CONTINUE", "The AI could not generate a move.\nYour current position has been preserved.", footer, false)
 	}
 	return render.Window(content, m.width, m.height)
 }
 
 func (m application) resultText() (string, string, string) {
 	s, _ := m.match.Game().Snapshot()
-	reason := map[game.EndReason]string{game.Checkmate: "Xeque-mate.", game.Stalemate: "Empate por afogamento.\nSem jogadas legais e sem xeque.", game.Resignation: "Partida encerrada por desistência.", game.Agreement: "Empate por acordo."}[s.Outcome.Reason]
+	reason := map[game.EndReason]string{game.Checkmate: "Checkmate.", game.Stalemate: "Draw by stalemate.\nNo legal moves and not in check.", game.Resignation: "Game ended by resignation.", game.Agreement: "Draw by agreement."}[s.Outcome.Reason]
 
 	switch s.Outcome.Reason {
 	case game.InsufficientMaterial:
-		reason = "Empate por material insuficiente."
+		reason = "Draw by insufficient material."
 	case game.Repetition:
-		reason = "Empate reivindicado por tripla repetição."
+		reason = "Draw claimed by threefold repetition."
 	case game.FiftyMoves:
-		reason = "Empate reivindicado pela regra dos 50 movimentos."
+		reason = "Draw claimed under the 50-move rule."
 	case game.FivefoldRepetition:
-		reason = "Empate automático por quíntupla repetição."
+		reason = "Automatic draw by fivefold repetition."
 	case game.SeventyFiveMoves:
-		reason = "Empate automático pela regra dos 75 movimentos."
+		reason = "Automatic draw under the 75-move rule."
 	}
 
 	if s.Outcome.Winner == chess.NoColor {
-		return "EMPATE", "Nenhum vencedor.\n\n" + reason, render.Draw
+		return "DRAW", "No winner.\n\n" + reason, render.Draw
 	}
 
 	if !m.config.computer {
-		winner := map[chess.Color]string{chess.White: "Jogador 1(W)", chess.Black: "Jogador 2(B)"}[s.Outcome.Winner]
-		return winner + " VENCEU", reason, render.Accent
+		winner := map[chess.Color]string{chess.White: "Player 1(W)", chess.Black: "Player 2(B)"}[s.Outcome.Winner]
+		return winner + " WINS", reason, render.Accent
 	}
 
 	if s.Outcome.Winner == m.match.State().AIColor {
-		return "DERROTA", "O computador venceu.\n\n" + reason, render.Alert
+		return "DEFEAT", "The computer won.\n\n" + reason, render.Alert
 	}
 
-	return "VITÓRIA", "Você venceu de " + sideText(s.Outcome.Winner) + ".\n\n" + reason, render.Victory
+	return "VICTORY", "You won as " + sideText(s.Outcome.Winner) + ".\n\n" + reason, render.Victory
 }

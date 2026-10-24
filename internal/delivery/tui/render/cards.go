@@ -38,7 +38,7 @@ func Promotion(cursor chess.Square, color chess.Color, choice int, kinds []chess
 		items = append(items, option)
 	}
 
-	return bar + "\n\n" + center.Bold(true).Render("PROMOÇÃO DE PEÃO") + "\n" + center.Render("Escolha a nova peça para "+cursor.String()+".") + "\n\n" + bar + "\n\n" + Menu(items, choice, width) + "\n\n" + center.Render("↑↓ escolher · Enter confirmar\nQ/R/B/N atalhos · Esc cancelar")
+	return bar + "\n\n" + center.Bold(true).Render("PAWN PROMOTION") + "\n" + center.Render("Choose the new piece for "+cursor.String()+".") + "\n\n" + bar + "\n\n" + Menu(items, choice, width) + "\n\n" + center.Render("↑↓ choose · Enter confirm\nQ/R/B/N shortcuts · Esc cancel")
 }
 
 const MenuCursor = "▸"

@@ -17,20 +17,20 @@ func TestMenuActionsMatchDisplayedOptions(t *testing.T) {
 		if difficulty == "" {
 			m = keys(t, m, tea.KeyDown)
 		}
-		contains(t, m, "▸ Desistir")
+		contains(t, m, "▸ Resign")
 		m = keys(t, m, tea.KeyEnter)
-		contains(t, m, "CONFIRMAR DESISTÊNCIA?")
+		contains(t, m, "CONFIRM RESIGNATION?")
 	}
 }
 
 func TestConfigurationCyclesInBothDirections(t *testing.T) {
 	m := app(t, tui.Options{})
 	m = keys(t, m, tea.KeyDown, tea.KeyEnter, tea.KeyLeft)
-	contains(t, m, "Aleatório")
+	contains(t, m, "Random")
 	m = keys(t, m, tea.KeyRight)
-	contains(t, m, "Brancas")
+	contains(t, m, "White")
 	m = keys(t, m, tea.KeyDown, tea.KeyRight, tea.KeyRight, tea.KeyRight)
-	contains(t, m, "Normal")
+	contains(t, m, "Medium")
 	m = keys(t, m, tea.KeyLeft)
-	contains(t, m, "Fácil")
+	contains(t, m, "Easy")
 }

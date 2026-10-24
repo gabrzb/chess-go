@@ -170,11 +170,11 @@ func opposite(color chess.Color) chess.Color {
 
 func sideText(color chess.Color) string {
 	if color == chess.White {
-		return "brancas"
+		return "white"
 	}
 
 	if color == chess.Black {
-		return "pretas"
+		return "black"
 	}
 
 	return "—"

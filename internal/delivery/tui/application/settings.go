@@ -10,15 +10,15 @@ const (
 	randomSide
 )
 
-var sideNames = [...]string{"Brancas", "Pretas", "Aleatório"}
+var sideNames = [...]string{"White", "Black", "Random"}
 
 var difficulties = [...]struct {
 	value engine.Difficulty
 	label string
 }{
-	{engine.Easy, "Fácil"},
-	{engine.Medium, "Normal"},
-	{engine.Hard, "Difícil"},
+	{engine.Easy, "Easy"},
+	{engine.Medium, "Medium"},
+	{engine.Hard, "Hard"},
 }
 
 func difficultyLabel(value engine.Difficulty) string {

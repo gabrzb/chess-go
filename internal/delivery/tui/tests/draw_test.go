@@ -18,8 +18,8 @@ func TestClaimDrawFromPauseMenu(t *testing.T) {
 		}
 	}
 	m = keys(t, m, tea.KeyEscape, tea.KeyUp)
-	contains(t, m, "▸ Reivindicar empate")
+	contains(t, m, "▸ Claim draw")
 	m = keys(t, m, tea.KeyEnter)
-	contains(t, m, "EMPATE")
-	contains(t, m, "tripla repetição")
+	contains(t, m, "DRAW")
+	contains(t, m, "threefold repetition")
 }

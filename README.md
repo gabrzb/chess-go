@@ -1,85 +1,85 @@
-# Xadrez em Go
+# Chess in Go
 
-[Português](README.md) | [English](README-EN.md)
+[English](README.md) | [Português](README-PT-BR.md)
 
-Aplicação de xadrez em Go com interface de terminal (TUI) para dois jogadores
-locais ou para jogar contra a IA. Implementa movimentos legais, xeque,
-xeque-mate, afogamento, roque, en passant e promoção com escolha da peça.
-Também permite desistência e empate por acordo entre jogadores locais.
+A chess application written in Go with a terminal user interface (TUI) for two
+local players or playing against the AI. It implements legal moves, check,
+checkmate, stalemate, castling, en passant, and promotion with a choice of piece.
+It also supports resignation and draws by agreement between local players.
 
-A interface permite selecionar peças, visualizar destinos legais e revisar
-o histórico sem alterar a partida. O motor possui testes de regras e perft.
+The interface lets you select pieces, view legal destinations, and review
+the history without changing the game. The engine includes rule and perft tests.
 
-## Sumário
+## Contents
 
-- [Execução](#execução)
-- [Testes](#testes)
-- [Organização](#organização)
-- [Regras implementadas](#regras-implementadas)
-- [Como a IA funciona](#como-a-ia-funciona)
-- [Limitações](#limitações)
-- [Licença](#licença)
+- [Running](#running)
+- [Tests](#tests)
+- [Organization](#organization)
+- [Implemented rules](#implemented-rules)
+- [How the AI works](#how-the-ai-works)
+- [Limitations](#limitations)
+- [License](#license)
 
-## Execução
+## Running
 
-Com o [Task instalado](https://taskfile.dev/docs/installation/), os comandos
-principais ficam disponíveis na raiz do projeto:
+With [Task installed](https://taskfile.dev/docs/installation/), the main commands
+are available from the project root:
 
 ```sh
-task                         # listar comandos
-task run                     # abrir o menu principal
-task ai                      # contra a IA em dificuldade média
+task                         # list commands
+task run                     # open the main menu
+task ai                      # play against the AI on medium difficulty
 task ai -- -ai hard -color black
-task test                    # testes
-task vet                     # análise estática
-task fmt                     # formatação
-task build                   # executável em bin/
-task check                   # testes, análise e compilação em sequência
+task test                    # run tests
+task vet                     # static analysis
+task fmt                     # format code
+task build                   # build executable in bin/
+task check                   # run tests, analysis, and build in sequence
 ```
 
-Os comandos Go abaixo continuam disponíveis sem o Task.
+The Go commands below are also available without Task.
 
-Na raiz do projeto:
+From the project root:
 
 ```sh
 go run ./cmd/chess-tui
 ```
 
-O menu permite iniciar uma partida local ou configurar a IA: escolha suas peças
-(brancas, pretas ou aleatório) e a dificuldade. Após o resultado, é possível jogar
-novamente, consultar o tabuleiro e o histórico ou voltar ao menu. A revanche usa
-as mesmas configurações; a opção aleatória faz um novo sorteio.
+The menu lets you start a local game or configure the AI: choose your pieces
+(white, black, or random) and the difficulty. After the result, you can play
+again, inspect the board and history, or return to the menu. A rematch uses
+the same settings; the random option draws a new color.
 
-Os comandos com `-ai` iniciam diretamente a partida. Para entrar diretamente no
-modo local, use `go run ./cmd/chess-tui -ai off`.
+Commands with `-ai` start a game directly. To enter local mode directly,
+use `go run ./cmd/chess-tui -ai off`.
 
-Para jogar de brancas contra a IA:
+To play as White against the AI:
 
 ```sh
 go run ./cmd/chess-tui -ai medium
 ```
 
-Para jogar de pretas, deixando a IA começar:
+To play as Black, letting the AI move first:
 
 ```sh
 go run ./cmd/chess-tui -ai hard -color black
 ```
 
-| Opção | Valores | Padrão |
+| Option | Values | Default |
 | --- | --- | --- |
-| `-ai` | `off`, `easy`, `medium`, `hard`; inicia sem passar pelo menu | Sem a flag: menu principal |
-| `-color` | `white`, `black`: sua cor contra a IA | `white` |
-| `-seed` | Inteiro usado no desempate da IA | `1` |
-| `-no-animation` | Desativar animações | Animações ligadas |
+| `-ai` | `off`, `easy`, `medium`, `hard`; starts without going through the menu | Without the flag: main menu |
+| `-color` | `white`, `black`: your color against the AI | `white` |
+| `-seed` | Integer used to break ties between AI moves | `1` |
+| `-no-animation` | Disable animations | Animations enabled |
 
-## Testes
+## Tests
 
-O CI executa testes, `go vet` e compilação no Windows e no Linux.
+CI runs tests, `go vet`, and builds on Windows and Linux.
 
-Todos os arquivos `*_test.go`, incluindo benchmarks, ficam em
-`internal/domain/tests`, `internal/engine/tests` ou `internal/delivery/tui/tests`, separados por assunto.
-Os testes usam as APIs públicas dos pacotes; os fluxos da TUI são exercitados
-por eventos de teclado e pela saída renderizada.
+All `*_test.go` files, including benchmarks, live in
+`internal/domain/tests`, `internal/engine/tests` or `internal/delivery/tui/tests`, grouped by subject.
+Tests use the packages' public APIs; TUI flows are exercised through
+keyboard events and rendered output.
 
 ```sh
 go test ./...
@@ -87,29 +87,29 @@ go vet ./...
 go test ./internal/engine/tests -run '^$' -bench BenchmarkChooseMove -benchmem
 ```
 
-### Controles
+### Controls
 
-- Nos menus, ↑/↓ e Enter navegam e selecionam; ←/→ alteram as configurações.
-- Na partida, setas ou WASD movem o cursor; Enter seleciona ou confirma a jogada.
-- Esc: cancelar seleção/promoção; sem seleção, abrir o menu da partida.
-- No menu da partida, continuar, desistir ou voltar ao menu principal. No modo
-  local, também oferecer empate; recusar mantém a partida.
-- F: inverter a orientação do tabuleiro.
-- ?: abrir a ajuda; Esc retorna à tela anterior.
-- H: abrir ou fechar a revisão do histórico.
-- Na revisão, ←/A e →/D percorrem as posições; Esc retorna à partida.
-- Na promoção, ↑/↓ e Enter escolhem a peça; Q/R/B/N são atalhos para dama,
-  torre, bispo ou cavalo. Esc cancela sem executar o movimento.
-- Q abre o menu da partida; no menu principal, encerra. Ctrl+C encerra sempre.
-- No menu principal, A liga ou desliga animações nesta execução. Enter pula
-  a abertura sem iniciar uma partida; pressione novamente para selecionar.
-- Durante o cálculo da IA, é possível abrir menu, ajuda ou histórico. A busca
-  é cancelada e recomeça ao retornar à partida.
-- Se a IA falhar, a tela permite tentar novamente ou voltar ao menu. Detalhes
-  técnicos ficam em `chess-go/chess-go.log`, dentro da pasta de cache do usuário
-  (`os.UserCacheDir`). Se o log não puder ser aberto, o jogo continua sem gravá-lo.
+- In menus, ↑/↓ and Enter navigate and select; ←/→ change settings.
+- During a game, arrow keys or WASD move the cursor; Enter selects or confirms a move.
+- Esc: cancel selection/promotion; with nothing selected, open the game menu.
+- In the game menu, resume, resign, or return to the main menu. In local mode,
+  you can also offer a draw; declining it keeps the game going.
+- F: flip the board orientation.
+- ?: open help; Esc returns to the previous screen.
+- H: open or close history review.
+- During review, ←/A and →/D step through positions; Esc returns to the game.
+- During promotion, ↑/↓ and Enter choose a piece; Q/R/B/N are shortcuts for queen,
+  rook, bishop, or knight. Esc cancels without making the move.
+- Q opens the game menu; in the main menu, it quits. Ctrl+C always quits.
+- In the main menu, A toggles animations for the current run. Enter skips
+  the opening animation without starting a game; press it again to select.
+- While the AI is thinking, you can open the menu, help, or history. The search
+  is canceled and restarts when you return to the game.
+- If the AI fails, the screen lets you retry or return to the menu. Technical
+  details are written to `chess-go/chess-go.log` inside the user's cache directory
+  (`os.UserCacheDir`). If the log cannot be opened, the game continues without logging.
 
-## Organização
+## Organization
 
 ```text
 cmd/
@@ -135,34 +135,34 @@ internal/
         └── tests/       # interface tests
 ```
 
-### Interface e controle da partida
+### Interface and game control
 
-`cmd/chess-tui` interpreta as flags e chama a API de entrada em `tui`.
-`delivery/tui/application` coordena as telas e as sessões; `match` controla a interação com
-a partida e adapta os eventos de busca. `internal/application.Opponent` coordena
-o ciclo da IA sem depender do Bubble Tea. `render` transforma dados em conteúdo de
-terminal, sem executar jogadas ou iniciar buscas.
+`cmd/chess-tui` parses flags and calls the entry API in `tui`.
+`delivery/tui/application` coordinates screens and sessions; `match` controls game
+interaction and adapts search events. `internal/application.Opponent` coordinates
+the AI lifecycle independently of Bubble Tea. `render` turns data into terminal content without
+making moves or starting searches.
 
-As setas abaixo representam imports internos. A vista omite somente os imports
-do pacote base `domain`, usado diretamente pelos pacotes de entrada,
-interface e coordenação da IA.
+The arrows below represent internal imports. This view omits only imports of
+the base `domain` package, used directly by the entry, interface, and AI
+coordination packages.
 
 ```mermaid
 flowchart LR
     cli["cmd/chess-tui"]
 
     subgraph ui["internal/delivery/tui"]
-        entry["tui<br/>API de entrada"]
-        application["application<br/>Telas e sessões"]
-        match["match<br/>Interação e eventos de busca"]
-        render["render<br/>Apresentação"]
+        entry["tui<br/>Entry API"]
+        application["application<br/>Screens and sessions"]
+        match["match<br/>Interaction and search events"]
+        render["render<br/>Presentation"]
     end
 
-    coordinator["internal/application<br/>Coordenação da IA"]
+    coordinator["internal/application<br/>AI coordination"]
 
-    subgraph engine["Pacotes do motor usados pela TUI"]
-        game["domain/game<br/>Partida e snapshots"]
-        ai["engine<br/>Escolha de jogadas"]
+    subgraph engine["Engine packages used by the TUI"]
+        game["domain/game<br/>Game and snapshots"]
+        ai["engine<br/>Move selection"]
     end
 
     cli --> entry
@@ -182,48 +182,49 @@ flowchart LR
     render --> game
 ```
 
-O pacote `tui` também oferece `NewModel` e `NewModelWithAI`, que expõem o modelo
-de `match` sem a navegação de telas de `application`; por isso ele importa
-`match` e `game` diretamente. `tui` e o executável importam `engine` para
-configurar a dificuldade. `render` importa `game` para apresentar snapshots
-e resultados, mas não depende das regras nem da busca.
+The `tui` package also provides `NewModel` and `NewModelWithAI`, which expose
+the `match` model without `application` screen navigation; this is why it imports
+`match` and `game` directly. Both `tui` and the executable import `engine` to
+configure difficulty. `render` imports `game` to display snapshots and results,
+but does not depend on rules or search.
 
-A interface `domain.MoveChooser` define `ChooseMove(context.Context, Position)`.
-`engine.Player` implementa esse contrato; `tui.NewModelWithAI` recebe qualquer
-implementação, inclusive estratégias próprias. `internal/application.Opponent`
-aplica a resposta por `Game.Play`, que valida a jogada antes de alterar a partida.
-O pacote `match` não importa `engine`.
+`domain.MoveChooser` defines `ChooseMove(context.Context, Position)`.
+`engine.Player` implements this contract; `tui.NewModelWithAI` accepts any
+implementation, including custom strategies. `internal/application.Opponent`
+applies results through `Game.Play`, which validates moves before changing the game.
+The `match` package does not import `engine`.
 
-`Opponent.Start` devolve uma função de busca para execução em segundo plano;
-`Start`, `Stop` e `Accept` devem ser chamados no loop de eventos da interface.
-A coordenação cancela buscas e descarta respostas duplicadas, de buscas anteriores
-ou de outras sessões. A TUI decide quando pausar para histórico, menus ou promoção
-e converte a função de busca em `tea.Cmd`. A camada de aplicação depende somente
-do domínio e da biblioteca padrão; não cria goroutines nem contém mensagens visuais.
+`Opponent.Start` returns a search function for background execution;
+`Start`, `Stop`, and `Accept` must run on the interface's event loop.
+The coordinator cancels searches and discards duplicate results, older searches,
+and results from other sessions. The TUI decides when to pause for history, menus,
+or promotion and adapts the search function to `tea.Cmd`. The application layer
+depends only on the domain and standard library; it starts no goroutines and
+contains no display messages.
 
-`Board` contém um array fixo, e `Position` contém somente valores: copiar a
-posição também copia suas 64 casas, sem alocar slices ou compartilhar ponteiros.
-`rules.PositionAfterMove` valida e devolve uma nova posição. A busca usa
-`PositionAfterLegalMove` somente com movimentos legais gerados para aquela posição.
+`Board` owns a fixed array and `Position` contains only values: copying a position
+copies all 64 squares without allocating slices or sharing pointers.
+`rules.PositionAfterMove` validates and returns a new position. Search uses
+`PositionAfterLegalMove` only with legal moves generated for that exact position.
 
-`NewPosition` permite construir posições editáveis. `Position.Validate` verifica
-peças, reis, contadores, direitos de roque e metadados de en passant; não comprova
-que a posição pode ser alcançada numa partida legal. O motor valida a entrada
-uma vez antes da busca, sem repetir essa verificação em cada posição simulada.
+`NewPosition` builds editable positions. `Position.Validate` checks pieces, kings,
+counters, castling rights, and en passant metadata; it does not prove reachability
+through legal play. The engine validates input once before searching, without
+repeating this check for every simulated position.
 
-### Motor e regras
+### Engine and rules
 
-Todos os nomes desta vista pertencem a `internal/domain` e `internal/engine`. Aqui estão todos os
-imports internos desses pacotes, incluindo as dependências dos tipos base.
+All names in this view belong to `internal/domain` and `internal/engine`. It shows all internal imports
+of these packages, including dependencies on the base types.
 
 ```mermaid
 flowchart TB
-    game["game<br/>Partida, histórico e SAN"]
-    ai["engine<br/>Avaliação e busca"]
-    rules["rules<br/>Legalidade e situação da posição"]
-    movegen["movegen<br/>Movimentos pseudolegais"]
-    attacks["attacks<br/>Casas atacadas"]
-    chess["domain<br/>Tipos, tabuleiro e posição"]
+    game["game<br/>Game, history, and SAN"]
+    ai["engine<br/>Evaluation and search"]
+    rules["rules<br/>Legality and position status"]
+    movegen["movegen<br/>Pseudolegal moves"]
+    attacks["attacks<br/>Attacked squares"]
+    chess["domain<br/>Types, board, and position"]
 
     ai --> rules
     game --> rules
@@ -236,174 +237,171 @@ flowchart TB
     attacks --> chess
 ```
 
-O pacote base `domain` contém os dados compartilhados e não importa outros pacotes
-do projeto. `rules` filtra movimentos e determina a situação de uma posição;
-`game` mantém o estado da partida, os resultados e as repetições. `engine` simula
-posições pelas regras e devolve uma jogada, sem modificar a partida real.
+The base `domain` package contains shared data and imports no other project
+packages. `rules` filters moves and determines a position's status;
+`game` maintains game state, results, and repetitions. `engine` simulates
+positions according to the rules and returns a move without changing the actual game.
 
-Cada opção de menu reúne seu rótulo e sua ação em `application/menus.go`;
-o desenho e o comando executado usam a mesma definição. A configuração mantém
-dificuldades tipadas, e as escolhas de promoção vêm dos movimentos da partida.
-`match.State` fornece cópias dos dados de interação, enquanto medidas, cores,
-componentes e quadros de animação pertencem a `render`. A notação SAN pertence a
-`domain/game`, junto dos snapshots que descreve; o renderer não consulta regras.
-O pacote `delivery/tui/application` coordena eventos, telas e o agendamento das animações.
+Each menu option keeps its label and action together in `application/menus.go`;
+rendering and command execution use the same definition. Configuration keeps
+typed difficulty values, and promotion choices come from the game's moves.
+`match.State` provides copies of interaction data, while dimensions, colors,
+components, and animation frames belong to `render`. SAN notation belongs to
+`domain/game`, alongside the snapshots it describes; the renderer does not query rules.
+The `delivery/tui/application` package coordinates events, screens, and animation scheduling.
 
-O motor não importa a TUI. `application`, `match` e `render` não importam a raiz
-`tui`, e nenhum pacote de produção importa os testes. Os testes ficam nas pastas
-`tests` e dependem das APIs públicas dos pacotes que verificam.
+The engine does not import the TUI. `application`, `match`, and `render` do not
+import the root `tui` package, and no production package imports tests. Tests live
+in `tests` directories and depend on the public APIs of the packages they verify.
 
-`internal/architecture/tests` verifica os imports de todos os arquivos Go de
-produção, incluindo arquivos específicos de outras plataformas. O teste protege
-as fronteiras acima e exige declarar as dependências de novos pacotes. Ele roda
-com `go test ./...`, inclusive no CI, sem ferramentas adicionais.
+`internal/architecture/tests` checks imports in every production Go file,
+including files targeting other platforms. It protects the boundaries above
+and requires declaring dependencies for new packages. It runs with
+`go test ./...`, including CI, without additional tools.
 
-Para conferir os imports reais, sem incluir dependências exclusivas dos testes:
+To inspect the actual imports, excluding dependencies used only by tests:
 
 ```sh
 go list -f '{{.ImportPath}} {{.Imports}}' ./cmd/... ./internal/...
 ```
 
-## Regras implementadas
+## Implemented rules
 
-- Movimentos legais das seis peças e alternância de turnos.
-- Capturas e proteção do próprio rei contra xeque.
-- Xeque, xeque-mate e empate por afogamento.
-- Roque pequeno e grande.
+- Legal moves for all six piece types and alternating turns.
+- Captures and protection of your own king from check.
+- Check, checkmate, and draws by stalemate.
+- Kingside and queenside castling.
 - En passant.
-- Promoção para dama, torre, bispo ou cavalo.
-- Desistência e empate por acordo no modo local.
+- Promotion to queen, rook, bishop, or knight.
+- Resignation and draws by agreement in local mode.
 
-## Como a IA funciona
+## How the AI works
 
-A IA usa busca de jogadas e uma função de avaliação escrita no projeto.
-Não utiliza treinamento, redes neurais, serviços externos ou conexão com a internet.
+The AI uses move search and an evaluation function written for this project.
+It uses no training, neural networks, external services, or internet connection.
 
-### 1. Avaliação da posição
+### 1. Position evaluation
 
-Uma pontuação estima a vantagem no tabuleiro. A unidade é o centésimo de peão:
-100 pontos representam o valor material de um peão.
+A score estimates the advantage on the board. The unit is a centipawn:
+100 points represent the material value of a pawn.
 
-| Peça | Valor material |
+| Piece | Material value |
 | --- | ---: |
-| Peão | 100 |
-| Cavalo | 320 |
-| Bispo | 330 |
-| Torre | 500 |
-| Dama | 900 |
+| Pawn | 100 |
+| Knight | 320 |
+| Bishop | 330 |
+| Rook | 500 |
+| Queen | 900 |
 
-A avaliação soma o material das brancas e subtrai o das pretas. Valores positivos
-favorecem as brancas; negativos favorecem as pretas. Pequenos bônus valorizam
-cavalos, bispos e damas próximos do centro, além de peões centrais e avançados.
-O cálculo espelha as posições para tratar as duas cores da mesma maneira.
+Evaluation adds White's material and subtracts Black's. Positive values favor
+White; negative values favor Black. Small bonuses reward knights, bishops,
+and queens near the center, as well as central and advanced pawns.
+The calculation mirrors positions to treat both colors equally.
 
-O rei não recebe um preço de captura: as regras impedem sua captura. A busca
-reconhece xeque-mate separadamente e atribui a ele uma importância maior que
-qualquer vantagem material. Ela prefere mates mais rápidos e adia uma derrota
-forçada. Afogamento recebe pontuação zero, inclusive no limite da busca.
+The king has no capture value: the rules prevent its capture. The search
+recognizes checkmate separately and gives it more weight than any material
+advantage. It prefers faster mates and delays forced losses.
+Stalemate scores zero, including at the search boundary.
 
-### 2. Minimax e Negamax
+### 2. Minimax and Negamax
 
-A busca simula uma árvore: cada posição gera suas jogadas legais e cada jogada
-gera outra posição. O Minimax supõe que o adversário escolherá a melhor resposta
-para ele. Por isso, compara as alternativas considerando a pior resposta para nós.
+The search simulates a tree: each position generates its legal moves, and each
+move generates another position. Minimax assumes the opponent will choose their
+best response. It therefore compares alternatives considering the worst response for us.
 
-Exemplo simplificado, com notas vistas pelo jogador que está escolhendo:
+A simplified example, with scores from the choosing player's perspective:
 
-| Alternativa | Notas após possíveis respostas adversárias | Pior resposta |
+| Alternative | Scores after possible opponent responses | Worst response |
 | --- | --- | ---: |
 | A | +300, -100 | -100 |
 | B | +80, +40 | +40 |
 
-A escolha é B: a resposta adversária mais forte ainda deixa +40.
-Essa é a ideia do [Minimax, descrita no material de IA da UC Berkeley](https://inst.eecs.berkeley.edu/~cs188/textbook/games/minimax.html).
+The choice is B: the opponent's strongest response still leaves +40.
+This is the idea behind [Minimax, described in UC Berkeley's AI material](https://inst.eecs.berkeley.edu/~cs188/textbook/games/minimax.html).
 
-Neste projeto, o algoritmo é escrito na forma **Negamax**: a nota é vista por quem
-tem a vez, e seu sinal é invertido ao passar para o adversário. Isso permite usar
-a mesma lógica para as duas cores. A busca aprofunda de 1 até a profundidade
-escolhida, com orçamento de dois segundos por jogada. Ao esgotar o orçamento,
-usa a última profundidade concluída;
-se nenhuma terminar, usa uma jogada legal já gerada. Cancelamentos da interface
-descartam o resultado, inclusive após uma iteração concluída.
+In this project, the algorithm uses the **Negamax** form: the score is viewed
+from the side to move, and its sign is reversed when passing to the opponent.
+This lets both colors share the same logic. The search deepens from 1 to the
+selected depth, with a budget of two seconds per move. When the budget runs out,
+it uses the last completed depth; if none finishes, it uses an already generated
+legal move. Interface cancellations discard the result, even after a completed iteration.
 
-### 3. Poda Alpha-Beta e ordenação
+### 3. Alpha-Beta pruning and move ordering
 
-A poda Alpha-Beta interrompe a análise de uma sequência quando os limites já
-calculados mostram que ela não pode melhorar a escolha. Ela preserva o resultado
-do Minimax na mesma profundidade e com a mesma avaliação, visitando menos posições.
-Veja a [explicação de Alpha-Beta da UC Berkeley](https://inst.eecs.berkeley.edu/~cs188/textbook/games/minimax.html#321-alpha-beta-pruning).
+Alpha-Beta pruning stops analyzing a sequence when previously calculated bounds
+show that it cannot improve the choice. It preserves the Minimax result at the
+same depth and with the same evaluation while visiting fewer positions.
+See [UC Berkeley's Alpha-Beta explanation](https://inst.eecs.berkeley.edu/~cs188/textbook/games/minimax.html#321-alpha-beta-pruning).
 
-Para encontrar esses limites mais cedo, a busca examina primeiro promoções e
-capturas, dando prioridade a vítimas valiosas capturadas por peças mais baratas.
-A ordenação inclui en passant. Todas as simulações usam as regras do motor,
-incluindo roque, en passant, promoção e proteção do próprio rei.
+To find these bounds earlier, the search examines promotions and captures first,
+prioritizing valuable victims captured by cheaper pieces. Move ordering includes
+en passant. All simulations use the engine's rules, including castling,
+en passant, promotion, and protection of your own king.
 
-### 4. Dificuldades e desempate
+### 4. Difficulty levels and tie-breaking
 
-A profundidade conta turnos individuais, chamados *plies*. Um movimento das
-brancas e uma resposta das pretas correspondem a dois plies.
+Depth counts individual turns, called *plies*. A White move and a Black response
+make up two plies.
 
-| Dificuldade | Profundidade | O que considera a partir da posição atual |
+| Difficulty | Depth | What it considers from the current position |
 | --- | ---: | --- |
-| Fácil (`easy`) | 1 | Jogada da IA |
-| Normal (`medium`) | 2 | Jogada da IA e resposta adversária |
-| Difícil (`hard`) | 3 | Jogada da IA, resposta adversária e próxima jogada da IA |
+| Easy (`easy`) | 1 | AI move |
+| Normal (`medium`) | 2 | AI move and opponent response |
+| Hard (`hard`) | 3 | AI move, opponent response, and next AI move |
 
-As três dificuldades usam o mesmo avaliador. Aumentar a profundidade exige mais
-cálculo; esses nomes não correspondem a uma classificação Elo.
+All three difficulty levels use the same evaluator. Increasing depth requires
+more computation; these names do not correspond to an Elo rating.
 
-Quando várias jogadas têm exatamente a melhor nota encontrada, a IA desempata
-usando `-seed`. A mesma posição, dificuldade e seed produzem a mesma escolha quando a mesma
-profundidade é concluída dentro do orçamento.
-Mudar a seed pode variar os empates; ela não escolhe aleatoriamente uma jogada
-com nota inferior. Por exemplo:
+When several moves have exactly the best score found, the AI breaks ties using
+`-seed`. The same position, difficulty, and seed produce the same choice when
+the same depth is completed within the budget. Changing the seed can vary ties;
+it does not randomly select a move with a lower score. For example:
 
 ```sh
 go run ./cmd/chess-tui -ai medium -seed 42
 ```
 
-### 5. Relação com a partida e o histórico
+### 5. Relationship with the game and history
 
-A busca recebe uma cópia completa da posição, incluindo direitos de roque,
-en passant e contadores. Simular uma sequência não modifica a partida nem grava
-posições no histórico. Somente a jogada escolhida é enviada ao controle da partida,
-que a valida e a registra como qualquer outra jogada.
+The search receives a complete copy of the position, including castling rights,
+en passant, and counters. Simulating a sequence does not change the game or
+record positions in its history. Only the chosen move is sent to the game
+controller, which validates and records it like any other move.
 
-O cálculo roda em segundo plano enquanto a TUI continua recebendo teclas.
-Ao abrir menu, ajuda ou revisão, abandonar a partida ou encerrar o programa,
-a busca recebe um cancelamento. Resultados antigos são associados à sessão,
-ao pedido e à posição original, impedindo que alterem outra partida ou revanche.
-A IA também escolhe a peça de
-promoção durante a busca, sem solicitar uma escolha ao jogador humano.
+Computation runs in the background while the TUI continues receiving keystrokes.
+Opening the menu, help, or review, leaving the game, or quitting the program
+cancels the search. Old results are associated with the session, request, and
+original position, preventing them from changing another game or rematch.
+The AI also chooses its promotion piece during search without asking the human player.
 
-## Limitações
+## Limitations
 
-- A IA tem profundidade limitada e avaliação simples: pode cometer erros e não
-  garante a melhor jogada da partida. Uma sequência tática pode continuar além
-  do limite pesquisado e tornar uma avaliação otimista demais.
-- A quiescência estende capturas, en passant, promoções e respostas a xeque
-  por até oito plies adicionais. No limite dessa extensão, aplica a avaliação
-  estática; ainda pode perder táticas mais longas.
-- Não há livro de aberturas nem cache de posições. O orçamento de dois segundos
-  vale para o aprofundamento após gerar as jogadas iniciais; o cancelamento é
-  cooperativo e não constitui uma garantia de tempo real.
-- A busca reconhece material insuficiente e o limite automático de 75 movimentos,
-  mas não recebe o histórico de repetições; a partida controla essas repetições.
-- Repetição tripla e regra dos 50 movimentos permitem reivindicar empate na
-  posição atual pelo menu da partida. A IA reivindica assim que pode. Não há
-  reivindicação antecipada indicando um lance ainda não executado.
-- Repetição quíntupla e 75 movimentos encerram automaticamente a partida,
-  preservando a prioridade do xeque-mate. Material insuficiente cobre reis
-  sozinhos, um único bispo ou cavalo e somente bispos da mesma cor de casas;
-  outras posições mortas, como bloqueios complexos, não são detectadas.
-  Referência: [regras da FIDE, artigos 5 e 9](https://handbook.fide.com/chapter/e012023).
-- A revisão do histórico permite consultar posições anteriores sem
-  desfazer jogadas ou modificar a partida.
-- Não há salvamento de partidas nem relógio. Voltar ao menu descarta a partida
-  após confirmação; encerrar o programa também não a salva.
-- Oferta de empate contra a IA não está disponível: o motor ainda não possui
-  uma política para aceitar ou recusar.
+- The AI has limited depth and a simple evaluation: it can make mistakes and
+  does not guarantee the best move in the game. A tactical sequence may continue
+  beyond the search boundary, making an evaluation overly optimistic.
+- Quiescence extends captures, en passant, promotions, and responses to check
+  by up to eight additional plies. At that extension's boundary, it applies
+  static evaluation; it can still miss longer tactics.
+- There is no opening book or position cache. The two-second budget applies
+  to deepening after the initial moves are generated; cancellation is
+  cooperative and does not provide a real-time guarantee.
+- The search recognizes insufficient material and the automatic 75-move limit,
+  but does not receive repetition history; the game tracks those repetitions.
+- Threefold repetition and the 50-move rule allow a draw claim in the current
+  position through the game menu. The AI claims as soon as it can. Claims based
+  on an intended move that has not yet been played are not supported.
+- Fivefold repetition and 75 moves automatically end the game, preserving
+  checkmate's priority. Insufficient material covers bare kings, a single bishop
+  or knight, and positions with only bishops on the same square color in addition
+  to the kings; other dead positions, such as complex blockades, are not detected.
+  Reference: [FIDE rules, Articles 5 and 9](https://handbook.fide.com/chapter/e012023).
+- History review lets you inspect previous positions without undoing moves
+  or changing the game.
+- There is no game saving or chess clock. Returning to the menu discards the game
+  after confirmation; quitting the program does not save it either.
+- Draw offers against the AI are unavailable: the engine does not yet have
+  a policy for accepting or declining them.
 
-## Licença
+## License
 
-Este projeto é distribuído sob a [licença MIT](LICENSE).
+This project is distributed under the [MIT license](LICENSE).

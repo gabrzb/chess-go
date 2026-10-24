@@ -18,10 +18,10 @@ func TestTurnBlockMatchesSideAndContext(t *testing.T) {
 		state                    render.TurnState
 		title, label, background string
 	}{
-		{render.TurnState{Color: chess.White}, "VEZ DE", "Jogador 1(W)", render.WhitePiece},
-		{render.TurnState{Color: chess.Black}, "VEZ DE", "Jogador 2(B)", render.BlackPiece},
-		{render.TurnState{Color: chess.White, Reviewing: true}, "REVISÃO", "Jogador 1(W)", render.WhitePiece},
-		{render.TurnState{Color: chess.Black, Finished: true}, "PARTIDA", "ENCERRADA", render.Background},
+		{render.TurnState{Color: chess.White}, "TURN", "Player 1(W)", render.WhitePiece},
+		{render.TurnState{Color: chess.Black}, "TURN", "Player 2(B)", render.BlackPiece},
+		{render.TurnState{Color: chess.White, Reviewing: true}, "REVIEW", "Player 1(W)", render.WhitePiece},
+		{render.TurnState{Color: chess.Black, Finished: true}, "GAME", "OVER", render.Background},
 	} {
 		block := render.Turn(tc.state, render.CompactBoard)
 		text := ansi.Strip(block)
@@ -47,8 +47,8 @@ func TestMatchFitsStandardWindows(t *testing.T) {
 		for _, color := range []chess.Color{chess.White, chess.Black} {
 			panel := render.MatchPanel{Width: size.width, Height: size.height, Board: chess.NewInitialPosition().Board,
 				BoardState: render.BoardState{Cursor: chess.A2}, Turn: render.TurnState{Color: color},
-				Status: "Vez das brancas\nJogador 1", CompactStatus: "Vez das brancas", LastMove: "—",
-				Mode: "LOCAL · JOGADOR VS JOGADOR", CompactMode: "LOCAL", Footer: "Setas/WASD mover · Enter selecionar\nEsc menu · F inverter · H histórico · ? ajuda"}
+				Status: "Turn: white\nPlayer 1", CompactStatus: "Turn: white", LastMove: "—",
+				Mode: "LOCAL · PLAYER VS PLAYER", CompactMode: "LOCAL", Footer: "Arrows/WASD move · Enter select\nEsc menu · F flip · H history · ? help"}
 			content := render.Match(panel)
 			if !render.Fits(content, size.width, size.height) {
 				t.Fatalf("match overflows %dx%d", size.width, size.height)
@@ -63,7 +63,7 @@ func TestMatchFitsStandardWindows(t *testing.T) {
 func TestWindowDoesNotSpreadCursorBackground(t *testing.T) {
 	panel := render.MatchPanel{Width: render.DefaultWidth, Height: render.DefaultHeight, Board: chess.NewInitialPosition().Board,
 		BoardState: render.BoardState{Cursor: chess.A2}, Turn: render.TurnState{Color: chess.White},
-		Status: "Vez das brancas", CompactStatus: "Vez das brancas", LastMove: "—"}
+		Status: "Turn: white", CompactStatus: "Turn: white", LastMove: "—"}
 	before := uv.NewStyledString(render.Window(render.Match(panel), panel.Width, panel.Height).Content).Lines(ansi.GraphemeWidth)
 	panel.BoardState.Cursor = chess.H8
 	after := uv.NewStyledString(render.Window(render.Match(panel), panel.Width, panel.Height).Content).Lines(ansi.GraphemeWidth)

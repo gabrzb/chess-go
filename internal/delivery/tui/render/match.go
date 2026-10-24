@@ -39,7 +39,7 @@ func matchContent(panel MatchPanel, scale BoardScale) string {
 	panel.BoardState.Scale = scale
 
 	board := Board(panel.Board, panel.BoardState)
-	board = Center("TABULEIRO\n"+board, lipgloss.Width(board))
+	board = Center("BOARD\n"+board, lipgloss.Width(board))
 	body := Center(lipgloss.JoinHorizontal(lipgloss.Center, board, strings.Repeat(" ", ColumnGap), Turn(panel.Turn, scale)), width)
 	footer := center(Paint(panel.Footer, Muted))
 
@@ -55,7 +55,7 @@ func matchContent(panel MatchPanel, scale BoardScale) string {
 
 	if panel.Width >= WideMatchMinWidth {
 		for rows := MaxHistoryRows; rows >= 0; rows-- {
-			columns := []string{"PARTIDA\n" + panel.Status, "ÚLTIMO LANCE\n" + panel.LastMove}
+			columns := []string{"GAME\n" + panel.Status, "LAST MOVE\n" + panel.LastMove}
 
 			if rows > 0 {
 				columns = append(columns, History(panel.Moves, rows))
@@ -74,7 +74,7 @@ func matchContent(panel MatchPanel, scale BoardScale) string {
 		}
 	}
 
-	return compose(panel.CompactMode, center(panel.CompactStatus+"\nÚltimo lance: "+panel.LastMove))
+	return compose(panel.CompactMode, center(panel.CompactStatus+"\nLast move: "+panel.LastMove))
 }
 
 func interleave(items []string, separator string) []string {
@@ -92,7 +92,7 @@ func interleave(items []string, separator string) []string {
 }
 
 func History(labels []string, rows int) string {
-	content := "HISTÓRICO\nBrancas   Pretas"
+	content := "HISTORY\nWhite   Black"
 
 	if len(labels) == 0 {
 		return content + "\n—         —"

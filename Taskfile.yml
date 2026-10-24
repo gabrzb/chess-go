@@ -2,44 +2,44 @@ version: '3'
 
 tasks:
   default:
-    desc: Listar os comandos disponíveis
+    desc: List available commands
     cmds:
       - task --list
 
   run:
-    desc: Iniciar o jogo (aceita argumentos depois de --)
+    desc: Start the game (accepts arguments after --)
     interactive: true
     cmds:
       - go run ./cmd/chess-tui {{.CLI_ARGS}}
 
   ai:
-    desc: Jogar contra a IA em dificuldade média (aceita argumentos depois de --)
+    desc: Play against the AI on medium difficulty (accepts arguments after --)
     interactive: true
     cmds:
       - go run ./cmd/chess-tui -ai medium {{.CLI_ARGS}}
 
   test:
-    desc: Executar todos os testes sem reutilizar resultados anteriores
+    desc: Run all tests without reusing cached results
     cmds:
       - go test ./... -count=1 -timeout 60s {{.CLI_ARGS}}
 
   vet:
-    desc: Analisar o código com go vet
+    desc: Analyze code with go vet
     cmds:
       - go vet ./...
 
   fmt:
-    desc: Formatar os arquivos Go
+    desc: Format Go files
     cmds:
       - go fmt ./...
 
   build:
-    desc: Compilar o executável em bin/
+    desc: Build the executable in bin/
     cmds:
       - go build -o ./bin/ ./cmd/chess-tui
 
   check:
-    desc: Executar testes, análise estática e compilação
+    desc: Run tests, static analysis, and build
     cmds:
       - task: test
       - task: vet
