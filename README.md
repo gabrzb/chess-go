@@ -1,8 +1,8 @@
-# Chess in Go
+# Chess
 
 [English](README.md) | [Português](README-PT-BR.md)
 
-Terminal chess in Go for two local players or against the AI.
+Terminal based chess made in Go for two local players or against the AI.
 
 ## Project structure
 
@@ -16,7 +16,7 @@ internal/architecture/ Dependency checks
 docs/                  Documentation in English and Portuguese
 ```
 
-## Running
+## How to run
 
 Requires Go 1.26.3 or later. From the project root:
 

@@ -1,8 +1,8 @@
-# Xadrez em Go
+# Xadrez
 
 [English](README.md) | [Português](README-PT-BR.md)
 
-Xadrez no terminal em Go para dois jogadores locais ou contra a IA.
+Xadrez que funciona no terminal feito em Go para dois jogadores locais ou contra a IA.
 
 ## Estrutura do projeto
 
