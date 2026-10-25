@@ -44,7 +44,11 @@ func (m application) View() tea.View {
 	case pauseScreen:
 		content = m.card("GAME MENU", "", footer+"\nEsc resume", false)
 	case resignScreen:
-		content = m.card("CONFIRM RESIGNATION?", sideText(opposite(m.resigningSide()))+" will win.", footer+"\nEsc back", false)
+		winner := "AI"
+		if !m.config.computer {
+			winner = map[chess.Color]string{chess.White: "Player 1(W)", chess.Black: "Player 2(B)"}[opposite(m.resigningSide())]
+		}
+		content = m.card("CONFIRM RESIGNATION?", winner+" will win.", footer+"\nEsc back", false)
 	case abandonScreen:
 		content = m.card("END GAME?", "The current game will be discarded.", footer+"\nEsc back", false)
 	case drawScreen:

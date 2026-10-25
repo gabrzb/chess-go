@@ -214,6 +214,17 @@ func TestApplicationOpeningAndConfiguration(t *testing.T) {
 	contains(t, m, "Turn: white")
 }
 
+func TestApplicationResignationNamesParticipants(t *testing.T) {
+	for _, color := range []chess.Color{chess.White, chess.Black} {
+		m := app(t, tui.Options{Difficulty: engine.Easy, HumanColor: color, StartGame: true})
+		m = keys(t, m, tea.KeyEscape, tea.KeyDown, tea.KeyEnter)
+		contains(t, m, "AI will win.")
+	}
+	m := app(t, tui.Options{StartGame: true})
+	m = keys(t, m, tea.KeyEscape, tea.KeyDown, tea.KeyDown, tea.KeyEnter)
+	contains(t, m, "Player 2(B) will win.")
+}
+
 func TestApplicationRejectsPreviousSessionAI(t *testing.T) {
 	m := app(t, tui.Options{Difficulty: engine.Easy, HumanColor: chess.Black, StartGame: true})
 	old := m.Init()
@@ -221,7 +232,7 @@ func TestApplicationRejectsPreviousSessionAI(t *testing.T) {
 		t.Fatal("Missing initial AI search")
 	}
 	m = keys(t, m, tea.KeyEscape, tea.KeyDown, tea.KeyEnter)
-	contains(t, m, "white will win.")
+	contains(t, m, "AI will win.")
 	m = keys(t, m, tea.KeyDown, tea.KeyEnter)
 	contains(t, m, "DEFEAT")
 	next, current := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})

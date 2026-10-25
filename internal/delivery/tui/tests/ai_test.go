@@ -66,7 +66,11 @@ func TestAITurnsAndResults(t *testing.T) {
 		m = moveCursorTo(t, m, move.From)
 		m = updateModel(t, m, tea.KeyPressMsg{Code: tea.KeyEnter})
 		assertHighlights(t, m, chess.NoSquare)
+		started := time.Now()
 		result := cmd()
+		if time.Since(started) < 500*time.Millisecond {
+			t.Fatal("AI reply did not leave time to view the board")
+		}
 		assertUnchanged(t, g, before, length)
 		m = updateModel(t, m, result)
 		state, err := g.Snapshot()

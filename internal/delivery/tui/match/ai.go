@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -53,7 +54,13 @@ func (m *Model) StartAI() tea.Cmd {
 
 	m.message = ""
 	m.aiError = nil
-	return func() tea.Msg { return search() }
+	return func() tea.Msg {
+		timer := time.NewTimer(500 * time.Millisecond)
+		defer timer.Stop()
+		result := search()
+		<-timer.C
+		return result
+	}
 }
 
 func (m *Model) StopAI() {
