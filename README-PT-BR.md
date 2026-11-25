@@ -17,7 +17,7 @@ Consulte as [limitações](docs/pt-br/limitacoes.md) para conhecer as condiçõe
 
 ## Início rápido
 
-Requer **Go 1.26.3 ou superior**. Na raiz do projeto, abra o menu principal:
+Requer **Go 1.27.3 ou superior**. Na raiz do projeto, abra o menu principal:
 
 ```sh
 go run ./cmd/chess-tui
@@ -28,6 +28,13 @@ uma partida contra a IA na dificuldade média sem passar pelo menu:
 
 ```sh
 go run ./cmd/chess-tui -ai medium
+```
+
+Para o app desktop nativo (macOS, Windows, Linux), feito com
+[MyGo](https://github.com/egoist/mygo):
+
+```sh
+go run ./cmd/chess-desktop
 ```
 
 Use as setas e Enter para navegar. Durante a partida, pressione `?` para abrir a ajuda.
@@ -53,10 +60,12 @@ O projeto separa as regras de xadrez, a busca da IA e a apresentação no termin
 
 ```text
 cmd/chess-tui/          Entrada da CLI
+cmd/chess-desktop/      Entrada do app desktop
 internal/application/  Coordenação da IA
 internal/domain/       Regras de xadrez, partida e histórico
 internal/engine/       Avaliação e busca da IA
 internal/delivery/tui/  Interface de terminal
+internal/delivery/desktop/ Interface desktop nativa (MyGo)
 internal/architecture/ Verificação de dependências
 docs/                  Documentação em inglês e português
 ```

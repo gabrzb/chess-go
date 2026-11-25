@@ -17,7 +17,7 @@ See the [limitations](docs/en/limitations.md) for supported draw conditions and 
 
 ## Quick start
 
-Requires **Go 1.26.3 or later**. From the project root, open the main menu:
+Requires **Go 1.27.3 or later**. From the project root, open the main menu:
 
 ```sh
 go run ./cmd/chess-tui
@@ -28,6 +28,13 @@ against the AI on medium difficulty directly:
 
 ```sh
 go run ./cmd/chess-tui -ai medium
+```
+
+For the native desktop app (macOS, Windows, Linux), built with
+[MyGo](https://github.com/egoist/mygo):
+
+```sh
+go run ./cmd/chess-desktop
 ```
 
 Use the arrow keys and Enter to navigate. During a game, press `?` for help.
@@ -53,10 +60,12 @@ The project separates chess rules, AI search, and terminal presentation:
 
 ```text
 cmd/chess-tui/          CLI entry point
+cmd/chess-desktop/      Desktop entry point
 internal/application/  AI coordination
 internal/domain/       Chess rules, game, and history
 internal/engine/       AI evaluation and search
 internal/delivery/tui/  Terminal interface
+internal/delivery/desktop/ Native desktop interface (MyGo)
 internal/architecture/ Dependency checks
 docs/                  English and Portuguese documentation
 ```

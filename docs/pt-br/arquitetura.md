@@ -4,7 +4,8 @@
 
 ```text
 cmd/
-└── chess-tui/          # CLI entry point
+├── chess-tui/          # terminal entry point
+└── chess-desktop/      # native desktop entry point
 internal/
 ├── application/        # UI-independent AI coordination
 │   └── tests/          # search lifecycle tests
@@ -19,80 +20,89 @@ internal/
 ├── engine/             # AI evaluation and search
 │   └── tests/          # search tests and benchmarks
 └── delivery/
-    └── tui/            # terminal interface and entry API
-        ├── application/ # screens and sessions
-        ├── match/       # interaction and search event adapter
-        ├── render/      # presentation
-        └── tests/       # interface tests
+    ├── tui/            # Bubble Tea terminal interface
+    │   ├── application/ # screens and sessions
+    │   ├── match/       # interaction and search event adapter
+    │   ├── render/      # presentation
+    │   └── tests/       # interface tests
+    └── desktop/        # MyGo native window and entry API
+        ├── pages/      # screen selection and composition
+        ├── components/ # widgets and interaction state
+        └── tests/      # desktop interface tests
 ```
 
-### Interface e controle da partida
-
-`cmd/chess-tui` interpreta as flags e chama a API de entrada em `tui`.
-`delivery/tui/application` coordena as telas e as sessões; `match` controla a interação com
-a partida e adapta os eventos de busca. `internal/application.Opponent` coordena
-o ciclo da IA sem depender do Bubble Tea. `render` transforma dados em conteúdo de
-terminal, sem executar jogadas ou iniciar buscas.
-
-As setas abaixo representam imports internos. A vista omite somente os imports
-do pacote base `domain`, usado diretamente pelos pacotes de entrada,
-interface e coordenação da IA.
+## Interfaces e núcleo compartilhado
 
 ```mermaid
-flowchart LR
-    cli["cmd/chess-tui"]
-
-    subgraph ui["internal/delivery/tui"]
-        entry["tui<br/>API de entrada"]
-        application["application<br/>Telas e sessões"]
-        match["match<br/>Interação e eventos de busca"]
-        render["render<br/>Apresentação"]
-    end
-
-    coordinator["internal/application<br/>Coordenação da IA"]
-
-    subgraph engine["Pacotes do motor usados pela TUI"]
-        game["domain/game<br/>Partida e snapshots"]
-        ai["engine<br/>Escolha de jogadas"]
-    end
-
-    cli --> entry
-    cli --> ai
-    entry --> application
-    entry --> match
-    entry --> game
-    entry --> ai
-    application --> match
-    application --> render
-    application --> game
-    application --> ai
-    match --> render
-    match --> game
-    match --> coordinator
-    coordinator --> game
-    render --> game
+flowchart TB
+    tuiCmd["cmd/chess-tui"] --> tui["delivery/tui (Bubble Tea)"]
+    desktopCmd["cmd/chess-desktop"] --> desktop["delivery/desktop (MyGo)"]
+    tui --> core["Partida, regras, motor e coordenação da IA"]
+    desktop --> core
 ```
 
-O pacote `tui` também oferece `NewModel` e `NewModelWithAI`, que expõem o modelo
-de `match` sem a navegação de telas de `application`; por isso ele importa
-`match` e `game` diretamente. `tui` e o executável importam `engine` para
-configurar a dificuldade. `render` importa `game` para apresentar snapshots
-e resultados, mas não depende das regras nem da busca.
+Cada executável lê as flags e chama o pacote da sua interface. As setas
+resumem as dependências entre as interfaces e o núcleo em `internal`.
 
-A interface `domain.MoveChooser` define `ChooseMove(context.Context, Position)`.
-`engine.Player` implementa esse contrato; `tui.NewModelWithAI` recebe qualquer
-implementação, inclusive estratégias próprias. `internal/application.Opponent`
-aplica a resposta por `Game.Play`, que valida a jogada antes de alterar a partida.
-O pacote `match` não importa `engine`.
+### Terminal
 
-`Opponent.Start` devolve uma função de busca para execução em segundo plano;
-`Start`, `Stop` e `Accept` devem ser chamados no loop de eventos da interface.
-A coordenação cancela buscas e descarta respostas duplicadas, de buscas anteriores
-ou de outras sessões. A TUI decide quando pausar para histórico, menus ou promoção
-e converte a função de busca em `tea.Cmd`. A camada de aplicação depende somente
-do domínio e da biblioteca padrão; não cria goroutines nem contém mensagens visuais.
+`delivery/tui/application` coordena telas, sessões, eventos e animações.
+`match` controla a interação com a partida, expõe cópias do estado em
+`match.State` e adapta a busca da IA para `tea.Cmd`. A TUI cancela a busca
+ao abrir o histórico ou o menu da partida e aguarda a escolha da peça antes
+de iniciar uma busca quando há uma promoção pendente.
 
-`Board` contém um array fixo, e `Position` contém somente valores: copiar a
+`render` usa snapshots e resultados de `domain/game` para desenhar a interface.
+Medidas, cores e quadros de animação ficam nesse pacote. Cada opção de menu
+reúne seu rótulo e sua ação em `delivery/tui/application/menus.go`.
+`tui.NewModel` e `tui.NewModelWithAI` expõem o modelo de partida para uso
+direto, com navegação de telas disponível em `tui.NewApplication`.
+
+### Desktop
+
+`desktop.Run` abre a janela nativa do MyGo e conecta `Window.Update` ao
+estado da interface. `pages` seleciona e monta as telas de menu, configuração
+e partida. `components` desenha o tabuleiro, as barras dos jogadores, a
+lateral e os diálogos. O estado nesse pacote controla seleção, arraste,
+promoção e consulta do histórico, usando `domain/game` para validar jogadas
+e manter a partida.
+
+O desktop cria a IA em `components` com `engine.NewPlayer`, executa a
+busca em uma goroutine e entrega o resultado à thread da interface por
+`Window.Update`, que também atualiza o desenho.
+
+### Coordenação da IA
+
+As duas interfaces usam `internal/application.Opponent` para iniciar e cancelar
+buscas e descartar respostas duplicadas ou de buscas e sessões anteriores.
+`Start` devolve uma função para a interface executar em segundo plano.
+A interface chama `Start`, `Stop` e `Accept` no seu loop de eventos.
+`Accept` aplica a resposta por `Game.Play`, que valida a jogada.
+
+`domain.MoveChooser` define o contrato `ChooseMove(context.Context, Position)`.
+`engine.Player` implementa esse contrato, e `tui.NewModelWithAI` também aceita
+estratégias próprias. O pacote `match` depende desse contrato e delega o ciclo
+de busca a `Opponent`.
+
+## Motor e regras
+
+Cada seta mostra um import direto. Os cinco pacotes do diagrama também
+importam a base `internal/domain`, que define os tipos, o tabuleiro e a posição.
+
+```mermaid
+flowchart TB
+    game["domain/game"] --> rules["domain/rules"]
+    engine["engine"] --> rules
+    rules --> movegen["domain/movegen"]
+    rules --> attacks["domain/attacks"]
+```
+
+O pacote base `domain` usa apenas a biblioteca padrão. `rules` filtra movimentos
+e determina a situação de uma posição. `game` mantém o estado da partida, os
+resultados, as repetições e os snapshots que servem de base para a notação SAN.
+`engine` simula posições pelas regras e devolve a jogada escolhida à interface.
+
+`Board` contém um array fixo. `Position` contém somente valores, então copiar a
 posição também copia suas 64 casas, sem alocar slices ou compartilhar ponteiros.
 `rules.PositionAfterMove` valida e devolve uma nova posição. A busca usa
 `PositionAfterLegalMove` somente com movimentos legais gerados para aquela posição.
@@ -102,47 +112,12 @@ peças, reis, contadores, direitos de roque e metadados de en passant; não comp
 que a posição pode ser alcançada numa partida legal. O motor valida a entrada
 uma vez antes da busca, sem repetir essa verificação em cada posição simulada.
 
-### Motor e regras
+## Fronteiras de dependência
 
-Todos os nomes desta vista pertencem a `internal/domain` e `internal/engine`. Aqui estão todos os
-imports internos desses pacotes, incluindo as dependências dos tipos base.
-
-```mermaid
-flowchart TB
-    game["game<br/>Partida, histórico e SAN"]
-    ai["engine<br/>Avaliação e busca"]
-    rules["rules<br/>Legalidade e situação da posição"]
-    movegen["movegen<br/>Movimentos pseudolegais"]
-    attacks["attacks<br/>Casas atacadas"]
-    chess["domain<br/>Tipos, tabuleiro e posição"]
-
-    ai --> rules
-    game --> rules
-    rules --> movegen
-    rules --> attacks
-    ai --> chess
-    game --> chess
-    rules --> chess
-    movegen --> chess
-    attacks --> chess
-```
-
-O pacote base `domain` contém os dados compartilhados e não importa outros pacotes
-do projeto. `rules` filtra movimentos e determina a situação de uma posição;
-`game` mantém o estado da partida, os resultados e as repetições. `engine` simula
-posições pelas regras e devolve uma jogada, sem modificar a partida real.
-
-Cada opção de menu reúne seu rótulo e sua ação em `application/menus.go`;
-o desenho e o comando executado usam a mesma definição. A configuração mantém
-dificuldades tipadas, e as escolhas de promoção vêm dos movimentos da partida.
-`match.State` fornece cópias dos dados de interação, enquanto medidas, cores,
-componentes e quadros de animação pertencem a `render`. A notação SAN pertence a
-`domain/game`, junto dos snapshots que descreve; o renderer não consulta regras.
-O pacote `delivery/tui/application` coordena eventos, telas e o agendamento das animações.
-
-O motor não importa a TUI. `application`, `match` e `render` não importam a raiz
-`tui`, e nenhum pacote de produção importa os testes. Os testes ficam nas pastas
-`tests` e dependem das APIs públicas dos pacotes que verificam.
+O motor e a coordenação da IA funcionam independentemente das interfaces.
+`internal/application` usa o domínio e a biblioteca padrão. A TUI e o desktop
+têm árvores de pacotes independentes. Os testes ficam nas pastas `tests` e
+usam as APIs públicas dos pacotes que verificam.
 
 `internal/architecture/tests` verifica os imports de todos os arquivos Go de
 produção, incluindo arquivos específicos de outras plataformas. O teste protege
