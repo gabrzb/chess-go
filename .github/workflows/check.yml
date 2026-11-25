@@ -26,4 +26,4 @@ jobs:
       - name: Vet
         run: go vet ./...
       - name: Build
-        run: go build ./cmd/chess-tui
+        run: go build ./cmd/chess-tui ./cmd/chess-desktop
