@@ -15,18 +15,22 @@ const module = "github.com/gabrzb/chess-go/"
 
 // Each production package declares the project packages it may import.
 var dependencies = map[string][]string{
-	"cmd/chess-tui":                     {"internal/delivery/tui", "internal/domain", "internal/engine"},
-	"internal/domain":                   {},
-	"internal/domain/attacks":           {"internal/domain"},
-	"internal/domain/movegen":           {"internal/domain"},
-	"internal/domain/rules":             {"internal/domain", "internal/domain/attacks", "internal/domain/movegen"},
-	"internal/domain/game":              {"internal/domain", "internal/domain/rules"},
-	"internal/engine":                   {"internal/domain", "internal/domain/rules"},
-	"internal/application":              {"internal/domain", "internal/domain/game"},
-	"internal/delivery/tui":             {"internal/domain", "internal/domain/game", "internal/engine", "internal/delivery/tui/application", "internal/delivery/tui/match"},
-	"internal/delivery/tui/application": {"internal/domain", "internal/domain/game", "internal/engine", "internal/delivery/tui/match", "internal/delivery/tui/render"},
-	"internal/delivery/tui/match":       {"internal/application", "internal/domain", "internal/domain/game", "internal/delivery/tui/render"},
-	"internal/delivery/tui/render":      {"internal/domain", "internal/domain/game"},
+	"cmd/chess-tui":                        {"internal/delivery/tui", "internal/domain", "internal/engine"},
+	"cmd/chess-desktop":                    {"internal/delivery/desktop", "internal/domain", "internal/engine"},
+	"internal/domain":                      {},
+	"internal/domain/attacks":              {"internal/domain"},
+	"internal/domain/movegen":              {"internal/domain"},
+	"internal/domain/rules":                {"internal/domain", "internal/domain/attacks", "internal/domain/movegen"},
+	"internal/domain/game":                 {"internal/domain", "internal/domain/rules"},
+	"internal/engine":                      {"internal/domain", "internal/domain/rules"},
+	"internal/application":                 {"internal/domain", "internal/domain/game"},
+	"internal/delivery/desktop":            {"internal/delivery/desktop/components", "internal/delivery/desktop/pages"},
+	"internal/delivery/desktop/pages":      {"internal/delivery/desktop/components", "internal/domain"},
+	"internal/delivery/desktop/components": {"internal/application", "internal/domain", "internal/domain/game", "internal/engine"},
+	"internal/delivery/tui":                {"internal/domain", "internal/domain/game", "internal/engine", "internal/delivery/tui/application", "internal/delivery/tui/match"},
+	"internal/delivery/tui/application":    {"internal/domain", "internal/domain/game", "internal/engine", "internal/delivery/tui/match", "internal/delivery/tui/render"},
+	"internal/delivery/tui/match":          {"internal/application", "internal/domain", "internal/domain/game", "internal/delivery/tui/render"},
+	"internal/delivery/tui/render":         {"internal/domain", "internal/domain/game"},
 }
 
 func allowedImport(pkg, imported string) bool {
